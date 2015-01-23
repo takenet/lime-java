@@ -54,6 +54,10 @@ public class MediaType {
                 (Subtype != null && Subtype.equalsIgnoreCase(SubTypes.JSON));
     }
 
+    public String getSuffix() {
+        return Suffix;
+    }
+
     /// <summary>
     /// Returns a <see cref="System.String" /> that represents this instance.
     /// </summary>
