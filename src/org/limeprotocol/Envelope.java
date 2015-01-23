@@ -3,9 +3,6 @@ package org.limeprotocol;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Created by and_000 on 13/01/2015.
- */
 public abstract class Envelope {
     private UUID id;
     private Node from;
