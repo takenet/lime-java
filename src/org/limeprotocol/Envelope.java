@@ -10,6 +10,14 @@ public abstract class Envelope {
     private Node pp;
     private Map<String, String> metadata;
 
+    public Envelope(){
+        this(UUID.randomUUID());
+    }
+
+    protected Envelope(UUID id){
+        this.id = id;
+    }
+
     public UUID getId() {
         return id;
     }
