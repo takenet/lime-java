@@ -136,11 +136,11 @@ public class MediaType {
 
     /// <summary>
     /// Try parses the String to a MediaType object.
-    /// WARNING: Remember that Java hasn't out-operator!
     /// </summary>
     /// <param name="s">The String.</param>
     /// <param name="mediaType">Type of the media.</param>
     /// <returns></returns>
+    /// WARNING: Remember that Java hasn't out-operator!
     ///TODO: Check if all call to this method execute parser again
     public static boolean tryParse(String s, MediaType mediaType) {
         try {
