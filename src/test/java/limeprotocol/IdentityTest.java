@@ -1,6 +1,7 @@
-package org.limeprotocol;
+package limeprotocol;
 
 import org.junit.Test;
+import org.limeprotocol.Identity;
 import org.limeprotocol.exceptions.ArgumentNullException;
 
 import static org.junit.Assert.assertEquals;
