@@ -1,6 +1,7 @@
 package org.limeprotocol;
 
 
+import org.limeprotocol.exceptions.ArgumentNullException;
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
@@ -80,7 +81,7 @@ public class Node extends Identity {
     {
         if (StringUtils.isNullOrWhiteSpace(s))
         {
-            throw new IllegalArgumentException("s");
+            throw new ArgumentNullException("s");
         }
 
         Identity identity = Identity.parse(s);
