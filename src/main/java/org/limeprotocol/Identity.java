@@ -1,6 +1,5 @@
 package org.limeprotocol;
 
-import org.limeprotocol.exceptions.ArgumentNullException;
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
@@ -69,7 +68,7 @@ public class Identity {
     {
         if (StringUtils.isNullOrWhiteSpace(s))
         {
-            throw new ArgumentNullException("s");
+            throw new IllegalArgumentException("s");
         }
 
         String[] splittedIdentity = s.split("@");

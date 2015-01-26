@@ -1,8 +1,6 @@
 package org.limeprotocol;
 
 import com.sun.jndi.toolkit.url.Uri;
-import org.limeprotocol.exceptions.ArgumentNullException;
-import org.limeprotocol.exceptions.InvalidOperationException;
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
@@ -19,7 +17,7 @@ public final class LimeUri {
     //TODO: Parse comments methods of Uri to JAVA
     public LimeUri(String uriPath) {
         if (StringUtils.isNullOrWhiteSpace(uriPath)) {
-            throw new ArgumentNullException("uriPath");
+            throw new IllegalArgumentException("uriPath");
         }
 
 //        if (Uri.IsWellFormedUriString(uriPath, UriKind.Absolute)) {
@@ -64,9 +62,9 @@ public final class LimeUri {
     /// absolute path to a Uri.
     /// </summary>
     /// <returns></returns>
-    public Uri toUri() throws InvalidOperationException {
+    public Uri toUri() throws IllegalStateException {
         if (absoluteUri == null) {
-            throw new InvalidOperationException("The URI path is relative");
+            throw new IllegalStateException("The URI path is relative");
         }
 
         return absoluteUri;
@@ -81,13 +79,13 @@ public final class LimeUri {
     /// <param name="authority"></param>
     /// <returns></returns>
     //TODO: Parse comments methods of Uri to JAVA
-    public Uri toUri(Identity authority) throws MalformedURLException, InvalidOperationException {
+    public Uri toUri(Identity authority) throws MalformedURLException, IllegalStateException {
         if (absoluteUri != null) {
-            throw new InvalidOperationException("The URI path is absolute");
+            throw new IllegalStateException("The URI path is absolute");
         }
 
         if (authority == null) {
-            throw new ArgumentNullException("authority");
+            throw new IllegalArgumentException("authority");
         }
 
         Uri baseUri = getBaseUri(authority);
