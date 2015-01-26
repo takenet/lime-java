@@ -37,10 +37,8 @@ public class Node extends Identity {
     public String toString()
     {
         //'\0' == '' (Empty character)
-        String nodeString = StringUtils.format("{0}/{1}", super.toString(), instance).trim();
-        if(nodeString.endsWith("/")){
-            return nodeString.substring(0, nodeString.length()-1);
-        }
+        String nodeString = StringUtils.format("{0}/{1}", super.toString(), instance);
+        nodeString = StringUtils.trimEnd(nodeString, "/");
 
         return nodeString;
     }

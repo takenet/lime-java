@@ -1,10 +1,9 @@
 package org.limeprotocol.exceptions;
 
-public class FormatException extends RuntimeException {
+public class InvalidOperationException extends Exception {
 
     //TODO: Improve quality on exception message
-    public FormatException(String msg) {
+    public InvalidOperationException(String msg) {
         super(msg);
     }
 }
-
