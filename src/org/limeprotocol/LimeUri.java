@@ -1,98 +1,74 @@
 package org.limeprotocol;
 
-import com.sun.jndi.toolkit.url.Uri;
-import org.limeprotocol.exceptions.ArgumentNullException;
-import org.limeprotocol.exceptions.InvalidOperationException;
+import java.net.URI;
+
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
-/// <summary>
-/// Represents a URI
-/// from the lime scheme.
-/// </summary>
+/**
+ * Represents a URI from the lime scheme.
+ */
 public final class LimeUri {
-    private Uri absoluteUri;
+    private URI absoluteUri;
     public static final String LIME_URI_SCHEME = "lime";
 
-    //TODO: Parse comments methods of Uri to JAVA
     public LimeUri(String uriPath) {
         if (StringUtils.isNullOrWhiteSpace(uriPath)) {
-            throw new ArgumentNullException("uriPath");
+            throw new IllegalArgumentException("uriPath");
         }
 
-//        if (Uri.IsWellFormedUriString(uriPath, UriKind.Absolute)) {
-//            absoluteUri = new Uri(uriPath);
-//            // In Linux, a path like '/presence' is considered
-//            // a valid absolute file uri
-//
-//            if (absoluteUri.IsFile) {
-//                absoluteUri = null;
-//            } else if (!absoluteUri.Scheme.Equals(LIME_URI_SCHEME)) {
-//                throw new ArgumentException(string.Format("Invalid URI scheme. Expected is '{0}'", LIME_URI_SCHEME));
-//            }
-//        } else if (!Uri.IsWellFormedUriString(uriPath, UriKind.Relative)) {
-//            throw new ArgumentException("Invalid URI format");
-//        }
+        try {
+            absoluteUri = new URI(uriPath);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid URI format");
+        }
+
+        if (absoluteUri.isAbsolute() && !absoluteUri.getScheme().equals(LIME_URI_SCHEME)) {
+            throw new IllegalArgumentException(String.format("Invalid URI scheme. Expected is '%1$s'", LIME_URI_SCHEME));
+        }
 
         this.path = StringUtils.trimEnd(uriPath, "/");
     }
 
-    /// <summary>
-    /// Fragment or complete
-    /// URI path.
-    /// </summary>
     private String path;
 
-    /// <summary>
-    /// Indicates if the path
-    /// is relative.
-    /// </summary>
-    public boolean isRelative;
-
     public boolean isRelative() {
-        return absoluteUri == null;
+        return !absoluteUri.isAbsolute();
     }
 
     public String getPath() {
         return path;
     }
 
-    /// <summary>
-    /// Convert the current
-    /// absolute path to a Uri.
-    /// </summary>
-    /// <returns></returns>
-    public Uri toUri() throws InvalidOperationException {
-        if (absoluteUri == null) {
-            throw new InvalidOperationException("The URI path is relative");
+    /**
+     * Convert the current absolute path to a Uri.
+     */
+    public URI toUri() {
+        if (absoluteUri != null && !absoluteUri.isAbsolute()) {
+            throw new IllegalStateException("The URI path is relative");
         }
 
         return absoluteUri;
     }
 
-    /// <summary>
-    /// Convert the relative
-    /// path to a Uri, using
-    /// the identity as the
-    /// URI authority.
-    /// </summary>
-    /// <param name="authority"></param>
-    /// <returns></returns>
-    //TODO: Parse comments methods of Uri to JAVA
-    public Uri toUri(Identity authority) throws MalformedURLException, InvalidOperationException {
-        if (absoluteUri != null) {
-            throw new InvalidOperationException("The URI path is absolute");
+    public URI toUri(Identity authority) {
+        if (absoluteUri != null && absoluteUri.isAbsolute()) {
+            throw new IllegalStateException("The URI path is absolute");
         }
 
         if (authority == null) {
-            throw new ArgumentNullException("authority");
+            throw new IllegalStateException("authority");
         }
 
-        Uri baseUri = getBaseUri(authority);
-        //return new Uri(baseUri, getPath());
-        return new Uri(getPath());
+        try {
+            URI baseUri = getBaseUri(authority);
+            return baseUri.resolve(getPath());
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
     }
 
     @Override
@@ -120,7 +96,7 @@ public final class LimeUri {
         return new LimeUri(value);
     }
 
-    public static Uri getBaseUri(Identity authority) throws MalformedURLException {
-        return new Uri(StringUtils.format("{0}://{1}/", LIME_URI_SCHEME, authority));
+    public static URI getBaseUri(Identity authority) throws MalformedURLException {
+        return URI.create(StringUtils.format("{0}://{1}/", LIME_URI_SCHEME, authority));
     }
 }

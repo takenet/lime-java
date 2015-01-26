@@ -2,6 +2,7 @@ package org.limeprotocol;
 
 import org.junit.Test;
 import org.limeprotocol.exceptions.ArgumentNullException;
+import org.limeprotocol.util.StringUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -194,7 +195,7 @@ public class IdentityTest {
         // Arrange
         String name = "myName";
         String domain = "myDomain";
-        String identityString = String.format("%1$s@%2$s", name, domain);
+        String identityString = StringUtils.format("{0}@{1}", name, domain);
 
         // Act
         Identity identity = Identity.parse(identityString);
@@ -221,7 +222,7 @@ public class IdentityTest {
     public void parse_OnlyDomain_ReturnsValidIdentity() {
         // Arrange
         String domain = "theBestDomain";
-        String identityString = String.format("@%1$s", domain);
+        String identityString = StringUtils.format("@{0}", domain);
 
         // Act
         Identity identity = Identity.parse(identityString);
