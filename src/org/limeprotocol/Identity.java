@@ -1,6 +1,7 @@
 package org.limeprotocol;
 
 import org.limeprotocol.exceptions.ArgumentNullException;
+import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
 public class Identity {
@@ -26,6 +27,35 @@ public class Identity {
 
     public void setDomain(String domain) {
         this.domain = domain;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        Identity identity = Cast.as(Identity.class, o);
+
+        if (identity == null) {
+            return false;
+        }
+
+        return ((this.name == null && identity.name == null) || (this.name != null && this.name.equalsIgnoreCase(identity.name))) &&
+                ((this.domain == null && identity.domain == null) || (this.domain != null && this.domain.equalsIgnoreCase(identity.domain)));
+    }
+
+    @Override
+    public int hashCode() {
+        return this.toString().toLowerCase().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        if (StringUtils.isNullOrWhiteSpace(this.domain)) {
+            return this.name;
+        }
+        else {
+            return String.format("%1$s@%2$s",
+                                name == null ? "" : name,
+                                domain);
+        }
     }
 
     /// <summary>
