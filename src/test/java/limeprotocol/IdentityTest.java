@@ -4,9 +4,7 @@ import org.junit.Test;
 import org.limeprotocol.Identity;
 import org.limeprotocol.util.StringUtils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class IdentityTest {
 
@@ -248,5 +246,13 @@ public class IdentityTest {
 
         // Act
         Identity identity = Identity.parse(identityString);
+    }
+
+    public void equals_CompareToNull_ReturnsFalse(){
+        // Arrange
+        Identity identity = new Identity(null, null);
+
+        // Act and Assert
+        assertFalse("equals should return false when comparing to null", identity.equals(null));
     }
 }
