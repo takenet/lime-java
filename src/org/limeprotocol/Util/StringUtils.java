@@ -28,6 +28,15 @@ public class StringUtils {
         }
         return formatted;
     }
+
+    public static String trimEnd(String string, String finalCharacter){
+        string.trim();
+        if(string.endsWith(finalCharacter)){
+            return string.substring(0, string.length()-1);
+        }
+
+        return string;
+    }
 }
 
 
