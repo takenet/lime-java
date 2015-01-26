@@ -5,9 +5,9 @@ package org.limeprotocol;
 /// server and its current state
 /// </summary>
 
-import org.limeprotocol.Security.Authentication;
-import org.limeprotocol.Security.Authentication.AuthenticationScheme;
-import org.limeprotocol.Util.UUIDUtils;
+import org.limeprotocol.security.Authentication;
+import org.limeprotocol.security.Authentication.AuthenticationScheme;
+import org.limeprotocol.util.UUIDUtils;
 
 public class Session extends Envelope {
     public final String STATE_KEY = "state";
@@ -227,7 +227,7 @@ public class Session extends Envelope {
         None,
         /// <summary>
         /// The session is encrypted by TLS
-        /// (Transport Layer Security).
+        /// (Transport Layer security).
         /// </summary>
 
         TLS

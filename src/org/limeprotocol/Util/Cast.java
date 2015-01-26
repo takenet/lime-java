@@ -1,4 +1,4 @@
-package org.limeprotocol.Util;
+package org.limeprotocol.util;
 
 public class Cast {
 

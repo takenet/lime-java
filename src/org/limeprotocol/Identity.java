@@ -1,7 +1,7 @@
 package org.limeprotocol;
 
-import org.limeprotocol.Exceptions.ArgumentNullException;
-import org.limeprotocol.Util.StringUtils;
+import org.limeprotocol.exceptions.ArgumentNullException;
+import org.limeprotocol.util.StringUtils;
 
 public class Identity {
     private String name;

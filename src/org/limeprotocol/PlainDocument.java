@@ -1,6 +1,6 @@
 package org.limeprotocol;
 
-import org.limeprotocol.Util.StringUtils;
+import org.limeprotocol.util.StringUtils;
 
 public class PlainDocument implements Document {
 

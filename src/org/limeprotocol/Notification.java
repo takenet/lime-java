@@ -1,9 +1,6 @@
 package org.limeprotocol;
 
-import org.limeprotocol.Envelope;
-import org.limeprotocol.Util.UUIDUtils;
-
-import java.util.UUID;
+import org.limeprotocol.util.UUIDUtils;
 
 /// <summary>
 /// Transports information about events associated to a message

@@ -1,6 +1,4 @@
-package org.limeprotocol.Exceptions;
-
-import java.util.IllegalFormatException;
+package org.limeprotocol.exceptions;
 
 public class FormatException extends RuntimeException {
 

@@ -1,9 +1,9 @@
 package org.limeprotocol;
 
-import org.limeprotocol.Exceptions.ArgumentNullException;
-import org.limeprotocol.Exceptions.FormatException;
-import org.limeprotocol.Util.Cast;
-import org.limeprotocol.Util.StringUtils;
+import org.limeprotocol.exceptions.ArgumentNullException;
+import org.limeprotocol.exceptions.FormatException;
+import org.limeprotocol.util.Cast;
+import org.limeprotocol.util.StringUtils;
 
 public class MediaType {
 

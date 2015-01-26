@@ -1,4 +1,4 @@
-package org.limeprotocol.Exceptions;
+package org.limeprotocol.exceptions;
 
 public class ArgumentNullException extends IllegalArgumentException {
 
