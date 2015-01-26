@@ -10,8 +10,7 @@ import static org.junit.Assert.assertNull;
 public class IdentityTest {
 
     @Test
-    public void equals_EqualsIdentities_ReturnsTrue()
-    {
+    public void equals_EqualsIdentities_ReturnsTrue() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", "thisIsDomain");
 
@@ -23,8 +22,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void equals_EqualsIdentitiesDifferentCasing_ReturnsTrue()
-    {
+    public void equals_EqualsIdentitiesDifferentCasing_ReturnsTrue() {
         // Arrange
         Identity identity1 = new Identity("thisIsName".toUpperCase(), "thisIsDomain".toUpperCase());
 
@@ -36,8 +34,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void equals_EqualsIdentitiesNullDomain_ReturnsTrue()
-    {
+    public void equals_EqualsIdentitiesNullDomain_ReturnsTrue() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", null);
 
@@ -49,8 +46,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void equals_EqualsIdentitiesNullName_ReturnsTrue()
-    {
+    public void equals_EqualsIdentitiesNullName_ReturnsTrue() {
         // Arrange
         Identity identity1 = new Identity(null, "thisIsDomain");
 
@@ -62,8 +58,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void Equals_NotEqualsIdentities_ReturnsFalse()
-    {
+    public void Equals_NotEqualsIdentities_ReturnsFalse() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", "thisIsDomain");
 
@@ -74,72 +69,44 @@ public class IdentityTest {
         assertNotEquals(identity2, identity1);
     }
 
-    /*
-    public void Equals_NotEqualsIdentitiesNullName_ReturnsFalse()
-    {
-        var identity1 = new Identity()
-        {
-            Name = null,
-            Domain = DataUtil.CreateRandomString(10)
-        };
+    @Test
+    public void equals_NotEqualsIdentitiesNullName_ReturnsFalse() {
+        // Arrange
+        Identity identity1 = new Identity(null, "thisIsDomain");
 
-        var identity2 = new Identity()
-        {
-            Name = DataUtil.CreateRandomString(10),
-            Domain = DataUtil.CreateRandomString(10)
-        };
+        Identity identity2 = new Identity("thisIsOtherName", "thisIsOtherDomain");
 
-
-        Assert.AreNotEqual(identity1, identity2);
-        Assert.AreNotEqual(identity2, identity1);
+        // Assert
+        assertNotEquals(identity1, identity2);
+        assertNotEquals(identity2, identity1);
     }
-
-    [TestMethod]
-            [TestCategory("Equals")]
-    public void Equals_NotEqualsIdentitiesNullDomain_ReturnsFalse()
-    {
-        var identity1 = new Identity()
-        {
-            Name = DataUtil.CreateRandomString(10),
-            Domain = null
-        };
-
-        var identity2 = new Identity()
-        {
-            Name = DataUtil.CreateRandomString(10),
-            Domain = DataUtil.CreateRandomString(10)
-        };
-
-
-        Assert.AreNotEqual(identity1, identity2);
-        Assert.AreNotEqual(identity2, identity1);
-    }
-
-    [TestMethod]
-            [TestCategory("Equals")]
-    public void Equals_NotEqualsIdentitiesNullProperties_ReturnsFalse()
-    {
-        var identity1 = new Identity()
-        {
-            Name = null,
-            Domain = null
-        };
-
-        var identity2 = new Identity()
-        {
-            Name = DataUtil.CreateRandomString(10),
-            Domain = DataUtil.CreateRandomString(10)
-        };
-
-
-        Assert.AreNotEqual(identity1, identity2);
-        Assert.AreNotEqual(identity2, identity1);
-    }
-    */
 
     @Test
-    public void getHashCode_EqualsIdentities_ReturnsSameHash()
-    {
+    public void Equals_NotEqualsIdentitiesNullDomain_ReturnsFalse() {
+        // Arrange
+        Identity identity1 = new Identity("thisIsName", null);
+
+        Identity identity2 = new Identity("thisIsOtherName", "thisIsDomain");
+
+        // Assert
+        assertNotEquals(identity1, identity2);
+        assertNotEquals(identity2, identity1);
+    }
+
+    @Test
+    public void Equals_NotEqualsIdentitiesNullProperties_ReturnsFalse() {
+        // Arrange
+        Identity identity1 = new Identity(null, null);
+
+        Identity identity2 = new Identity("thisIsOtherName", "thisIsDomain");
+
+        // Assert
+        assertNotEquals(identity1, identity2);
+        assertNotEquals(identity2, identity1);
+    }
+
+    @Test
+    public void getHashCode_EqualsIdentities_ReturnsSameHash() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", "thisIsDomain");
 
@@ -150,8 +117,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void getHashCode_EqualsIdentitiesDifferentCasing_ReturnsSameHash()
-    {
+    public void getHashCode_EqualsIdentitiesDifferentCasing_ReturnsSameHash() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", "thisIsDomain");
 
@@ -162,8 +128,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void getHashCode_NotEqualsIdentities_ReturnsDifferentHash()
-    {
+    public void getHashCode_NotEqualsIdentities_ReturnsDifferentHash() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", "thisIsDomain");
 
@@ -174,8 +139,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void toString_CompleteIdentity_ReturnsValidString()
-    {
+    public void toString_CompleteIdentity_ReturnsValidString() {
         // Arrange
         String name = "thisIsName";
         String domain = "thisIsDomain";
@@ -192,8 +156,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void toString_OnlyNameIdentity_ReturnsValidString()
-    {
+    public void toString_OnlyNameIdentity_ReturnsValidString() {
         // Arrange
         String name = "thisIsName";
         String domain = null;
@@ -210,8 +173,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void toString_OnlyDomainIdentity_ReturnsValidString()
-    {
+    public void toString_OnlyDomainIdentity_ReturnsValidString() {
         // Arrange
         String name = null;
         String domain = "thisIsDomain";
@@ -243,8 +205,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void parse_OnlyNameString_ReturnsValidIdentity()
-    {
+    public void parse_OnlyNameString_ReturnsValidIdentity() {
         // Arrange
         String name = "anyName";
 
@@ -257,8 +218,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void parse_OnlyDomain_ReturnsValidIdentity()
-    {
+    public void parse_OnlyDomain_ReturnsValidIdentity() {
         // Arrange
         String domain = "theBestDomain";
         String identityString = String.format("@%1$s", domain);
