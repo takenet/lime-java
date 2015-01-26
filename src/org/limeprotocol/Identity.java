@@ -1,6 +1,5 @@
 package org.limeprotocol;
 
-import org.limeprotocol.exceptions.ArgumentNullException;
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
@@ -67,9 +66,8 @@ public class Identity {
     /// <exception cref="System.FormatException">Invalid identity format</exception>
     public static Identity parse(String s)
     {
-        if (StringUtils.isNullOrWhiteSpace(s))
-        {
-            throw new ArgumentNullException("s");
+        if (StringUtils.isNullOrWhiteSpace(s)) {
+            throw new IllegalArgumentException("s");
         }
 
         String[] splittedIdentity = s.split("@");

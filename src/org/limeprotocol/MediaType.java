@@ -1,18 +1,16 @@
 package org.limeprotocol;
 
-import org.limeprotocol.exceptions.ArgumentNullException;
-import org.limeprotocol.exceptions.FormatException;
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
 public class MediaType {
 
-    /// <summary>
-    /// The top-level type
-    /// identifier. The valid values
-    /// are text, application, image,
-    /// audio and video.
-    /// </summary>
+    /**
+     * The top-level type
+     * identifier. The valid values
+     * are text, application, image,
+     * audio and video.
+     */
     private String Type;
 
     private String Subtype;
@@ -35,13 +33,13 @@ public class MediaType {
 
     public MediaType(String type, String subtype, String suffix) {
         if (StringUtils.isNullOrWhiteSpace(type)) {
-            throw new ArgumentNullException("type");
+            throw new IllegalArgumentException("type");
         }
 
         this.Type = type;
 
         if (StringUtils.isNullOrWhiteSpace(subtype)) {
-            throw new ArgumentNullException("subtype");
+            throw new IllegalArgumentException("subtype");
         }
 
         this.Subtype = subtype;
@@ -113,22 +111,18 @@ public class MediaType {
     /// <exception cref="System.FormatException">Invalid media type format</exception>
     public static MediaType parse(String s) {
         if (StringUtils.isNullOrWhiteSpace(s)) {
-            throw new ArgumentNullException("value");
+            throw new IllegalArgumentException("value");
         }
 
         String[] splittedMediaType = s.split("/");
-
         if (splittedMediaType.length != 2) {
 
-            throw new FormatException("Invalid media type format");
+            throw new IllegalArgumentException("Invalid media type format");
         }
 
         String type = splittedMediaType[0];
-
         String[] splittedSubtype = splittedMediaType[1].split("\\+");
-
         String subtype = splittedSubtype[0];
-
         String suffix = null;
 
         if (splittedSubtype.length > 1) {
