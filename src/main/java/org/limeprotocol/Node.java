@@ -1,7 +1,6 @@
 package org.limeprotocol;
 
 
-import org.limeprotocol.exceptions.ArgumentNullException;
 import org.limeprotocol.util.Cast;
 import org.limeprotocol.util.StringUtils;
 
@@ -79,9 +78,8 @@ public class Node extends Identity {
     /// <exception cref="System.FormatException">Invalid Peer format</exception>
     public static Node parse(String s)
     {
-        if (StringUtils.isNullOrWhiteSpace(s))
-        {
-            throw new ArgumentNullException("s");
+        if (StringUtils.isNullOrWhiteSpace(s)) {
+            throw new IllegalArgumentException("s");
         }
 
         Identity identity = Identity.parse(s);

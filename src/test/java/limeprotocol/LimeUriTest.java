@@ -1,8 +1,8 @@
-package org.limeprotocol;
+package limeprotocol;
 
 import org.junit.Test;
-import org.limeprotocol.exceptions.ArgumentNullException;
-import org.limeprotocol.exceptions.InvalidOperationException;
+import org.limeprotocol.Identity;
+import org.limeprotocol.LimeUri;
 import org.limeprotocol.util.StringUtils;
 
 import java.net.URI;

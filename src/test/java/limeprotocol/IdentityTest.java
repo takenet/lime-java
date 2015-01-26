@@ -1,7 +1,7 @@
-package org.limeprotocol;
+package limeprotocol;
 
 import org.junit.Test;
-import org.limeprotocol.exceptions.ArgumentNullException;
+import org.limeprotocol.Identity;
 import org.limeprotocol.util.StringUtils;
 
 import static org.junit.Assert.assertEquals;
@@ -232,7 +232,7 @@ public class IdentityTest {
         assertNull(identity.getName());
     }
 
-    @Test(expected = ArgumentNullException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void parse_NullString_ThrowsArgumentNullException() {
         // Arrange
         String identityString = null;
@@ -241,7 +241,7 @@ public class IdentityTest {
         Identity identity = Identity.parse(identityString);
     }
 
-    @Test(expected = ArgumentNullException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void parse_EmptyString_ThrowsArgumentNullException() {
         // Arrange
         String identityString = "";
