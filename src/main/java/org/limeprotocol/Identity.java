@@ -57,21 +57,18 @@ public class Identity {
         }
     }
 
-    /// <summary>
-    /// Parses the string to a valid Identity.
-    /// </summary>
-    /// <param name="s">The s.</param>
-    /// <returns></returns>
-    /// <exception cref="System.ArgumentNullException">s</exception>
-    /// <exception cref="System.FormatException">Invalid identity format</exception>
-    public static Identity parse(String s)
+    /**
+     * Parses the string to a valid Identity.
+     * @param string
+     */
+    public static Identity parse(String string)
     {
-        if (StringUtils.isNullOrWhiteSpace(s))
+        if (StringUtils.isNullOrWhiteSpace(string))
         {
             throw new IllegalArgumentException("s");
         }
 
-        String[] splittedIdentity = s.split("@");
+        String[] splittedIdentity = string.split("@");
 
         String name = !StringUtils.isNullOrWhiteSpace(splittedIdentity[0]) ? splittedIdentity[0] : null;
         String domain = splittedIdentity.length > 1 ? splittedIdentity[1] : null;
