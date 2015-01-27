@@ -4,6 +4,7 @@ import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 import org.limeprotocol.network.Transport;
+import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
 
 import javax.net.ssl.SSLSocket;
@@ -21,7 +22,7 @@ import java.util.concurrent.*;
 /**
  * Synchronous TCP transport implementation.
  */
-public class TcpTransport implements Transport {
+public class TcpTransport extends TransportBase implements Transport {
 
     public final static int DEFAULT_BUFFER_SIZE = 8192;
     private final EnvelopeSerializer envelopeSerializer;
@@ -35,7 +36,6 @@ public class TcpTransport implements Transport {
     private Future<?> inputListenerFuture;
 
     private ExecutorService executorService;
-    private TransportListener transportListener;
 
     public TcpTransport(EnvelopeSerializer envelopeSerializer) {
         this.envelopeSerializer = envelopeSerializer;
@@ -60,15 +60,6 @@ public class TcpTransport implements Transport {
         }
     }
 
-    /**
-     * Sets the listener for receiving envelopes.
-     *
-     * @param transportListener
-     */
-    @Override
-    public void setListener(TransportListener transportListener) {
-        this.transportListener = transportListener;
-    }
 
     /**
      * Opens the transport connection with the specified Uri.
@@ -97,14 +88,11 @@ public class TcpTransport implements Transport {
         inputListenerFuture = executorService.submit(new JsonStreamReader(DEFAULT_BUFFER_SIZE));
     }
 
-    /**
-     * Closes the connection.
-     */
     @Override
-    public synchronized void close() throws IOException {
+    protected void performClose() throws IOException {
         ensureSocketOpen();
         socket.close();
-        
+
         if (inputListenerFuture != null) {
             try {
                 inputListenerFuture.cancel(true);
@@ -119,53 +107,14 @@ public class TcpTransport implements Transport {
     }
 
     /**
-     * Enumerates the supported compression options for the transport.
-     *
-     * @return
-     */
-    @Override
-    public SessionCompression[] getSupportedCompression() {
-        return new SessionCompression[0];
-    }
-
-    /**
-     * Gets the current transport compression option.
-     *
-     * @return
-     */
-    @Override
-    public SessionCompression getCompression() {
-        return null;
-    }
-
-    /**
-     * Defines the compression mode for the transport.
-     *
-     * @param compression
-     */
-    @Override
-    public void setCompression(SessionCompression compression) {
-
-    }
-
-    /**
      * Enumerates the supported encryption options for the transport.
      *
      * @return
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        return new SessionEncryption[0];
-    }
-
-    /**
-     * Gets the current transport encryption option.
-     *
-     * @return
-     */
-    @Override
-    public SessionEncryption getEncryption() {
-        return null;
+        
+        return new SessionEncryption[] { SessionEncryption.none, SessionEncryption.tls };
     }
 
     /**
@@ -184,7 +133,10 @@ public class TcpTransport implements Transport {
                         true);
                 
                 break;
+            
         }
+        
+        super.setEncryption(encryption);
     }
 
 
@@ -233,7 +185,7 @@ public class TcpTransport implements Transport {
                     }
                 }
 
-                TcpTransport.this.transportListener.onReceive(envelope);
+                TcpTransport.this.getListener().onReceive(envelope);
             }
 
             return null;

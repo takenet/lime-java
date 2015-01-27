@@ -4,15 +4,30 @@ import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
+import java.util.Arrays;
 
+/**
+ *  Base class for transport implementation.
+ */
 public abstract class TransportBase implements Transport {
     
     private TransportListener transportListener;
+    private boolean closingInvoked;
+    private boolean closedInvoked;
 
+    private SessionCompression compression;
+    private SessionEncryption encryption;
+    
     protected TransportBase() {
-
+        compression = SessionCompression.none;
+        encryption = SessionEncryption.none;
+        
     }
-    protected abstract void performClose();
+
+    /**
+     * Closes the transport.
+     */
+    protected abstract void performClose() throws IOException;
 
 
     @Override
@@ -20,6 +35,9 @@ public abstract class TransportBase implements Transport {
         this.transportListener = transportListener;
     }
 
+    protected TransportListener getListener() {
+        return transportListener;
+    }
 
     @Override
     public SessionCompression[] getSupportedCompression() {
@@ -28,14 +46,15 @@ public abstract class TransportBase implements Transport {
 
     @Override
     public SessionCompression getCompression() {
-        return SessionCompression.none;
+        return compression;
     }
 
     @Override
     public void setCompression(SessionCompression compression) throws IOException  {
-        if (compression != getCompression()) {
-            throw new UnsupportedOperationException();
+        if (Arrays.asList(getSupportedCompression()).contains(compression)) {
+            throw new IllegalArgumentException("compression");
         }
+        this.compression = compression;
     }
 
     @Override
@@ -45,25 +64,30 @@ public abstract class TransportBase implements Transport {
 
     @Override
     public SessionEncryption getEncryption() {
-        return SessionEncryption.none;
+        return encryption;
     }
 
     @Override
     public void setEncryption(SessionEncryption encryption) throws IOException {
-        if (encryption != getEncryption()) {
-            throw new UnsupportedOperationException();
+        if (Arrays.asList(getSupportedEncryption()).contains(encryption)) {
+            throw new IllegalArgumentException("encryption");
         }
+        this.encryption = encryption;
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         TransportListener transportListener = this.transportListener;
-        if (transportListener != null) {
+        if (transportListener != null &&
+                !closingInvoked) {
             transportListener.onClosing();
+            closingInvoked = true;
         }
         performClose();
-        if (transportListener != null) {
+        if (transportListener != null &&
+                !closedInvoked) {
             transportListener.onClosed();
+            closedInvoked = true;
         }
     }
 }
