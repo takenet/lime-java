@@ -215,38 +215,4 @@ public class Session extends Envelope {
 
         Failed
     }
-
-    /// <summary>
-    /// Defines the valid session encryption values.
-    /// </summary>
-    public enum SessionEncryption {
-        /// <summary>
-        /// The session is not encrypted.
-        /// </summary>
-
-        None,
-        /// <summary>
-        /// The session is encrypted by TLS
-        /// (Transport Layer security).
-        /// </summary>
-
-        TLS
-    }
-
-    /// <summary>
-    /// Defines the valid session compression values.
-    /// </summary>
-    public enum SessionCompression {
-        /// <summary>
-        /// The session is not compressed.
-        /// </summary>
-
-        None,
-        /// <summary>
-        /// The session is using the GZip
-        /// algorithm for compression.
-        /// </summary>
-
-        GZip
-    }
 }
