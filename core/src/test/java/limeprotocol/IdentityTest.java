@@ -45,6 +45,8 @@ public class IdentityTest {
         assertEquals(identity2, identity1);
     }
 
+
+
     @Test
     public void equals_EqualsIdentitiesNullName_ReturnsTrue() {
         // Arrange
@@ -55,6 +57,20 @@ public class IdentityTest {
         // Assert
         assertEquals(identity1, identity2);
         assertEquals(identity2, identity1);
+    }
+
+
+
+    @Test
+    public void equals_EqualsIdentitiesNullName_ReturnsFalse() {
+        // Arrange
+        Identity identity1 = new Identity(null, "thisIsDomain");
+
+        Identity identity2 = new Identity(null, "notEqualsDomain");
+
+        // Assert
+        assertNotEquals(identity1, identity2);
+        assertNotEquals(identity2, identity1);
     }
 
     @Test
@@ -106,6 +122,16 @@ public class IdentityTest {
     }
 
     @Test
+    public void equals_CompareToNullNameAndNullDomain (){
+        // Arrange
+        Identity identity = new Identity(null, null);
+        Identity identity2 = new Identity(null, null);
+
+        // Act and Assert
+        assertEquals("equals should return true", identity, identity2);
+    }
+
+    @Test
     public void equals_CompareToNull_ReturnsFalse(){
         // Arrange
         Identity identity = new Identity(null, null);
@@ -113,6 +139,7 @@ public class IdentityTest {
         // Act and Assert
         assertFalse("equals should return false when comparing to null", identity.equals(null));
     }
+
     //endregion
 
     //region getHashCode method

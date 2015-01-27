@@ -36,8 +36,17 @@ public class Identity {
             return false;
         }
 
-        return ((this.name == null && identity.name == null) || (this.name != null && this.name.equalsIgnoreCase(identity.name))) &&
-                ((this.domain == null && identity.domain == null) || (this.domain != null && this.domain.equalsIgnoreCase(identity.domain)));
+        if (!((this.name == null && identity.name == null)
+                || (this.name != null && this.name.equalsIgnoreCase(identity.name)))){
+            return false;
+        }
+
+        if (!((this.domain == null && identity.domain == null) ||
+                (this.domain != null && this.domain.equalsIgnoreCase(identity.domain)))){
+            return false;
+        }
+
+        return true;
     }
 
     @Override
