@@ -1,5 +1,7 @@
 package org.limeprotocol.util;
 
+import org.apache.commons.codec.binary.Base64;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,6 +40,10 @@ public class StringUtils {
         }
 
         return string;
+    }
+
+    public static String toBase64(String value) {
+        return new String(Base64.encodeBase64(value.getBytes()));
     }
 }
 

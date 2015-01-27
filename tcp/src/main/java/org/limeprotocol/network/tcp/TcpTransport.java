@@ -173,7 +173,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
                     if (jsonBufferReadResult.isSuccess()) {
                         String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
-                        envelope = TcpTransport.this.envelopeSerializer.Deserialize(jsonString);
+                        envelope = TcpTransport.this.envelopeSerializer.deserialize(jsonString);
                     }
 
                     if (envelope == null) {

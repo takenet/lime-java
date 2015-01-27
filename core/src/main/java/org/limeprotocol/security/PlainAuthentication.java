@@ -22,7 +22,7 @@ public class PlainAuthentication extends Authentication {
         if (StringUtils.isNullOrWhiteSpace(password)) {
             setPassword(password);
         } else {
-            setPassword(new String(Base64.encodeBase64(password.getBytes())));
+            setPassword(StringUtils.toBase64(password));
         }
     }
 }

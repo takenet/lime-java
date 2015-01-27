@@ -1,4 +1,4 @@
-package limeprotocol;
+package org.limeprotocol;
 
 import org.junit.Test;
 import org.limeprotocol.Identity;
