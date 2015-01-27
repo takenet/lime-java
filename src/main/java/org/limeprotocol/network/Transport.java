@@ -2,6 +2,8 @@ package org.limeprotocol.network;
 
 import org.limeprotocol.Envelope;
 
+import java.net.URI;
+
 /**
  * Defines a network connection with a node.
  */
@@ -19,6 +21,17 @@ public interface Transport {
      */
     void setListener(TransportListener transportListener);
 
+    /**
+     * Opens the transport connection with the specified Uri.
+     * @param uri
+     */
+    void open(URI uri);
+
+    /**
+     * Closes the connection.
+     */
+    void close();
+    
     /**
      * Defines a envelope transport listener. 
      */
