@@ -7,6 +7,8 @@ import java.util.Map;
 
 public class StringUtils {
 
+    public static final String STRING_EMPTY = "";
+
     public static boolean isNullOrEmpty(String string){
         return string == null || string.equals("");
     }

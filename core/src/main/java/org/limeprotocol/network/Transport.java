@@ -51,7 +51,7 @@ public interface Transport {
      * Defines the compression mode for the transport.
      * @param compression
      */
-    void setCompression(SessionCompression compression);
+    void setCompression(SessionCompression compression) throws IOException;
     
     /**
      * Enumerates the supported encryption options for the transport.

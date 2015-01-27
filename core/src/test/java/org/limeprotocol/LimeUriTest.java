@@ -100,7 +100,7 @@ public class LimeUriTest {
         LimeUri limeUri = LimeUri.parse(relative);
 
         // Act
-        URI uri = limeUri.toUri();
+        limeUri.toUri();
     }
 
     @Test
@@ -132,7 +132,7 @@ public class LimeUriTest {
         LimeUri limeUri = LimeUri.parse(absolutePath);
 
         // Act
-        URI uri = limeUri.toUri(identity);
+        limeUri.toUri(identity);
     }
     //endregion
 
