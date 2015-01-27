@@ -35,6 +35,7 @@
         </pluginManagement>
     </build>
     <modules>
+        <module>core</module>
         <module>tcp</module>
     </modules>
 

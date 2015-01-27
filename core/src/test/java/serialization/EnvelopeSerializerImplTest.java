@@ -1,4 +1,4 @@
-package limeprotocol.serialization;
+package serialization;
 
 import org.junit.Before;
 import org.junit.Test;
