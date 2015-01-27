@@ -108,6 +108,7 @@ public class TcpTransport implements Transport {
         
         if (inputListenerFuture != null) {
             try {
+                inputListenerFuture.cancel(true);
                 inputListenerFuture.wait();
                 inputListenerFuture.get();
             } catch (InterruptedException e) {
