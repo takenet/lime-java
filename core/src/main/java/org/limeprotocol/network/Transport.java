@@ -19,10 +19,17 @@ public interface Transport {
     void send(Envelope envelope) throws IOException;
 
     /**
-     *  Sets the listener for receiving envelopes.
+     *  Add a listener for receiving envelopes with default priority
      * @param transportListener
      */
-    void setListener(TransportListener transportListener);
+    void addListener(TransportListener transportListener);
+
+    /**
+     *  Add a listener for receiving envelopes with the specify priority
+     * @param transportListener
+     */
+    void addListener(TransportListener transportListener, Integer priority);
+
 
     /**
      * Opens the transport connection with the specified Uri.
