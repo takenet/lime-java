@@ -18,7 +18,7 @@ public class StringUtils {
         Map<String, Object> tags = new LinkedHashMap<String, Object>();
 
         for (int i=0; i<values.length; i++){
-            tags.put("\\{" + i + "\\}", values[i]);
+            tags.put("\\{" + i + "\\}", values[i]==null ? "" : values[i]);
         }
 
         String formatted = pattern;
