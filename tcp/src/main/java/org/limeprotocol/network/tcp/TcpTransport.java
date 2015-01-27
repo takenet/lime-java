@@ -5,7 +5,6 @@ import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.serialization.EnvelopeSerializer;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -213,7 +212,7 @@ public class TcpTransport implements Transport {
         @Override
         public Void call() throws Exception {
             if (TcpTransport.this.inputStream == null) {
-                throw new InvalidStateException("The stream was not initialized. Call Open first.");
+                throw new IllegalStateException("The stream was not initialized. Call Open first.");
             }
 
             while (canRead()) {
