@@ -5,9 +5,9 @@ import org.limeprotocol.util.StringUtils;
 public class PlainDocument implements Document {
 
     private MediaType mediaType;
-    /// <summary>
-    /// The value of the document
-    /// </summary>
+    /**
+     * The value of the document
+     */
     public String value;
 
 

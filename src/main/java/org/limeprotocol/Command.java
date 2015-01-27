@@ -17,39 +17,39 @@ public class Command extends Envelope {
         super(id);
     }
 
-    /// <summary>
-    /// The universal identifier
-    /// of the resource
-    /// </summary>
+    /**
+     * The universal identifier
+     * of the resource
+     */
     public LimeUri uri;
 
-    /// <summary>
-    ///  MIME declaration of the resource type of the command.
-    /// </summary>
+    /**
+     *   MIME declaration of the resource type of the command.
+     */
     public MediaType type;
 
-    /// <summary>
-    /// Server resource that are subject
-    /// of the command
-    /// </summary>
+    /**
+     *  Server resource that are subject
+     *  of the command
+     */
     public Document resource;
 
-    /// <summary>
-    /// Action to be taken to the
-    /// resource
-    /// </summary>
+    /**
+     *  Action to be taken to the
+     *  resource
+     */
     public CommandMethod method;
 
-    /// <summary>
-    /// Indicates the status of
-    /// the action taken to the resource
-    /// </summary>
+    /**
+     *  Indicates the status of
+     *  the action taken to the resource
+     */
     public CommandStatus status;
 
-    /// <summary>
-    /// Indicates a reason for
-    /// the status
-    /// </summary>
+    /**
+     *  Indicates a reason for
+     *  the status
+     */
     public Reason reason;
 
 

@@ -5,26 +5,26 @@ import org.limeprotocol.util.StringUtils;
 
 public class MediaType {
 
-    /// <summary>
-    /// The top-level type
-    /// identifier. The valid values
-    /// are text, application, image,
-    /// audio and video.
-    /// </summary>
-    private String Type;
+    /**
+     * The top-level type
+     * identifier. The valid values
+     * are text, application, image,
+     * audio and video.
+     */
+    private String type;
 
-    private String Subtype;
+    private String subtype;
 
-    /// <summary>
-    /// Media type suffix
-    /// </summary>
-    /// <a href="http://tools.ietf.org/html/rfc6839"/>
-    private String Suffix;
+    /**
+     * Media type suffix
+     * @link  href="http://tools.ietf.org/html/rfc6839"
+     */
+    private String suffix;
 
-    /// <summary>
-    /// Indicates if the MIME
-    /// represents a JSON type
-    /// </summary>
+    /**
+     * Indicates if the MIME
+     * represents a JSON type
+     */
     private boolean isJson;
 
     public MediaType() {
@@ -36,59 +36,53 @@ public class MediaType {
             throw new IllegalArgumentException("type");
         }
 
-        this.Type = type;
+        this.type = type;
 
         if (StringUtils.isNullOrWhiteSpace(subtype)) {
             throw new IllegalArgumentException("subtype");
         }
 
-        this.Subtype = subtype;
+        this.subtype = subtype;
 
-        this.Suffix = suffix;
+        this.suffix = suffix;
     }
 
     public boolean isJson() {
-        return (Suffix != null && Suffix.equalsIgnoreCase(SubTypes.JSON)) ||
-                (Subtype != null && Subtype.equalsIgnoreCase(SubTypes.JSON));
+        return (suffix != null && suffix.equalsIgnoreCase(SubTypes.JSON)) ||
+                (subtype != null && subtype.equalsIgnoreCase(SubTypes.JSON));
     }
 
     public String getSuffix() {
-        return Suffix;
+        return suffix;
     }
 
-    /// <summary>
-    /// Returns a <see cref="System.String" /> that represents this instance.
-    /// </summary>
-    /// <returns>
-    /// A <c cref="System.String" /> that represents this instance.
-    /// </returns>
+    /**
+     * Returns a <see cref="System.String" /> that represents this instance.
+     **/
     @Override
     public String toString() {
-        if (StringUtils.isNullOrWhiteSpace(this.Suffix)) {
-            return StringUtils.format("{0}/{1}", this.Type, this.Subtype);
+        if (StringUtils.isNullOrWhiteSpace(this.suffix)) {
+            return StringUtils.format("{0}/{1}", this.type, this.subtype);
         } else {
-            return String.format("{0}/{1}+{2}", this.Type, this.Subtype, this.Suffix);
+            return String.format("{0}/{1}+{2}", this.type, this.subtype, this.suffix);
         }
     }
 
-    /// <summary>
-    /// Returns a hash code for this instance.
-    /// </summary>
-    /// <returns>
-    /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
-    /// </returns>
+    /**
+     * Returns a hash code for this instance.
+     * @return A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+     */
     @Override
     public int hashCode() {
         return this.toString().hashCode();
     }
 
-    /// <summary>
-    /// Determines whether the specified <see cref="System.Object" }, is equal to this instance.
-    /// </summary>
-    /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
-    /// <returns>
-    ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
-    /// </returns>
+    /**
+     * Determines whether the specified <see cref="System.Object" }, is equal to this instance.
+     *
+     * @param obj
+     * @return <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+     */
     @Override
     public boolean equals(Object obj) {
         MediaType mediaType = Cast.as(MediaType.class, obj);
@@ -97,18 +91,15 @@ public class MediaType {
             return false;
         }
 
-        return this.Type.equalsIgnoreCase(mediaType.Type) &&
-                this.Subtype.equalsIgnoreCase(mediaType.Subtype) &&
-                (this.Suffix == null && mediaType.Suffix == null || (this.Suffix != null && mediaType.Suffix != null && this.Suffix.equalsIgnoreCase(mediaType.Suffix)));
+        return this.type.equalsIgnoreCase(mediaType.type) &&
+                this.subtype.equalsIgnoreCase(mediaType.subtype) &&
+                (this.suffix == null && mediaType.suffix == null || (this.suffix != null && mediaType.suffix != null && this.suffix.equalsIgnoreCase(mediaType.suffix)));
     }
 
-    /// <summary>
-    /// Parses the String to a MediaType object.
-    /// </summary>
-    /// <param name="s">The String.</param>
-    /// <returns></returns>
-    /// <exception cref="System.ArgumentNullException">value</exception>
-    /// <exception cref="System.FormatException">Invalid media type format</exception>
+    /**
+     * Parses the String to a MediaType object.
+     * @param s
+     */
     public static MediaType parse(String s) {
         if (StringUtils.isNullOrWhiteSpace(s)) {
             throw new IllegalArgumentException("value");
@@ -135,13 +126,13 @@ public class MediaType {
         return new MediaType(type, subtype, suffix);
     }
 
-    /// <summary>
-    /// Try parses the String to a MediaType object.
-    /// </summary>
-    /// <param name="s">The String.</param>
-    /// <param name="mediaType">Type of the media.</param>
-    /// <returns></returns>
-    /// WARNING: Remember that Java hasn't out-operator!
+    /**
+     * Try parses the String to a MediaType object.
+     *
+     * @param s
+     * @param mediaType
+     */
+    ///WARNING: Remember that Java hasn't out-operator!
     ///TODO: Check if all call to this method execute parser again
     public static boolean tryParse(String s, MediaType mediaType) {
         try {
