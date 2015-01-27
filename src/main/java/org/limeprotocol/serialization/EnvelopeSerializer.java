@@ -19,5 +19,5 @@ public interface EnvelopeSerializer {
      * @param envelopeString
      * @return
      */
-    Envelope Deserialize(String envelopeString);
+    Envelope deserialize(String envelopeString);
 }

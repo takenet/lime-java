@@ -2,11 +2,13 @@ package org.limeprotocol.testHelpers;
 
 import org.limeprotocol.Identity;
 import org.limeprotocol.Node;
+import org.limeprotocol.Reason;
 import org.limeprotocol.Session;
 import org.limeprotocol.Session.*;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.util.StringUtils;
 
+import java.util.Random;
 import java.util.UUID;
 
 public class TestDummy {
@@ -22,6 +24,10 @@ public class TestDummy {
         }
 
         return random.substring(size);
+    }
+
+    public static int createRandomInt(int size) {
+        return new Random().nextInt(size);
     }
 
     public static String createDomainName() {
@@ -60,5 +66,9 @@ public class TestDummy {
         PlainAuthentication authentication = new PlainAuthentication();
         authentication.setToBase64Password(createRandomString(8));
         return authentication;
+    }
+
+    public static Reason createReason() {
+        return new Reason(createRandomInt(100), createRandomString(100));
     }
 }

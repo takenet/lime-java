@@ -27,6 +27,15 @@ public class JsonConstants {
         public static final String REASON_KEY = "reason";
     }
 
+    public static class Reason {
+        public static final String CODE_KEY = "code";
+        public static final String DESCRIPTION_KEY = "description";
+
+        public static final String CODE_KEY_FROM_ROOT = Session.REASON_KEY + "." + CODE_KEY;
+        public static final String DESCRIPTION_KEY_FROM_ROOT = Session.REASON_KEY + "." + DESCRIPTION_KEY;
+
+    }
+
     public static class PlainAuthentication {
         public static final String PASSWORD_KEY = "password";
         public static final String PASSWORK_KEY_FROM_ROOT = Session.AUTHENTICATION_KEY + "." + PASSWORD_KEY;

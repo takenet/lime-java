@@ -5,6 +5,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize.*;
 import org.codehaus.jackson.map.module.SimpleModule;
 import org.limeprotocol.Envelope;
+import org.limeprotocol.Message;
+import org.limeprotocol.Session;
 
 import java.io.IOException;
 
@@ -31,7 +33,18 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
     }
 
     @Override
-    public Envelope Deserialize(String envelopeString) {
-        return null;
+    public Envelope deserialize(String envelopeString) {
+        Class clazz;
+        if (envelopeString.contains("\"state\"")) {
+            clazz = Session.class;
+        } else {
+            throw new IllegalArgumentException("JSON string is not a valid envelope");
+        }
+
+        try {
+            return (Envelope) mapper.readValue(envelopeString, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("JSON string is not a valid envelope", e);
+        }
     }
 }
