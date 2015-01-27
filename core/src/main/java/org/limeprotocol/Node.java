@@ -11,19 +11,23 @@ public class Node extends Identity {
     private boolean isComplete;
 
 
-    public Node(String name, String domain, String instance) {
+    public Node(String name, String domain, String instance){
         this(name, domain);
         setInstance(instance);
     }
 
-    public Node(String name, String domain) {
+    public Node(String name, String domain){
         super(name, domain);
     }
 
-    /**
-     * The name of the instance used
-     * by the node to connect to the network
-     */
+    public Node(Identity identity){
+        super(identity.getName(), identity.getDomain());
+    }
+
+    /// <summary>
+    /// The name of the instance used
+    /// by the node to connect to the network
+    /// </summary>
     public String getInstance() {
         return instance;
     }
@@ -45,7 +49,8 @@ public class Node extends Identity {
     public boolean equals(Object obj) {
         Node node = Cast.as(Node.class, obj);
 
-        if (node == null) {
+        if (node == null)
+        {
             return false;
         }
 
@@ -54,22 +59,27 @@ public class Node extends Identity {
                 ((this.getInstance() == null && node.getInstance() == null) || (this.getInstance() != null && this.getInstance().equalsIgnoreCase(node.getInstance())));
     }
 
-    /**
-     * Returns a hash code for this instance.
-     *
-     * @return A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
-     */
+    /// <summary>
+    /// Returns a hash code for this instance.
+    /// </summary>
+    /// <returns>
+    /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+    /// </returns>
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         return super.hashCode();
     }
 
-    /**
-     * Parses the String to a valid Node.
-     *
-     * @param s
-     */
-    public static Node parse(String s) {
+    /// <summary>
+    /// Parses the String to a valid Node.
+    /// </summary>
+    /// <param name="s">The s.</param>
+    /// <returns></returns>
+    /// <exception cref="System.ArgumentNullException">s</exception>
+    /// <exception cref="System.FormatException">Invalid Peer format</exception>
+    public static Node parse(String s)
+    {
         if (StringUtils.isNullOrWhiteSpace(s)) {
             throw new IllegalArgumentException("s");
         }
@@ -85,51 +95,59 @@ public class Node extends Identity {
         return new Node(name, domain, instance);
     }
 
-    /**
-     * Tries to parse the String to a valid Node
-     *
-     * @param s
-     * @param value
-     */
-    ///WARNING: Remember that Java hasn't out-operator!
+    /// <summary>
+    /// Tries to parse the String to a valid Node
+    /// </summary>
+    /// <param name="s">The s.</param>
+    /// <param name="value">The value.</param>
+    /// <returns></returns>
+    /// WARNING: Remember that Java hasn't out-operator!
     ///TODO: Check if all call to this method execute parser again
-    public static boolean TryParse(String s, Node value) {
-        try {
+    public static boolean TryParse(String s, Node value)
+    {
+        try
+        {
             parse(s);
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             return false;
         }
     }
 
-    /**
-     * Creates an Identity instance
-     * based on the Node identity
-     */
-    public Identity toIdentity() {
+    /// <summary>
+    /// Creates an Identity instance
+    /// based on the Node identity
+    /// </summary>
+    /// <returns></returns>
+    public Identity toIdentity()
+    {
         return new Identity(getName(), getDomain());
     }
 
-    /**
-     * Indicates if the node is
-     * a complete representation, with
-     * name, domain and instance.
-     */
-    public boolean isComplete() {
+    /// <summary>
+    /// Indicates if the node is
+    /// a complete representation, with
+    /// name, domain and instance.
+    /// </summary>
+    public boolean isComplete(){
 
         return
-                !StringUtils.isNullOrEmpty(getName()) &&
-                        !StringUtils.isNullOrEmpty(getDomain()) &&
-                        !StringUtils.isNullOrEmpty(getInstance());
+                    !StringUtils.isNullOrEmpty(getName()) &&
+                            !StringUtils.isNullOrEmpty(getDomain()) &&
+                            !StringUtils.isNullOrEmpty(getInstance());
 
     }
 
-    /**
-     *  Creates a new object that
-     *  is a copy of the current instance.
-     *  A new object that is a copy of this instance.
-     */
-    public Node copy() {
+    /// <summary>
+    /// Creates a new object that
+    /// is a copy of the current instance.
+    /// </summary>
+    /// <returns>
+    /// A new object that is a copy of this instance.
+    /// </returns>
+    public Node copy(){
         return new Node(getName(), getDomain(), getInstance());
     }
 
