@@ -8,6 +8,7 @@ import static org.junit.Assert.*;
 
 public class IdentityTest {
 
+    //region equals method
     @Test
     public void equals_EqualsIdentities_ReturnsTrue() {
         // Arrange
@@ -57,7 +58,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void Equals_NotEqualsIdentities_ReturnsFalse() {
+    public void equals_NotEqualsIdentities_ReturnsFalse() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", "thisIsDomain");
 
@@ -81,7 +82,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void Equals_NotEqualsIdentitiesNullDomain_ReturnsFalse() {
+    public void equals_NotEqualsIdentitiesNullDomain_ReturnsFalse() {
         // Arrange
         Identity identity1 = new Identity("thisIsName", null);
 
@@ -93,7 +94,7 @@ public class IdentityTest {
     }
 
     @Test
-    public void Equals_NotEqualsIdentitiesNullProperties_ReturnsFalse() {
+    public void equals_NotEqualsIdentitiesNullProperties_ReturnsFalse() {
         // Arrange
         Identity identity1 = new Identity(null, null);
 
@@ -104,6 +105,17 @@ public class IdentityTest {
         assertNotEquals(identity2, identity1);
     }
 
+    @Test
+    public void equals_CompareToNull_ReturnsFalse(){
+        // Arrange
+        Identity identity = new Identity(null, null);
+
+        // Act and Assert
+        assertFalse("equals should return false when comparing to null", identity.equals(null));
+    }
+    //endregion
+
+    //region getHashCode method
     @Test
     public void getHashCode_EqualsIdentities_ReturnsSameHash() {
         // Arrange
@@ -136,7 +148,9 @@ public class IdentityTest {
         // Assert
         assertNotEquals(identity1.hashCode(), identity2.hashCode());
     }
+    //endregion
 
+    //region toString method
     @Test
     public void toString_CompleteIdentity_ReturnsValidString() {
         // Arrange
@@ -187,7 +201,9 @@ public class IdentityTest {
         // Assert
         assertEquals(expectedResult, identityString);
     }
+    //endregion
 
+    //region parse method
     @Test
     public void parse_CompleteString_ReturnsValidIdentity() {
         // Arrange
@@ -247,12 +263,5 @@ public class IdentityTest {
         // Act
         Identity identity = Identity.parse(identityString);
     }
-
-    public void equals_CompareToNull_ReturnsFalse(){
-        // Arrange
-        Identity identity = new Identity(null, null);
-
-        // Act and Assert
-        assertFalse("equals should return false when comparing to null", identity.equals(null));
-    }
+    //endregion
 }

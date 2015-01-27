@@ -11,6 +11,8 @@ import static org.fest.assertions.api.Assertions.assertThat;
 
 public class LimeUriTest {
 
+    //region parse method
+
     @Test
     public void parse_ValidRelativeString_ReturnsInstance() {
         // Arrange
@@ -69,7 +71,9 @@ public class LimeUriTest {
         // Act
         LimeUri actual = LimeUri.parse(absolutePath);
     }
+    //endregion
 
+    //region toUri methods
     @Test
     public void toUri_AbsoluteInstance_ReturnsUri() {
         // Arrange
@@ -130,5 +134,6 @@ public class LimeUriTest {
         // Act
         URI uri = limeUri.toUri(identity);
     }
+    //endregion
 
 }
