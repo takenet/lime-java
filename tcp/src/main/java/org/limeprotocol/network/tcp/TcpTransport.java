@@ -4,8 +4,14 @@ import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 import org.limeprotocol.network.Transport;
+import org.limeprotocol.serialization.EnvelopeSerializer;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
@@ -16,11 +22,17 @@ import java.net.URI;
 public class TcpTransport implements Transport {
 
     public final static int DEFAULT_BUFFER_SIZE = 8192;
-    
-    private Socket socket;
+    private final EnvelopeSerializer envelopeSerializer;
 
-    public TcpTransport() {
-        
+    private Socket socket;
+    private SSLSocket sslSocket;
+
+    private BufferedInputStream inputStream;
+    private BufferedOutputStream outputStream;
+    private TransportListener transportListener;
+
+    public TcpTransport(EnvelopeSerializer envelopeSerializer) {
+        this.envelopeSerializer = envelopeSerializer;
     }
 
     /**
@@ -29,8 +41,16 @@ public class TcpTransport implements Transport {
      * @param envelope
      */
     @Override
-    public void send(Envelope envelope) {
-        
+    public synchronized void send(Envelope envelope) throws IOException {
+        ensureSocketOpen();
+        String envelopeString = envelopeSerializer.serialize(envelope);
+        try {
+            byte[] envelopeBytes = envelopeString.getBytes("UTF-8");
+            outputStream.write(envelopeBytes);
+            outputStream.flush();
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Could not convert the serialized envelope to a UTF-8 byte array", e);
+        }
     }
 
     /**
@@ -40,7 +60,7 @@ public class TcpTransport implements Transport {
      */
     @Override
     public void setListener(TransportListener transportListener) {
-
+        this.transportListener = transportListener;
     }
 
     /**
@@ -65,6 +85,8 @@ public class TcpTransport implements Transport {
         
         socket = new Socket();
         socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        inputStream = new BufferedInputStream(socket.getInputStream());
+        outputStream = new BufferedOutputStream(socket.getOutputStream());
     }
 
     /**
@@ -72,10 +94,7 @@ public class TcpTransport implements Transport {
      */
     @Override
     public synchronized void close() throws IOException {
-        if (socket == null) {
-            throw new IllegalStateException("The client is not open");
-        }
-        
+        ensureSocketOpen();
         socket.close();
     }
 
@@ -135,7 +154,23 @@ public class TcpTransport implements Transport {
      * @param encryption
      */
     @Override
-    public void setEncryption(SessionEncryption encryption) {
+    public void setEncryption(SessionEncryption encryption) throws IOException {
+        switch (encryption) {
+            case tls:
+                sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
+                        socket,
+                        socket.getInetAddress().getHostAddress(),
+                        socket.getPort(),
+                        true);
+                
+                break;
+        }
+    }
 
+
+    private void ensureSocketOpen() {
+        if (socket == null) {
+            throw new IllegalStateException("The client is not open");
+        }
     }
 }

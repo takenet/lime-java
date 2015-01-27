@@ -16,7 +16,7 @@ public interface Transport {
      * Sends an envelope to the remote node. 
      * @param envelope
      */
-    void send(Envelope envelope);
+    void send(Envelope envelope) throws IOException;
 
     /**
      *  Sets the listener for receiving envelopes.
@@ -69,7 +69,7 @@ public interface Transport {
      * Defines the encryption mode for the transport.
      * @param encryption
      */
-    void setEncryption(SessionEncryption encryption);
+    void setEncryption(SessionEncryption encryption) throws IOException;
 
     /**
      * Defines a envelope transport listener. 
