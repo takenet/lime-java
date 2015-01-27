@@ -37,8 +37,7 @@ public class Node extends Identity {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         //'\0' == '' (Empty character)
         String nodeString = StringUtils.format("{0}/{1}", super.toString(), instance);
         nodeString = StringUtils.trimEnd(nodeString, "/");
@@ -47,8 +46,7 @@ public class Node extends Identity {
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
+    public boolean equals(Object obj) {
         Node node = Cast.as(Node.class, obj);
 
         if (node == null)

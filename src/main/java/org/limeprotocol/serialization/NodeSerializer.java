@@ -16,6 +16,6 @@ public class NodeSerializer extends JsonSerializer<Node> {
 
     @Override
     public void serialize(Node node, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-       jsonGenerator.writeRaw(node.toString());
+       jsonGenerator.writeString(node.toString());
     }
 }
