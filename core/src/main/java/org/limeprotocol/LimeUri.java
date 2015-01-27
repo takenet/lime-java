@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 public final class LimeUri {
     private URI absoluteUri;
     public static final String LIME_URI_SCHEME = "lime";
+    private String path;
 
     public LimeUri(String uriPath) {
         if (StringUtils.isNullOrWhiteSpace(uriPath)) {
@@ -33,8 +34,6 @@ public final class LimeUri {
         this.path = StringUtils.trimEnd(uriPath, "/");
     }
 
-    private String path;
-
     public boolean isRelative() {
         return !absoluteUri.isAbsolute();
     }
@@ -47,7 +46,7 @@ public final class LimeUri {
      * Convert the current absolute path to a Uri.
      */
     public URI toUri() {
-        if (absoluteUri != null && !absoluteUri.isAbsolute()) {
+        if (!absoluteUri.isAbsolute()) {
             throw new IllegalStateException("The URI path is relative");
         }
 
@@ -55,7 +54,7 @@ public final class LimeUri {
     }
 
     public URI toUri(Identity authority) {
-        if (absoluteUri != null && absoluteUri.isAbsolute()) {
+        if (absoluteUri.isAbsolute()) {
             throw new IllegalStateException("The URI path is absolute");
         }
 
