@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class EnvelopeSerializerTest {
+public class EnvelopeSerializerImplTest {
 
     @Before
     public void setUp() throws Exception {
