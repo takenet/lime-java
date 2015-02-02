@@ -7,6 +7,7 @@ import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
 import org.limeprotocol.Session.SessionState;
+import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
@@ -14,6 +15,7 @@ import org.limeprotocol.util.StringUtils;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static org.limeprotocol.security.Authentication.*;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.limeprotocol.testHelpers.TestDummy.*;
@@ -97,7 +99,7 @@ public class EnvelopeSerializerImplTest {
 
     @Test
     @Ignore("Need to fix deserialization of scheme property")
-    public void deserialize_AuthenticatingSession_ReturnsValidJsonString() {
+    public void deserialize_AuthenticatingSession_ReturnsValidInstance() {
         // Arrange
         UUID id = UUID.randomUUID();
         Node from = createNode();
@@ -113,7 +115,7 @@ public class EnvelopeSerializerImplTest {
 
         SessionState state = SessionState.Authenticating;
 
-        String json = StringUtils.format("{\"state\":\"{0}\",\"scheme\":\"plain\",\"authentication\":{\"password\":\"{1}\"},\"id\":\"{2}\",\"from\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
+        String json = StringUtils.format("{\"state\":\"{0}\",\"scheme\":\"{9}\",\"authentication\":{\"password\":\"{1}\"},\"id\":\"{2}\",\"from\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
                 state.toString(),
                 password,
                 id,
@@ -122,7 +124,8 @@ public class EnvelopeSerializerImplTest {
                 randomKey1,
                 randomString1,
                 randomKey2,
-                randomString2
+                randomString2,
+                state.toString().toLowerCase()
         );
         // Act
         Envelope envelope = target.deserialize(json);
@@ -132,6 +135,20 @@ public class EnvelopeSerializerImplTest {
 
         Session session = (Session)envelope;
         assertThat(session.getId()).isEqualTo(id);
+        assertThat(session.getFrom()).isEqualTo(from);
+        assertThat(session.getTo()).isEqualTo(to);
+        assertThat(session.getMetadata()).isNotNull();
+        assertThat(session.getMetadata()).containsKey(randomKey1);
+        assertThat(session.getMetadata().get(randomKey1)).isEqualTo(randomString1);
+        assertThat(session.getMetadata()).containsKey(randomKey2);
+        assertThat(session.getMetadata().get(randomKey2)).isEqualTo(randomString2);
+
+        assertThat(session.getState()).isEqualTo(state);
+
+        assertThat(session.getPp()).isNull();
+        assertThat(session.getReason()).isNull();
+
+        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Plain);
     }
 
     //endregion Session

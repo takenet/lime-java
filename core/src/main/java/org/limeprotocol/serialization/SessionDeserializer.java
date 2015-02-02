@@ -1,12 +1,11 @@
 package org.limeprotocol.serialization;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.ObjectCodec;
-import org.codehaus.jackson.map.DeserializationContext;
-import org.codehaus.jackson.map.JsonDeserializer;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Session;
 
 import java.io.IOException;
@@ -20,7 +19,7 @@ public class SessionDeserializer extends JsonDeserializer<Session> {
         ObjectCodec oc = jsonParser.getCodec();
         ObjectNode node = (ObjectNode)oc.readTree(jsonParser);
 
-        String schemeValue = node.with(SCHEME_KEY).getValueAsText();
+        String schemeValue = node.with(SCHEME_KEY).asText();
         node.remove("scheme");
 
         Session session = new Session();

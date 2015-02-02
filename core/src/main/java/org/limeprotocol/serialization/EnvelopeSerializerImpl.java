@@ -1,11 +1,14 @@
 package org.limeprotocol.serialization;
 
-import org.codehaus.jackson.Version;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize.*;
-import org.codehaus.jackson.map.module.SimpleModule;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Envelope;
-import org.limeprotocol.Message;
+import org.limeprotocol.Node;
 import org.limeprotocol.Session;
 
 import java.io.IOException;
@@ -15,11 +18,13 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
 
     public EnvelopeSerializerImpl() {
         this.mapper = new ObjectMapper();
-        this.mapper.setSerializationInclusion(Inclusion.NON_NULL);
+        this.mapper.setSerializationInclusion(Include.NON_NULL);
 
         SimpleModule customSerializersModule = new SimpleModule("CustomSerializers",
-                new Version(1,0,0,null));
-        customSerializersModule.addSerializer(new NodeSerializer());
+                new Version(1,0,0,null))
+            .addSerializer(new NodeSerializer())
+            .addDeserializer(Node.class, new NodeDeserializer());
+
         mapper.registerModule(customSerializersModule);
     }
 
@@ -34,15 +39,21 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
 
     @Override
     public Envelope deserialize(String envelopeString) {
-        Class clazz;
-        if (envelopeString.contains("\"state\"")) {
-            clazz = Session.class;
-        } else {
-            throw new IllegalArgumentException("JSON string is not a valid envelope");
-        }
-
         try {
-            return (Envelope) mapper.readValue(envelopeString, clazz);
+            ObjectNode node;
+            node = (ObjectNode) mapper.readTree(envelopeString);
+
+            if (node.has("state")) {
+                JsonNode schemeNode = node.get("scheme");
+                JsonNode authenticationNode = node.get("authentication");
+                node.remove("scheme");
+                node.remove("authentication");
+                return mapper.convertValue(node, Session.class);
+            }
+            else {
+                throw new IllegalArgumentException("Envelope deserialization not implemented for this value");
+            }
+
         } catch (IOException e) {
             throw new IllegalArgumentException("JSON string is not a valid envelope", e);
         }
