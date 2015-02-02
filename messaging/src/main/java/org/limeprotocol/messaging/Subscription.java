@@ -1,9 +1,9 @@
-package org.limeprotocol.resources;
+package org.limeprotocol.messaging;
 
 /// <summary>
 /// Represents a resource subscription information, which allows to a node receive the
 /// updated value every time when a subscribed resource is changed in the target node.
-/// This is useful to receive updates of changes in other identities resources,
+/// This is useful to receive updates of changes in other identities messaging,
 /// like the presence, but is possible to subscribe to a remote resource owned by the
 /// caller, like a resource in a server. To be able to subscribe to another node resource,
 /// the subscriber must have a get delegation for the resource in the publisher node.

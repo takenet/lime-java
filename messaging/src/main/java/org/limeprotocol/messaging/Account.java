@@ -1,4 +1,4 @@
-package org.limeprotocol.resources;
+package org.limeprotocol.messaging;
 
 import org.limeprotocol.Document;
 import org.limeprotocol.MediaType;

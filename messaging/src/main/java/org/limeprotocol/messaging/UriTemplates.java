@@ -1,8 +1,8 @@
-package org.limeprotocol.resources;
+package org.limeprotocol.messaging;
 
 /**
  * Stores the Uri templates
- * for the common protocol resources
+ * for the common protocol messaging
  */
 public class UriTemplates
 {

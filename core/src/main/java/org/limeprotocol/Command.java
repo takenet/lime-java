@@ -103,7 +103,7 @@ public class Command extends Envelope {
 
     /// <summary>
     /// Defines method for the manipulation
-    /// of resources.
+    /// of messaging.
     /// </summary>
     public enum CommandMethod {
         /// <summary>
