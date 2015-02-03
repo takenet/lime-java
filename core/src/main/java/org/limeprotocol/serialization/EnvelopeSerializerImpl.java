@@ -10,7 +10,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
+import org.limeprotocol.security.Authentication;
+import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
+import org.limeprotocol.security.TransportAuthentication;
 
 import java.io.IOException;
 
@@ -44,19 +47,7 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
             node = (ObjectNode) mapper.readTree(envelopeString);
 
             if (node.has("state")) {
-                JsonNode schemeNode = node.get("scheme");
-                JsonNode authenticationNode = node.get("authentication");
-                node.remove("scheme");
-                node.remove("authentication");
-                Session session = mapper.convertValue(node, Session.class);
-                AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
-                switch (scheme) {
-                    case Plain:
-                        PlainAuthentication plainAuthentication = mapper.convertValue(authenticationNode, PlainAuthentication.class);
-                        session.setAuthentication(plainAuthentication);
-                        break;
-                }
-                return session;
+                return parseSession(node);
             }
             else {
                 throw new IllegalArgumentException("Envelope deserialization not implemented for this value");
@@ -65,5 +56,35 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
         } catch (IOException e) {
             throw new IllegalArgumentException("JSON string is not a valid envelope", e);
         }
+    }
+
+    private Session parseSession(ObjectNode node) {
+        JsonNode schemeNode = node.get("scheme");
+        JsonNode authenticationNode = node.get("authentication");
+        node.remove("scheme");
+        node.remove("authentication");
+
+        AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
+
+        Class<?> authenticationClass;
+        switch (scheme) {
+            case Guest:
+                authenticationClass = GuestAuthentication.class;
+                break;
+            case Plain:
+                authenticationClass = PlainAuthentication.class;
+                break;
+            case Transport:
+                authenticationClass = TransportAuthentication.class;
+                break;
+            default:
+                throw new IllegalArgumentException("JSON string is not a valid session envelope");
+        }
+
+        Session session = mapper.convertValue(node, Session.class);
+        Authentication plainAuthentication = (Authentication) mapper.convertValue(authenticationNode, authenticationClass);
+        session.setAuthentication(plainAuthentication);
+
+        return session;
     }
 }
