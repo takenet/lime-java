@@ -44,7 +44,7 @@
     </build>
     <modules>
         <module>core</module>
-        <module>resources</module>
+        <module>messaging</module>
         <module>tcp</module>
     </modules>
 

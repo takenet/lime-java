@@ -78,7 +78,7 @@ public class TcpTransport extends TransportBase implements Transport {
         }
         
         if (socket != null) {
-            throw new IllegalStateException("The client was already open");
+            throw new IllegalStateException("The client is already open");
         }
         
         socket = new Socket();
