@@ -10,8 +10,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
+import org.limeprotocol.security.PlainAuthentication;
 
 import java.io.IOException;
+
+import static org.limeprotocol.security.Authentication.*;
 
 public class EnvelopeSerializerImpl implements EnvelopeSerializer {
     private final ObjectMapper mapper;
@@ -20,10 +23,7 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
         this.mapper = new ObjectMapper();
         this.mapper.setSerializationInclusion(Include.NON_NULL);
 
-        SimpleModule customSerializersModule = new SimpleModule("CustomSerializers",
-                new Version(1,0,0,null))
-            .addSerializer(new NodeSerializer())
-            .addDeserializer(Node.class, new NodeDeserializer());
+        SimpleModule customSerializersModule = new CustomSerializerModule();
 
         mapper.registerModule(customSerializersModule);
     }
@@ -48,7 +48,15 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
                 JsonNode authenticationNode = node.get("authentication");
                 node.remove("scheme");
                 node.remove("authentication");
-                return mapper.convertValue(node, Session.class);
+                Session session = mapper.convertValue(node, Session.class);
+                AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
+                switch (scheme) {
+                    case Plain:
+                        PlainAuthentication plainAuthentication = mapper.convertValue(authenticationNode, PlainAuthentication.class);
+                        session.setAuthentication(plainAuthentication);
+                        break;
+                }
+                return session;
             }
             else {
                 throw new IllegalArgumentException("Envelope deserialization not implemented for this value");
