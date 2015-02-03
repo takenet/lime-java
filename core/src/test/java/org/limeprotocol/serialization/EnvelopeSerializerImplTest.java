@@ -55,7 +55,7 @@ public class EnvelopeSerializerImplTest {
         assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isEqualTo(session.getId());
         assertThatJson(resultString).node(JsonConstants.Envelope.FROM_KEY).isEqualTo(session.getFrom().toString());
         assertThatJson(resultString).node(JsonConstants.Envelope.TO_KEY).isEqualTo(session.getTo().toString());
-        assertThatJson(resultString).node(JsonConstants.Session.STATE_KEY).isEqualTo(session.getState());
+        assertThatJson(resultString).node(JsonConstants.Session.STATE_KEY).isEqualTo(session.getState().toString().toLowerCase());
         assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey1)).isEqualTo(metadataValue1);
         assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey2)).isEqualTo(metadataValue2);
         assertThatJson(resultString).node(JsonConstants.Session.AUTHENTICATION_KEY).isPresent();
@@ -79,7 +79,7 @@ public class EnvelopeSerializerImplTest {
         assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isEqualTo(session.getId());
         assertThatJson(resultString).node(JsonConstants.Envelope.FROM_KEY).isEqualTo(session.getFrom().toString());
         assertThatJson(resultString).node(JsonConstants.Envelope.TO_KEY).isEqualTo(session.getTo().toString());
-        assertThatJson(resultString).node(JsonConstants.Session.STATE_KEY).isEqualTo(session.getState());
+        assertThatJson(resultString).node(JsonConstants.Session.STATE_KEY).isEqualTo(session.getState().toString().toLowerCase());
         assertThatJson(resultString).node(JsonConstants.Session.REASON_KEY).isPresent();
         assertThatJson(resultString).node(JsonConstants.Reason.CODE_KEY_FROM_ROOT).isEqualTo(session.getReason().getCode());
         assertThatJson(resultString).node(JsonConstants.Reason.DESCRIPTION_KEY_FROM_ROOT).isEqualTo(session.getReason().getDescription());
@@ -98,7 +98,6 @@ public class EnvelopeSerializerImplTest {
     //region Session
 
     @Test
-    @Ignore("Need to fix deserialization of scheme property")
     public void deserialize_AuthenticatingSession_ReturnsValidInstance() {
         // Arrange
         UUID id = UUID.randomUUID();
@@ -115,8 +114,10 @@ public class EnvelopeSerializerImplTest {
 
         SessionState state = SessionState.Authenticating;
 
+        AuthenticationScheme scheme = AuthenticationScheme.Plain;
+
         String json = StringUtils.format("{\"state\":\"{0}\",\"scheme\":\"{9}\",\"authentication\":{\"password\":\"{1}\"},\"id\":\"{2}\",\"from\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
-                state.toString(),
+                state.toString().toLowerCase(),
                 password,
                 id,
                 from,
@@ -125,7 +126,7 @@ public class EnvelopeSerializerImplTest {
                 randomString1,
                 randomKey2,
                 randomString2,
-                state.toString().toLowerCase()
+                scheme.toString().toLowerCase()
         );
         // Act
         Envelope envelope = target.deserialize(json);
