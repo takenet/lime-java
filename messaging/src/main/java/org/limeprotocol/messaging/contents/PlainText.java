@@ -23,7 +23,7 @@ public class PlainText implements Document {
     /**
      * Text of the message
      */
-    public String text;
+    private String text;
 
 
     /**
