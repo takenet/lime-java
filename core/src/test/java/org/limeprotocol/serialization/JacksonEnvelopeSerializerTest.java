@@ -1,13 +1,11 @@
 package org.limeprotocol.serialization;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
 import org.limeprotocol.Session.SessionState;
-import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
@@ -20,13 +18,13 @@ import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.limeprotocol.testHelpers.TestDummy.*;
 
-public class EnvelopeSerializerImplTest {
+public class JacksonEnvelopeSerializerTest {
 
-    private EnvelopeSerializerImpl target;
+    private JacksonEnvelopeSerializer target;
 
     @Before
     public void setUp() throws Exception {
-        target = new EnvelopeSerializerImpl();
+        target = new JacksonEnvelopeSerializer();
     }
 
     //region serialize method
