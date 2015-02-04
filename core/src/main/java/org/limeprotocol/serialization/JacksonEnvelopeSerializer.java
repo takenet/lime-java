@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.limeprotocol.Envelope;
+import org.limeprotocol.Message;
 import org.limeprotocol.Session;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.GuestAuthentication;
@@ -17,10 +18,10 @@ import java.io.IOException;
 
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
 
-public class EnvelopeSerializerImpl implements EnvelopeSerializer {
+public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     private final ObjectMapper mapper;
 
-    public EnvelopeSerializerImpl() {
+    public JacksonEnvelopeSerializer() {
         this.mapper = new ObjectMapper();
         this.mapper.setSerializationInclusion(Include.NON_NULL);
 
@@ -44,10 +45,15 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
             ObjectNode node;
             node = (ObjectNode) mapper.readTree(envelopeString);
 
-            if (node.has("state")) {
+            if (node.has("content")) {
+                return parseMessage(node);
+            } else if (node.has("event")) {
+                return null;
+            } else if (node.has("method")) {
+                return null;
+            } else if (node.has("state")) {
                 return parseSession(node);
-            }
-            else {
+            } else {
                 throw new IllegalArgumentException("Envelope deserialization not implemented for this value");
             }
 
@@ -94,5 +100,9 @@ public class EnvelopeSerializerImpl implements EnvelopeSerializer {
         session.setAuthentication(authentication);
 
         return session;
+    }
+
+    private Message parseMessage(ObjectNode node){
+        return null;
     }
 }

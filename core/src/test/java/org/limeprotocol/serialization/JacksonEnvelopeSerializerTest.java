@@ -27,13 +27,13 @@ import static org.limeprotocol.testHelpers.TestDummy.createRandomString;
 import static org.limeprotocol.testHelpers.TestDummy.createReason;
 import static org.limeprotocol.testHelpers.TestDummy.createSession;
 
-public class EnvelopeSerializerImplTest {
+public class JacksonEnvelopeSerializerTest {
 
-    private EnvelopeSerializerImpl target;
+    private JacksonEnvelopeSerializer target;
 
     @Before
     public void setUp() throws Exception {
-        target = new EnvelopeSerializerImpl();
+        target = new JacksonEnvelopeSerializer();
     }
 
     //region serialize method
