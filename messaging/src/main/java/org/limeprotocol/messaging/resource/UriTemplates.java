@@ -1,4 +1,4 @@
-package org.limeprotocol.messaging;
+package org.limeprotocol.messaging.resource;
 
 /**
  * Stores the Uri templates
