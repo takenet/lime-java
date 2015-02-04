@@ -2,6 +2,8 @@ package org.limeprotocol.messaging;
 
 import org.limeprotocol.*;
 
+import static org.limeprotocol.Command.*;
+
 /**
  * Represents a delegation to send envelopes on behalf of another
  * identity of the same network. The delegation can be constrained to
@@ -80,13 +82,29 @@ public class Delegation implements Document {
         return this.mediaType;
     }
 
-    class DelegationCommand {
+    public class DelegationCommand {
         public final String TYPE_KEY = "type";
         public final String METHODS_KEY = "methods";
 
 
-        public MediaType Type;
+        public MediaType type;
 
-        public Command.CommandMethod Methods;
+        public CommandMethod methods;
+
+        public MediaType getType() {
+            return type;
+        }
+
+        public void setType(MediaType type) {
+            this.type = type;
+        }
+
+        public CommandMethod getMethods() {
+            return methods;
+        }
+
+        public void setMethods(CommandMethod methods) {
+            this.methods = methods;
+        }
     }
 }
