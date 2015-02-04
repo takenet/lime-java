@@ -1,4 +1,4 @@
-package org.limeprotocol.messaging;
+package org.limeprotocol.messaging.resource;
 
 /// <summary>
 /// Represents a resource subscription information, which allows to a node receive the
