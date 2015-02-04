@@ -6,6 +6,7 @@ import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
 import org.limeprotocol.Session.SessionState;
+import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
@@ -221,6 +222,25 @@ public class JacksonEnvelopeSerializerTest {
         PlainAuthentication authentication = (PlainAuthentication)session.getAuthentication();
         assertFalse(StringUtils.isNullOrEmpty(authentication.getPassword()));
 
+    }
+
+    @Test
+    public void deserialize_SessionAuthenticatingWithGuestAuthentication_ReturnsValidInstance()
+    {
+        // Arrange
+
+        String json = "{\"state\":\"authenticating\",\"scheme\":\"guest\",\"id\":\"feeb88e2-c209-40cd-b8ab-e14aeebe57ab\",\"from\":\"ca6829ff-1ac8-4dad-ad78-c25a3e4f8f7b@takenet.com.br/MINELLI-NOTE\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+
+        assertTrue(envelope instanceof Session);
+
+        Session session = (Session)envelope;
+        assertTrue(session.getScheme().equals(AuthenticationScheme.Guest));
+        assertTrue(session.getAuthentication() instanceof GuestAuthentication);
     }
 
     //endregion Session
