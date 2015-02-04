@@ -2,6 +2,7 @@ package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
@@ -26,19 +27,17 @@ public class TcpTransport extends TransportBase implements Transport {
     public final static int DEFAULT_BUFFER_SIZE = 8192;
     private final EnvelopeSerializer envelopeSerializer;
     private final TcpClientFactory tcpClientFactory;
-
+    private final TraceWriter traceWriter;
     private TcpClient tcpClient;
-
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
-    
     private Future<?> inputListenerFuture;
-
     private ExecutorService executorService;
 
-    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter) {
         this.envelopeSerializer = envelopeSerializer;
         this.tcpClientFactory = tcpClientFactory;
+        this.traceWriter = traceWriter;
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -49,8 +48,17 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public synchronized void send(Envelope envelope) throws IOException {
+        if (envelope == null) {
+            throw new IllegalArgumentException("envelope");
+        }
         ensureSocketOpen();
         String envelopeString = envelopeSerializer.serialize(envelope);
+        
+        if (traceWriter != null &&
+                traceWriter.isEnabled()) {
+            traceWriter.trace(envelopeString, TraceWriter.DataOperation.SEND);
+        }
+
         try {
             byte[] envelopeBytes = envelopeString.getBytes("UTF-8");
             outputStream.write(envelopeBytes);
