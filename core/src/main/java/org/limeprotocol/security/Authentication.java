@@ -6,7 +6,6 @@ package org.limeprotocol.security;
  * authentication schemes
  */
 
-
 public abstract class Authentication {
     private AuthenticationScheme authenticationScheme;
 

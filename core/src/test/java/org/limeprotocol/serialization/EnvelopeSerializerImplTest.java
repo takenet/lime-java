@@ -1,13 +1,11 @@
 package org.limeprotocol.serialization;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
 import org.limeprotocol.Session.SessionState;
-import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
@@ -15,10 +13,19 @@ import org.limeprotocol.util.StringUtils;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static org.limeprotocol.security.Authentication.*;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.limeprotocol.testHelpers.TestDummy.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.limeprotocol.security.Authentication.AuthenticationScheme;
+import static org.limeprotocol.testHelpers.TestDummy.createNode;
+import static org.limeprotocol.testHelpers.TestDummy.createPlainAuthentication;
+import static org.limeprotocol.testHelpers.TestDummy.createRandomString;
+import static org.limeprotocol.testHelpers.TestDummy.createReason;
+import static org.limeprotocol.testHelpers.TestDummy.createSession;
 
 public class EnvelopeSerializerImplTest {
 
@@ -150,6 +157,70 @@ public class EnvelopeSerializerImplTest {
         assertThat(session.getReason()).isNull();
 
         assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Plain);
+    }
+
+    @Test
+    public void deserialize_FailedSessionNullProperties_ReturnsValidInstance(){
+        // Arrange
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node pp = createNode();
+        Node to = createNode();
+
+        SessionState state = SessionState.Authenticating;
+
+        int reasonCode = 57;
+        String reasonDescription = "Unit test";
+
+        String json = StringUtils.format(
+                "{\"state\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"to\":\"{3}\",\"reason\":{\"code\":{4},\"description\":\"{5}\"}},\"encryptionOptions\":null,\"compressionOptions\":null,\"compression\":null,\"encryption\":null}}",
+                state.toString().toLowerCase(),
+                id,
+                from,
+                to,
+                reasonCode,
+                reasonDescription
+        );
+
+
+        // ACT
+        Envelope envelope = target.deserialize(json);
+
+        // ASSERT
+        assertTrue(envelope instanceof Session);
+
+        Session session = (Session) envelope;
+
+        assertEquals(id, session.getId());
+        assertEquals(from, session.getFrom());
+        assertEquals(to, session.getTo());
+        assertEquals(state, session.getState());
+        assertNotNull(session.getReason());
+        assertEquals(reasonCode, session.getReason().getCode());
+        assertNull(session.getPp());
+        assertNull(session.getMetadata());
+
+    }
+
+    @Test
+    public void deserialize_SessionAuthenticatingWithPlainAuthentication_ReturnsValidInstance()
+    {
+        // Arrange
+
+        String json = "{\"state\":\"authenticating\",\"scheme\":\"plain\",\"authentication\":{\"password\":\"Zg==\"},\"id\":\"ec9c196c-da09-43b0-923b-8ec162705c32\",\"from\":\"andre@takenet.com.br/MINELLI-NOTE\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+
+        assertTrue(envelope instanceof Session);
+        Session session = (Session)envelope;
+        assertEquals(session.getScheme(), AuthenticationScheme.Plain);
+        assertTrue(session.getAuthentication() instanceof PlainAuthentication );
+        PlainAuthentication authentication = (PlainAuthentication)session.getAuthentication();
+        assertFalse(StringUtils.isNullOrEmpty(authentication.getPassword()));
+
     }
 
     //endregion Session
