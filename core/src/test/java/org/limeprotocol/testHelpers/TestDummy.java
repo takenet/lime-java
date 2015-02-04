@@ -1,6 +1,8 @@
 package org.limeprotocol.testHelpers;
 
+import org.limeprotocol.Command;
 import org.limeprotocol.Identity;
+import org.limeprotocol.LimeUri;
 import org.limeprotocol.Node;
 import org.limeprotocol.Reason;
 import org.limeprotocol.Session;
@@ -8,6 +10,8 @@ import org.limeprotocol.Session.*;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.util.StringUtils;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.UUID;
 
@@ -61,6 +65,15 @@ public class TestDummy {
         return session;
     }
 
+    public static Command createCommand(){
+        Command command = new Command();
+        command.setFrom(TestDummy.createNode());
+        command.setTo(TestDummy.createNode());
+        command.setMethod(Command.CommandMethod.Get);
+        command.setStatus(Command.CommandStatus.Pending);
+        return command;
+    }
+
     public static PlainAuthentication createPlainAuthentication()
     {
         PlainAuthentication authentication = new PlainAuthentication();
@@ -70,5 +83,19 @@ public class TestDummy {
 
     public static Reason createReason() {
         return new Reason(createRandomInt(100), createRandomString(100));
+    }
+
+    public static LimeUri createAbsoluteLimeUri(){
+        return new LimeUri(LimeUri.LIME_URI_SCHEME + ";//" + createIdentity() +
+                "/" + createRandomString(10));
+    }
+
+    public static URI createUri(){
+        try {
+            return new URI("http://" + createDomainName() + ":" + createRandomInt(9999));
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+
+        }
     }
 }

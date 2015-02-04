@@ -2,6 +2,7 @@ package org.limeprotocol.serialization;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.limeprotocol.Command;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
@@ -9,6 +10,7 @@ import org.limeprotocol.Session.SessionState;
 import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
+import org.limeprotocol.testHelpers.TestDummy;
 import org.limeprotocol.util.StringUtils;
 
 import java.util.HashMap;
@@ -99,11 +101,52 @@ public class JacksonEnvelopeSerializerTest {
 
     //endregion Session
 
+    //region Command
+
+    @Test
+    public void serialize_AbsoluteUriRequestCommand_ReturnsValidJsonString()
+    {
+
+        Command command = TestDummy.createCommand();
+        command.setPp(TestDummy.createNode());
+        command.setUri(TestDummy.createAbsoluteLimeUri());
+
+
+        String metadataKey1 = "randomString1";
+        String metadataValue1 = TestDummy.createRandomString(50);
+        String metadataKey2 = "randomString2";
+        String metadataValue2 = TestDummy.createRandomString(50);
+        command.Metadata = new Dictionary<string, string>();
+        command.Metadata.Add(metadataKey1, metadataValue1);
+        command.Metadata.Add(metadataKey2, metadataValue2);
+
+        var resultString = target.Serialize(command);
+
+        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
+        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, command.Id));
+        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, command.From));
+        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, command.Pp));
+        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, command.To));
+        Assert.IsTrue(resultString.ContainsJsonProperty(Command.METHOD_KEY, command.Method));
+        Assert.IsTrue(resultString.ContainsJsonProperty(Command.URI_KEY, command.Uri));
+
+
+        Assert.IsTrue(resultString.ContainsJsonProperty(Command.METHOD_KEY, command.Method));
+        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
+        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
+
+        Assert.IsFalse(resultString.ContainsJsonKey(Command.STATUS_KEY));
+        Assert.IsFalse(resultString.ContainsJsonKey(Command.REASON_KEY));
+        Assert.IsFalse(resultString.ContainsJsonKey(Command.TYPE_KEY));
+        Assert.IsFalse(resultString.ContainsJsonKey(Command.RESOURCE_KEY));
+    }
+    //endregion Command
+
+    //region Session
+
     //endregion serialize
 
     //region deserialize method
-
-    //region Session
 
     @Test
     public void deserialize_AuthenticatingSession_ReturnsValidInstance() {
