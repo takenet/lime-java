@@ -24,7 +24,7 @@ public class Notification extends Envelope {
     public Event event;
 
     /// <summary>
-    /// In the case of a failed event,
+    /// In the case of a FAILED event,
     /// brings more details about
     /// the problem.
     /// </summary>

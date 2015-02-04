@@ -1,8 +1,7 @@
 package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
-import org.limeprotocol.SessionCompression;
-import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.Session;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
@@ -23,18 +22,14 @@ import java.util.concurrent.*;
  * Synchronous TCP transport implementation.
  */
 public class TcpTransport extends TransportBase implements Transport {
-
     public final static int DEFAULT_BUFFER_SIZE = 8192;
+    
     private final EnvelopeSerializer envelopeSerializer;
-
     private Socket socket;
     private SSLSocket sslSocket;
-
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
-    
     private Future<?> inputListenerFuture;
-
     private ExecutorService executorService;
 
     public TcpTransport(EnvelopeSerializer envelopeSerializer) {
@@ -59,7 +54,6 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalArgumentException("Could not convert the serialized envelope to a UTF-8 byte array", e);
         }
     }
-
 
     /**
      * Opens the transport connection with the specified Uri.
@@ -98,10 +92,8 @@ public class TcpTransport extends TransportBase implements Transport {
                 inputListenerFuture.cancel(true);
                 inputListenerFuture.wait();
                 inputListenerFuture.get();
-            } catch (InterruptedException e) {
-                throw new IllegalStateException("The connection failed", e);
-            } catch (ExecutionException e) {
-                throw new IllegalStateException("The connection failed", e);
+            } catch (InterruptedException | ExecutionException e) {
+                throw new IllegalStateException("The connection has FAILED", e);
             }
         }
     }
@@ -112,9 +104,8 @@ public class TcpTransport extends TransportBase implements Transport {
      * @return
      */
     @Override
-    public SessionEncryption[] getSupportedEncryption() {
-        
-        return new SessionEncryption[] { SessionEncryption.none, SessionEncryption.tls };
+    public Session.SessionEncryption[] getSupportedEncryption() {
+        return new Session.SessionEncryption[] { Session.SessionEncryption.NONE, Session.SessionEncryption.TLS};
     }
 
     /**
@@ -123,9 +114,9 @@ public class TcpTransport extends TransportBase implements Transport {
      * @param encryption
      */
     @Override
-    public void setEncryption(SessionEncryption encryption) throws IOException {
+    public void setEncryption(Session.SessionEncryption encryption) throws IOException {
         switch (encryption) {
-            case tls:
+            case TLS:
                 sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
                         socket,
                         socket.getInetAddress().getHostAddress(),
@@ -133,12 +124,10 @@ public class TcpTransport extends TransportBase implements Transport {
                         true);
                 
                 break;
-            
         }
         
         super.setEncryption(encryption);
     }
-
 
     private void ensureSocketOpen() {
         if (socket == null) {
@@ -147,9 +136,7 @@ public class TcpTransport extends TransportBase implements Transport {
     }
 
     class JsonStreamReader implements Callable<Void> {
-        
         private boolean canRead;
-        
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
@@ -191,8 +178,7 @@ public class TcpTransport extends TransportBase implements Transport {
             return null;
         }
 
-        private JsonBufferReadResult tryExtractJsonFromBuffer()
-        {
+        private JsonBufferReadResult tryExtractJsonFromBuffer() {
             if (bufferCurPos > buffer.length) {
                 throw new IllegalArgumentException("Buffer current pos or length value is invalid", null);
             }

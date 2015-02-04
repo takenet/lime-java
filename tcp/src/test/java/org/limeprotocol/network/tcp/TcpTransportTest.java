@@ -10,6 +10,11 @@ import static org.junit.Assert.*;
 
 public class TcpTransportTest {
 
+    public void open_notConnectedValidUri_connectsClientAndCallsGetStream() {
+        
+        
+    }
+    
     @Test
     public void open_validUri_connectToRemoteNode() throws URISyntaxException, IOException {
         TcpTransport tcpTransport = new TcpTransport(null);
