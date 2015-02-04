@@ -1,7 +1,6 @@
 package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
-import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
@@ -26,9 +25,9 @@ public class TcpTransport extends TransportBase implements Transport {
 
     public final static int DEFAULT_BUFFER_SIZE = 8192;
     private final EnvelopeSerializer envelopeSerializer;
+    private final TcpClientFactory tcpClientFactory;
 
-    private Socket socket;
-    private SSLSocket sslSocket;
+    private TcpClient tcpClient;
 
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
@@ -37,8 +36,9 @@ public class TcpTransport extends TransportBase implements Transport {
 
     private ExecutorService executorService;
 
-    public TcpTransport(EnvelopeSerializer envelopeSerializer) {
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
         this.envelopeSerializer = envelopeSerializer;
+        this.tcpClientFactory = tcpClientFactory;
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -60,7 +60,6 @@ public class TcpTransport extends TransportBase implements Transport {
         }
     }
 
-
     /**
      * Opens the transport connection with the specified Uri.
      *
@@ -77,21 +76,21 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalArgumentException("Invalid URI scheme. Expected is 'net.tcp'", null);
         }
         
-        if (socket != null) {
+        if (tcpClient != null) {
             throw new IllegalStateException("The client is already open");
         }
         
-        socket = new Socket();
-        socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
-        outputStream = new BufferedOutputStream(socket.getOutputStream());
-        inputStream = new BufferedInputStream(socket.getInputStream());
+        tcpClient = tcpClientFactory.create();
+        tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
+        inputStream = new BufferedInputStream(tcpClient.getInputStream());
         inputListenerFuture = executorService.submit(new JsonStreamReader(DEFAULT_BUFFER_SIZE));
     }
 
     @Override
     protected void performClose() throws IOException {
         ensureSocketOpen();
-        socket.close();
+        tcpClient.close();
 
         if (inputListenerFuture != null) {
             try {
@@ -126,10 +125,10 @@ public class TcpTransport extends TransportBase implements Transport {
     public void setEncryption(SessionEncryption encryption) throws IOException {
         switch (encryption) {
             case tls:
-                sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
-                        socket,
-                        socket.getInetAddress().getHostAddress(),
-                        socket.getPort(),
+                SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
+                        tcpClient.getSocket(),
+                        tcpClient.getSocket().getInetAddress().getHostAddress(),
+                        tcpClient.getSocket().getPort(),
                         true);
                 
                 break;
@@ -139,9 +138,8 @@ public class TcpTransport extends TransportBase implements Transport {
         super.setEncryption(encryption);
     }
 
-
     private void ensureSocketOpen() {
-        if (socket == null) {
+        if (tcpClient == null) {
             throw new IllegalStateException("The client is not open");
         }
     }
