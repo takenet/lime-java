@@ -15,6 +15,7 @@ import java.util.*;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.REASON_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
@@ -104,7 +105,31 @@ public class JacksonEnvelopeSerializerTest {
         assertThatJson(resultString).node(STATUS_KEY).isAbsent();
         assertThatJson(resultString).node(JsonConstants.Command.REASON_KEY).isAbsent();
         assertThatJson(resultString).node(JsonConstants.Command.TYPE_KEY).isAbsent();
-        assertThatJson(resultString).node(REASON_KEY).isAbsent();
+    }
+
+    @Test
+    public void serialize_RelativeUriRequestCommand_ReturnsValidJsonString() {
+        // Arrange
+        JsonDocument resource = createJsonDocument();
+
+        Command command = createCommand(resource);
+        command.setPp(createNode());
+        command.setMethod(Set);
+        command.setUri(createRelativeLimeUri());
+
+        // Act
+        String resultString = target.serialize(command);
+
+        // Assert
+        assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY);
+
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
+        assertThatJson(resultString).node(URI_KEY).isEqualTo(command.getUri().toString());
+        assertThatJson(resultString).node(JsonConstants.Command.TYPE_KEY).isEqualTo(command.getType().toString());
+        assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
+
+        assertThatJson(resultString).node(STATUS_KEY).isAbsent();
+        assertThatJson(resultString).node(JsonConstants.Command.REASON_KEY).isAbsent();
     }
 
     //endregion Command

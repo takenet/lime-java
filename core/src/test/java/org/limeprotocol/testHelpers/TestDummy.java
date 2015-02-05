@@ -123,11 +123,17 @@ public class TestDummy {
     }
 
     public static Command createCommand(){
+        return createCommand(null);
+    }
+
+    public static Command createCommand(Document resource) {
         Command command = new Command();
         command.setFrom(TestDummy.createNode());
         command.setTo(TestDummy.createNode());
         command.setMethod(Command.CommandMethod.Get);
         command.setStatus(Command.CommandStatus.Pending);
+        command.setResource(resource);
+
         return command;
     }
 
@@ -145,6 +151,10 @@ public class TestDummy {
     public static LimeUri createAbsoluteLimeUri(){
         return new LimeUri(LimeUri.LIME_URI_SCHEME + "://" + createIdentity() +
                 "/" + createRandomString(10));
+    }
+
+    public static LimeUri createRelativeLimeUri(){
+        return new LimeUri("/" + createRandomString(10));
     }
 
     public static URI createUri(){
