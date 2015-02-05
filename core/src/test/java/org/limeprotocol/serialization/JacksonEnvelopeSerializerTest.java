@@ -89,6 +89,126 @@ public class JacksonEnvelopeSerializerTest {
 
     //endregion Session
 
+    //region Message
+
+//    public void Serialize_TextMessage_ReturnsValidJsonString()
+//    {
+//        var content = DataUtil.CreateTextContent();
+//        var message = DataUtil.CreateMessage(content);
+//        message.Pp = DataUtil.CreateNode();
+//
+//        var metadataKey1 = "randomString1";
+//        var metadataValue1 = DataUtil.CreateRandomString(50);
+//        var metadataKey2 = "randomString2";
+//        var metadataValue2 = DataUtil.CreateRandomString(50);
+//        message.Metadata = new Dictionary<string, string>();
+//        message.Metadata.Add(metadataKey1, metadataValue1);
+//        message.Metadata.Add(metadataKey2, metadataValue2);
+//
+//        var resultString = target.Serialize(message);
+//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, message.Id));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, message.Pp));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
+//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.CONTENT_KEY, content.Text));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
+//    }
+//
+//    public void Serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
+//    {
+//        var target = GetTarget();
+//
+//        var content = DataUtil.CreateJsonDocument();
+//        var message = DataUtil.CreateMessage(content);
+//        message.Pp = DataUtil.CreateNode();
+//
+//        var metadataKey1 = "randomString1";
+//        var metadataValue1 = DataUtil.CreateRandomString(50);
+//        var metadataKey2 = "randomString2";
+//        var metadataValue2 = DataUtil.CreateRandomString(50);
+//        message.Metadata = new Dictionary<string, string>();
+//        message.Metadata.Add(metadataKey1, metadataValue1);
+//        message.Metadata.Add(metadataKey2, metadataValue2);
+//
+//        var resultString = target.Serialize(message);
+//
+//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, message.Id));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, message.Pp));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
+//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
+//
+//        foreach (var keyValuePair in content)
+//        {
+//            Assert.IsTrue(resultString.ContainsJsonProperty(keyValuePair.Key, keyValuePair.Value));
+//        }
+//
+//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
+//    }
+//
+//    public void Serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
+//    {
+//        var target = GetTarget();
+//
+//        var content = DataUtil.CreatePlainDocument();
+//        var message = DataUtil.CreateMessage(content);
+//        message.Pp = DataUtil.CreateNode();
+//
+//        var metadataKey1 = "randomString1";
+//        var metadataValue1 = DataUtil.CreateRandomString(50);
+//        var metadataKey2 = "randomString2";
+//        var metadataValue2 = DataUtil.CreateRandomString(50);
+//        message.Metadata = new Dictionary<string, string>();
+//        message.Metadata.Add(metadataKey1, metadataValue1);
+//        message.Metadata.Add(metadataKey2, metadataValue2);
+//
+//        var resultString = target.Serialize(message);
+//
+//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, message.Id));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, message.Pp));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
+//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.CONTENT_KEY, content.Value));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
+//    }
+//
+//    public void Serialize_FireAndForgetTextMessage_ReturnsValidJsonString()
+//    {
+//        var target = GetTarget();
+//
+//        var content = DataUtil.CreateTextContent();
+//        var message = DataUtil.CreateMessage(content);
+//        message.Id = Guid.Empty;
+//
+//        var resultString = target.Serialize(message);
+//
+//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
+//
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
+//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
+//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.CONTENT_KEY, content.Text));
+//
+//        Assert.IsFalse(resultString.ContainsJsonKey(Envelope.ID_KEY));
+//        Assert.IsFalse(resultString.ContainsJsonKey(Envelope.PP_KEY));
+//        Assert.IsFalse(resultString.ContainsJsonKey(Envelope.METADATA_KEY));
+//    }
+
+    //endregion Message
+
+
     //endregion serialize
 
     //region deserialize method

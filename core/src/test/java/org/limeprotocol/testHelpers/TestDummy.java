@@ -1,15 +1,15 @@
 package org.limeprotocol.testHelpers;
 
-import org.limeprotocol.Identity;
-import org.limeprotocol.Node;
-import org.limeprotocol.Reason;
-import org.limeprotocol.Session;
+import org.limeprotocol.*;
+import org.limeprotocol.Command.CommandMethod;
 import org.limeprotocol.Session.*;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.util.StringUtils;
 
 import java.util.Random;
 import java.util.UUID;
+
+import static org.limeprotocol.Command.CommandMethod.*;
 
 public class TestDummy {
 
