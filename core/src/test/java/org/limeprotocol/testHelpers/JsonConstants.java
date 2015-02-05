@@ -65,4 +65,11 @@ public class JsonConstants {
         public final static String CODE_FROM_REASON_KEY = REASON_KEY + "." + Reason.CODE_KEY;
         public final static String DESCRIPTION_FROM_REASON_KEY = REASON_KEY + "." + Reason.DESCRIPTION_KEY;
     }
+
+    public static class PlainText {
+        public final static String CONTENT_KEY = "content";
+        public final static String TEXT_KEY = "text";
+        public final static String CONTENT_TEXT_KEY = CONTENT_KEY + "." + TEXT_KEY;
+    }
+
 }

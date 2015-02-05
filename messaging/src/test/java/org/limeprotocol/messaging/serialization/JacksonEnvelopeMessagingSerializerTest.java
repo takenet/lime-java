@@ -6,13 +6,12 @@ import org.limeprotocol.Message;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
-import org.limeprotocol.util.UUIDUtils;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createTextContent;
+import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
-import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.*;
 
 public class JacksonEnvelopeMessagingSerializerTest {
 
@@ -39,7 +38,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
 
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
+        assertThatJson(resultString).node(JsonConstants.PlainText.CONTENT_TEXT_KEY).isEqualTo(content.getText());
     }
 
     @Test
@@ -47,7 +46,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     {
         PlainText content = createTextContent();
         Message message = createMessage(content);
-        message.setId(UUIDUtils.empty());
+        message.setId(null);
 
         String resultString = target.serialize(message);
 
@@ -56,11 +55,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
 
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
-
-        assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isAbsent();
-        assertThatJson(resultString).node(JsonConstants.Envelope.PP_KEY).isAbsent();
-        assertThatJson(resultString).node(JsonConstants.Envelope.METADATA_KEY).isAbsent();
+        assertThatJson(resultString).node(JsonConstants.PlainText.CONTENT_TEXT_KEY).isEqualTo(content.getText());
     }
 
 }

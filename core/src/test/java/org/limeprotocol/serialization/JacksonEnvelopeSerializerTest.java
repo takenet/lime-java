@@ -169,7 +169,8 @@ public class JacksonEnvelopeSerializerTest {
 
         for (Map.Entry<String, Object> keyValuePair : content.entrySet())
         {
-            assertThatJson(resultString).node(keyValuePair.getKey()).isEqualTo(keyValuePair.getValue().toString());
+            assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY + "." + keyValuePair.getKey()).isPresent();
+            assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY  + "." + keyValuePair.getKey()).isEqualTo(keyValuePair.getValue().toString());
         }
     }
 
@@ -475,7 +476,7 @@ public class JacksonEnvelopeSerializerTest {
 
     //endregion deserialize
 
-    private void assertJsonEnvelopeProperties(Envelope expected, String jsonString, String... properties) {
+    public static void assertJsonEnvelopeProperties(Envelope expected, String jsonString, String... properties) {
         List<String> missingKeys = new ArrayList<>(Arrays.asList(JsonConstants.Envelope.ALL_KEYS));
 
         for(String property : properties) {
