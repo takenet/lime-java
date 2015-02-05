@@ -1,5 +1,11 @@
 package org.limeprotocol.testHelpers;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import org.limeprotocol.*;
 import org.limeprotocol.Session.*;
 import org.limeprotocol.messaging.contents.PlainText;
@@ -75,6 +81,26 @@ public class TestDummy {
     {
         return new PlainText(createRandomString(150));
     }
+
+    public static Document createJsonDocument()
+    {
+        HashMap<String, Object> documentNodes = new HashMap<String, Object>();
+        documentNodes.put(createRandomString(10), createRandomString(50));
+        documentNodes.put(createRandomString(10), createRandomInt(50));
+
+        JsonDocument jsonDocument = new JsonDocument(documentNodes, createJsonMediaType());
+        return jsonDocument;
+    }
+
+    public static MediaType createJsonMediaType(){
+
+            return new MediaType(
+                    "application",
+                    createRandomString(10),
+                    "json"
+            );
+    }
+
 
     public static Message createMessage(Document content)
     {

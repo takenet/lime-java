@@ -10,6 +10,8 @@ import org.limeprotocol.security.*;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
+import javax.swing.text.AbstractDocument;
+import java.util.HashMap;
 import java.util.*;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
@@ -51,12 +53,16 @@ public class JacksonEnvelopeSerializerTest {
         String resultString = target.serialize(session);
 
         // Assert
-        assertJsonEnvelopeProperties(session, resultString, ID_KEY, FROM_KEY, TO_KEY, METADATA_KEY);
-
+        assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isEqualTo(session.getId());
+        assertThatJson(resultString).node(JsonConstants.Envelope.FROM_KEY).isEqualTo(session.getFrom().toString());
+        assertThatJson(resultString).node(JsonConstants.Envelope.TO_KEY).isEqualTo(session.getTo().toString());
         assertThatJson(resultString).node(JsonConstants.Session.STATE_KEY).isEqualTo(session.getState().toString().toLowerCase());
+        assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey1)).isEqualTo(metadataValue1);
+        assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey2)).isEqualTo(metadataValue2);
         assertThatJson(resultString).node(JsonConstants.Session.AUTHENTICATION_KEY).isPresent();
         assertThatJson(resultString).node(JsonConstants.PlainAuthentication.PASSWORK_KEY_FROM_ROOT).isEqualTo(plainAuthentication.getPassword());
 
+        assertThatJson(resultString).node(JsonConstants.Envelope.PP_KEY).isAbsent();
         assertThatJson(resultString).node(JsonConstants.Session.REASON_KEY).isAbsent();
     }
 
@@ -71,12 +77,16 @@ public class JacksonEnvelopeSerializerTest {
         String resultString = target.serialize(session);
 
         // Assert
-        assertJsonEnvelopeProperties(session, resultString, ID_KEY, FROM_KEY, TO_KEY);
+        assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isEqualTo(session.getId());
+        assertThatJson(resultString).node(JsonConstants.Envelope.FROM_KEY).isEqualTo(session.getFrom().toString());
+        assertThatJson(resultString).node(JsonConstants.Envelope.TO_KEY).isEqualTo(session.getTo().toString());
         assertThatJson(resultString).node(JsonConstants.Session.STATE_KEY).isEqualTo(session.getState().toString().toLowerCase());
         assertThatJson(resultString).node(JsonConstants.Session.REASON_KEY).isPresent();
         assertThatJson(resultString).node(JsonConstants.Reason.CODE_KEY_FROM_ROOT).isEqualTo(session.getReason().getCode());
         assertThatJson(resultString).node(JsonConstants.Reason.DESCRIPTION_KEY_FROM_ROOT).isEqualTo(session.getReason().getDescription());
 
+        assertThatJson(resultString).node(JsonConstants.Envelope.PP_KEY).isAbsent();
+        assertThatJson(resultString).node(JsonConstants.Envelope.METADATA_KEY).isAbsent();
         assertThatJson(resultString).node(JsonConstants.Session.AUTHENTICATION_KEY).isAbsent();
     }
 
@@ -103,6 +113,7 @@ public class JacksonEnvelopeSerializerTest {
 //
 //        var resultString = target.Serialize(command);
 //
+//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
 //        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, command.Id));
 //        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, command.From));
 //        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, command.Pp));
@@ -120,7 +131,6 @@ public class JacksonEnvelopeSerializerTest {
 //        Assert.IsFalse(resultString.ContainsJsonKey(Command.TYPE_KEY));
 //        Assert.IsFalse(resultString.ContainsJsonKey(Command.RESOURCE_KEY));
 //    }
-//
     //endregion Command
 
     //region Message
@@ -142,14 +152,19 @@ public class JacksonEnvelopeSerializerTest {
 
         String resultString = target.serialize(message);
 
-        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+        assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isEqualTo(message.getId());
+        assertThatJson(resultString).node(JsonConstants.Envelope.FROM_KEY).isEqualTo(message.getFrom().toString());
+        assertThatJson(resultString).node(JsonConstants.Envelope.TO_KEY).isEqualTo(message.getTo().toString());
+        assertThatJson(resultString).node(JsonConstants.Envelope.PP_KEY).isEqualTo(message.getPp().toString());
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
 
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
 
-    }
+        assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey1)).isEqualTo(metadataValue1);
+        assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey2)).isEqualTo(metadataValue2);
 
+    }
 //
 //    public void Serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
 //    {
@@ -386,39 +401,5 @@ public class JacksonEnvelopeSerializerTest {
     //endregion Session
 
     //endregion deserialize
-
-    private void assertJsonEnvelopeProperties(Envelope expected, String jsonString, String... properties) {
-        List<String> missingKeys = new ArrayList<>(Arrays.asList(JsonConstants.Envelope.ALL_KEYS));
-
-        for(String property : properties) {
-            JsonFluentAssert jsonFluentAssert = assertThatJson(jsonString).node(property);
-
-            missingKeys.remove(property);
-
-            switch (property) {
-                case ID_KEY:
-                    jsonFluentAssert.isEqualTo(expected.getId());
-                    break;
-                case FROM_KEY:
-                    jsonFluentAssert.isEqualTo(expected.getFrom().toString());
-                    break;
-                case TO_KEY:
-                    jsonFluentAssert.isEqualTo(expected.getTo().toString());
-                    break;
-                case PP_KEY:
-                    jsonFluentAssert.isEqualTo(expected.getPp().toString());
-                    break;
-                case METADATA_KEY:
-                    for (String key : expected.getMetadata().keySet()) {
-                        assertThatJson(jsonString).node(getMetadataKeyFromRoot(key)).isEqualTo(expected.getMetadata().get(key));
-                    }
-                    break;
-            }
-        }
-
-        for(String missingKey : missingKeys) {
-            assertThatJson(jsonString).node(missingKey).isAbsent();
-        }
-    }
 
 }
