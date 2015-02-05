@@ -31,6 +31,10 @@ public class MediaType {
 
     }
 
+    public MediaType(String type, String subtype) {
+        this(type, subtype, null);
+    }
+
     public MediaType(String type, String subtype, String suffix) {
         if (StringUtils.isNullOrWhiteSpace(type)) {
             throw new IllegalArgumentException("type");

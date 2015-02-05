@@ -9,6 +9,7 @@ import org.limeprotocol.security.*;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
+import javax.swing.text.AbstractDocument;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -162,12 +163,10 @@ public class JacksonEnvelopeSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey2)).isEqualTo(metadataValue2);
 
     }
-//
+
 //    public void Serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
 //    {
-//        var target = GetTarget();
-//
-//        var content = DataUtil.CreateJsonDocument();
+//        Content content = DataUtil.CreateJsonDocument();
 //        var message = DataUtil.CreateMessage(content);
 //        message.Pp = DataUtil.CreateNode();
 //
