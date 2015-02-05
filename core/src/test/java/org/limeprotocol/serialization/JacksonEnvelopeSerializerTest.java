@@ -5,13 +5,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.Session.SessionState;
-import org.limeprotocol.messaging.contents.PlainText;
-import org.limeprotocol.security.*;
+import org.limeprotocol.security.GuestAuthentication;
+import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
-import javax.swing.text.AbstractDocument;
-import java.util.HashMap;
 import java.util.*;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
@@ -113,25 +111,47 @@ public class JacksonEnvelopeSerializerTest {
 
     //region Message
 
-    public void serialize_TextMessage_ReturnsValidJsonString()
+
+    @Test
+    public void serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
     {
-        PlainText content = createTextContent();
+        JsonDocument content = createJsonDocument();
         Message message = createMessage(content);
         message.setPp(createNode());
 
-        Map<String, String> metadata = createRandomMetadata();
-        message.setMetadata(metadata);
+        message.setMetadata(createRandomMetadata());
 
         String resultString = target.serialize(message);
 
         assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
-
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
 
+        for (Map.Entry<String, Object> keyValuePair : content.entrySet())
+        {
+            assertThatJson(resultString).node(keyValuePair.getKey()).isEqualTo(keyValuePair.getValue());
+        }
     }
 
+    @Test
+    public void serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
+    {
+        PlainDocument content = createPlainDocument();
+        Message message = createMessage(content);
+        message.setPp(createNode());
+
+        message.setMetadata(createRandomMetadata());
+
+        String resultString = target.serialize(message);
+
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+
+        assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
+
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getValue());
+    }
 //
 //    public void Serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
 //    {

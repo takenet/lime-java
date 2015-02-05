@@ -8,8 +8,7 @@ public class PlainDocument implements Document {
     /**
      * The value of the document
      */
-    public String value;
-
+    private String value;
 
     public PlainDocument(MediaType mediaType){
         this(null, mediaType);
@@ -27,6 +26,10 @@ public class PlainDocument implements Document {
         this.value = value;
     }
 
+    public String getValue() {
+        return value;
+    }
+
     @Override
     public String toString()
     {
@@ -35,6 +38,6 @@ public class PlainDocument implements Document {
 
     @Override
     public MediaType getMediaType() {
-        return null;
+        return this.mediaType;
     }
 }
