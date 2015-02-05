@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Message;
 import org.limeprotocol.Session;
@@ -61,32 +62,34 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         }
     }
 
-    private Session parseSession(ObjectNode node) {
-        JsonNode schemeNode = node.get("scheme");
-        JsonNode authenticationNode = node.get("authentication");
-        node.remove("scheme");
-        node.remove("authentication");
-
+    private Authentication parseAuthentication(JsonNode schemeNode, JsonNode authenticationNode){
         AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
 
-        Class<?> authenticationClass;
+        if (scheme == null){
+            return null;
+        }
         switch (scheme) {
             case Guest:
-                authenticationClass = GuestAuthentication.class;
-                break;
+                return new GuestAuthentication();
             case Plain:
-                authenticationClass = PlainAuthentication.class;
-                break;
+                return mapper.convertValue(authenticationNode, PlainAuthentication.class);
             case Transport:
-                authenticationClass = TransportAuthentication.class;
-                break;
+                return new TransportAuthentication();
             default:
                 throw new IllegalArgumentException("JSON string is not a valid session envelope");
         }
+    }
+
+    private Session parseSession(ObjectNode node) {
+        JsonNode schemeNode = node.get("scheme");
+        JsonNode authenticationNode = node.get("authentication");
+
+        node.remove("scheme");
+        node.remove("authentication");
 
         Session session = mapper.convertValue(node, Session.class);
-        Authentication plainAuthentication = (Authentication) mapper.convertValue(authenticationNode, authenticationClass);
-        session.setAuthentication(plainAuthentication);
+        Authentication authentication = parseAuthentication(schemeNode, authenticationNode);
+        session.setAuthentication(authentication);
 
         return session;
     }
