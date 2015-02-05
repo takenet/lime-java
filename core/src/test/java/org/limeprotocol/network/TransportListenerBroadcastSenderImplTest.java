@@ -46,18 +46,18 @@ public class TransportListenerBroadcastSenderImplTest {
         listenerBroadcastSender.addListener(listener1);
         listenerBroadcastSender.addListener(listener2);
         listenerBroadcastSender.broadcastOnReceive(null);
-        assertEquals(listener1.onReceiveCount, 1);
-        assertEquals(listener2.onReceiveCount, 1);
+        assertEquals(1, listener1.onReceiveCount);
+        assertEquals(1, listener2.onReceiveCount);
     }
 
     @Test
     public void listenerAreCalledInTheCorrectOrder(){
-        listenerBroadcastSender.addListener(listener1, 5);
+        listenerBroadcastSender.addListener(listener1, 1);
 
         Transport.TransportListener verifyListener = new Transport.TransportListener() {
             @Override
             public void onReceive(Envelope envelope) {
-                assertEquals(listener1.onReceiveCount, 1);
+                assertEquals(1, listener1.onReceiveCount);
             }
 
             @Override
