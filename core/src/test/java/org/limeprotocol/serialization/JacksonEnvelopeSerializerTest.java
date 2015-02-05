@@ -173,33 +173,24 @@ public class JacksonEnvelopeSerializerTest {
         }
     }
 
-//    public void serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
-//    {
-//        PlainDocument content = createPlainDocument();
-//        var message = DataUtil.CreateMessage(content);
-//        message.Pp = DataUtil.CreateNode();
-//
-//        var metadataKey1 = "randomString1";
-//        var metadataValue1 = DataUtil.CreateRandomString(50);
-//        var metadataKey2 = "randomString2";
-//        var metadataValue2 = DataUtil.CreateRandomString(50);
-//        message.Metadata = new Dictionary<string, string>();
-//        message.Metadata.Add(metadataKey1, metadataValue1);
-//        message.Metadata.Add(metadataKey2, metadataValue2);
-//
-//        var resultString = target.Serialize(message);
-//
-//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, message.Id));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, message.Pp));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
-//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.CONTENT_KEY, content.Value));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
-//    }
+    public void serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
+    {
+        PlainDocument content = createPlainDocument();
+        Message message = createMessage(content);
+        message.setPp(createNode());
+
+        message.setMetadata(createRandomMetadata());
+
+        String resultString = target.serialize(message);
+
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+
+        assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
+
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getValue());
+
+    }
 
 
 //
