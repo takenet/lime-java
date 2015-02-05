@@ -25,6 +25,9 @@ public class PlainText implements Document {
      */
     private String text;
 
+    public String getText() {
+        return text;
+    }
 
     /**
      * Parses the string to a

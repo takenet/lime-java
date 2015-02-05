@@ -1,12 +1,8 @@
 package org.limeprotocol.testHelpers;
 
-import org.limeprotocol.Command;
-import org.limeprotocol.Identity;
-import org.limeprotocol.LimeUri;
-import org.limeprotocol.Node;
-import org.limeprotocol.Reason;
-import org.limeprotocol.Session;
+import org.limeprotocol.*;
 import org.limeprotocol.Session.*;
+import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.util.StringUtils;
 
@@ -63,6 +59,22 @@ public class TestDummy {
         session.setState(state);
 
         return session;
+    }
+
+    public static PlainText createTextContent()
+    {
+        return new PlainText(createRandomString(150));
+    }
+
+    public static Message createMessage(Document content)
+    {
+        Message message = new Message();
+
+        message.setContent(content);
+        message.setFrom(createNode());
+        message.setTo(createNode());
+
+        return message;
     }
 
     public static Command createCommand(){
