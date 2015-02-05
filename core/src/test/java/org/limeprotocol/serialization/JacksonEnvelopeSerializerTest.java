@@ -10,7 +10,6 @@ import org.limeprotocol.security.*;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
-import javax.swing.text.AbstractDocument;
 import java.util.HashMap;
 import java.util.*;
 
@@ -141,71 +140,42 @@ public class JacksonEnvelopeSerializerTest {
         Message message = createMessage(content);
         message.setPp(createNode());
 
-        String metadataKey1 = "randomString1";
-        String metadataValue1 = createRandomString(50);
-        String metadataKey2 = "randomString2";
-        String metadataValue2 = createRandomString(50);
-        message.setMetadata(new HashMap<String, String>());
-        message.getMetadata().put(metadataKey1, metadataValue1);
-        message.getMetadata().put(metadataKey2, metadataValue2);
-
+        message.setMetadata(createRandomMetadata());
 
         String resultString = target.serialize(message);
 
-        assertThatJson(resultString).node(JsonConstants.Envelope.ID_KEY).isEqualTo(message.getId());
-        assertThatJson(resultString).node(JsonConstants.Envelope.FROM_KEY).isEqualTo(message.getFrom().toString());
-        assertThatJson(resultString).node(JsonConstants.Envelope.TO_KEY).isEqualTo(message.getTo().toString());
-        assertThatJson(resultString).node(JsonConstants.Envelope.PP_KEY).isEqualTo(message.getPp().toString());
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
 
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
-
-        assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey1)).isEqualTo(metadataValue1);
-        assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey2)).isEqualTo(metadataValue2);
-
     }
-//
-//    public void Serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
+
+    public void serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
+    {
+        JsonDocument content = createJsonDocument();
+        Message message = createMessage(content);
+        message.setPp(createNode());
+
+        message.setMetadata(createRandomMetadata());
+
+        String resultString = target.serialize(message);
+
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+
+        assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
+
+        for (Map.Entry<String, Object> keyValuePair : content.entrySet())
+        {
+            assertThatJson(resultString).node(keyValuePair.getKey()).isEqualTo(keyValuePair.getValue());
+        }
+    }
+
+//    public void serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
 //    {
-//        var target = GetTarget();
-//
-//        var content = DataUtil.CreateJsonDocument();
-//        var message = DataUtil.CreateMessage(content);
-//        message.Pp = DataUtil.CreateNode();
-//
-//        var metadataKey1 = "randomString1";
-//        var metadataValue1 = DataUtil.CreateRandomString(50);
-//        var metadataKey2 = "randomString2";
-//        var metadataValue2 = DataUtil.CreateRandomString(50);
-//        message.Metadata = new Dictionary<string, string>();
-//        message.Metadata.Add(metadataKey1, metadataValue1);
-//        message.Metadata.Add(metadataKey2, metadataValue2);
-//
-//        var resultString = target.Serialize(message);
-//
-//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.ID_KEY, message.Id));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.PP_KEY, message.Pp));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
-//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
-//
-//        foreach (var keyValuePair in content)
-//        {
-//            Assert.IsTrue(resultString.ContainsJsonProperty(keyValuePair.Key, keyValuePair.Value));
-//        }
-//
-//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
-//    }
-//
-//    public void Serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
-//    {
-//        var target = GetTarget();
-//
-//        var content = DataUtil.CreatePlainDocument();
+//        PlainDocument content = createPlainDocument();
 //        var message = DataUtil.CreateMessage(content);
 //        message.Pp = DataUtil.CreateNode();
 //
@@ -230,6 +200,8 @@ public class JacksonEnvelopeSerializerTest {
 //        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey1, metadataValue1));
 //        Assert.IsTrue(resultString.ContainsJsonProperty(metadataKey2, metadataValue2));
 //    }
+
+
 //
 //    public void Serialize_FireAndForgetTextMessage_ReturnsValidJsonString()
 //    {
@@ -401,5 +373,39 @@ public class JacksonEnvelopeSerializerTest {
     //endregion Session
 
     //endregion deserialize
+
+    private void assertJsonEnvelopeProperties(Envelope expected, String jsonString, String... properties) {
+        List<String> missingKeys = new ArrayList<>(Arrays.asList(JsonConstants.Envelope.ALL_KEYS));
+
+        for(String property : properties) {
+            JsonFluentAssert jsonFluentAssert = assertThatJson(jsonString).node(property);
+
+            missingKeys.remove(property);
+
+            switch (property) {
+                case ID_KEY:
+                    jsonFluentAssert.isEqualTo(expected.getId());
+                    break;
+                case FROM_KEY:
+                    jsonFluentAssert.isEqualTo(expected.getFrom().toString());
+                    break;
+                case TO_KEY:
+                    jsonFluentAssert.isEqualTo(expected.getTo().toString());
+                    break;
+                case PP_KEY:
+                    jsonFluentAssert.isEqualTo(expected.getPp().toString());
+                    break;
+                case METADATA_KEY:
+                    for (String key : expected.getMetadata().keySet()) {
+                        assertThatJson(jsonString).node(getMetadataKeyFromRoot(key)).isEqualTo(expected.getMetadata().get(key));
+                    }
+                    break;
+            }
+        }
+
+        for(String missingKey : missingKeys) {
+            assertThatJson(jsonString).node(missingKey).isAbsent();
+        }
+    }
 
 }
