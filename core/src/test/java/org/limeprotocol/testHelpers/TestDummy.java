@@ -76,7 +76,7 @@ public class TestDummy {
 
     public static JsonDocument createJsonDocument()
     {
-        HashMap<String, Object> documentNodes = new HashMap<String, Object>();
+        HashMap<String, Object> documentNodes = new HashMap<>();
         documentNodes.put(createRandomString(10), createRandomString(50));
         documentNodes.put(createRandomString(10), createRandomInt(50));
 
@@ -143,7 +143,7 @@ public class TestDummy {
     }
 
     public static LimeUri createAbsoluteLimeUri(){
-        return new LimeUri(LimeUri.LIME_URI_SCHEME + ";//" + createIdentity() +
+        return new LimeUri(LimeUri.LIME_URI_SCHEME + "://" + createIdentity() +
                 "/" + createRandomString(10));
     }
 
@@ -154,5 +154,13 @@ public class TestDummy {
             throw new RuntimeException(e);
 
         }
+    }
+
+    public static Notification createNotification(Notification.Event event) {
+        Notification notification = new Notification();
+        notification.setFrom(createNode());
+        notification.setTo(createNode());
+        notification.setEvent(event);
+        return notification;
     }
 }
