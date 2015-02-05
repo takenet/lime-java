@@ -30,9 +30,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
-import static org.limeprotocol.testHelpers.JsonConstants.Command.METHOD_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Command.STATUS_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Command.URI_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.FROM_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.ID_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.METADATA_KEY;
@@ -44,18 +42,7 @@ import static org.limeprotocol.testHelpers.JsonConstants.Notification.DESCRIPTIO
 import static org.limeprotocol.testHelpers.JsonConstants.Notification.EVENT_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Session.AUTHENTICATION_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Session.STATE_KEY;
-import static org.limeprotocol.testHelpers.TestDummy.createAbsoluteLimeUri;
-import static org.limeprotocol.testHelpers.TestDummy.createCommand;
-import static org.limeprotocol.testHelpers.TestDummy.createJsonDocument;
-import static org.limeprotocol.testHelpers.TestDummy.createMessage;
-import static org.limeprotocol.testHelpers.TestDummy.createNode;
-import static org.limeprotocol.testHelpers.TestDummy.createNotification;
-import static org.limeprotocol.testHelpers.TestDummy.createPlainAuthentication;
-import static org.limeprotocol.testHelpers.TestDummy.createPlainDocument;
-import static org.limeprotocol.testHelpers.TestDummy.createRandomMetadata;
-import static org.limeprotocol.testHelpers.TestDummy.createRandomString;
-import static org.limeprotocol.testHelpers.TestDummy.createReason;
-import static org.limeprotocol.testHelpers.TestDummy.createSession;
+import static org.limeprotocol.testHelpers.TestDummy.*;
 
 
 public class JacksonEnvelopeSerializerTest {
