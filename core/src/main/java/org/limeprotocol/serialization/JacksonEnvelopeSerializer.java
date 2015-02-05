@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Message;
 import org.limeprotocol.Session;
@@ -95,6 +94,12 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     }
 
     private Message parseMessage(ObjectNode node){
-        return null;
+
+        JsonNode contentNode = node.get("content");
+
+        node.remove("content");
+
+        Message message = mapper.convertValue(node, Message.class);
+        return message;
     }
 }

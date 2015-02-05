@@ -5,6 +5,7 @@ import java.util.UUID;
 public class Message extends Envelope {
 
     private Document content;
+    private MediaType type;
 
     public Message()
     {
