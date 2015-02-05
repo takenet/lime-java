@@ -343,6 +343,8 @@ public class JacksonEnvelopeSerializerTest {
 
     //region deserialize method
 
+    //region Session
+
     @Test
     public void deserialize_AuthenticatingSession_ReturnsValidInstance() {
         // Arrange
@@ -480,6 +482,95 @@ public class JacksonEnvelopeSerializerTest {
     }
 
     //endregion Session
+
+    //region Notification
+
+    @Test
+    public void deserialize_ReceivedNotification_ReturnsValidInstance()
+    {
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node  pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+        Notification.Event event = Notification.Event.Received;
+
+        String json = StringUtils.format(
+                "{\"event\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
+        event.toString().toLowerCase(),
+            id,
+            from,
+            pp,
+            to,
+            randomKey1,
+            randomString1,
+            randomKey2,
+            randomString2
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        assertTrue(envelope instanceof Notification);
+
+        Notification notification = (Notification) envelope;
+        assertEquals(id, notification.getId());
+        assertEquals(from, notification.getFrom());
+        assertEquals(pp, notification.getPp());
+        assertEquals(to, notification.getTo());
+        assertNotNull(notification.getMetadata());
+        assertTrue(notification.getMetadata().containsKey(randomKey1));
+        assertTrue(notification.getMetadata().containsKey(randomKey2));
+        assertEquals(notification.getMetadata().get(randomKey1), randomString1);
+        assertEquals(notification.getMetadata().get(randomKey2), randomString2);
+
+        assertEquals(event, notification.getEvent());
+
+        assertNull(notification.getReason());
+    }
+
+    public void Deserialize_FailedNotification_ReturnsValidInstance()
+    {
+        Notification.Event event = Notification.Event.Received;
+        int reasonCode = createRandomInt(100);
+        String reasonDescription = createRandomString(100);
+
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node to = createNode();
+
+        String json = StringUtils.format(
+                "{\"event\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"to\":\"{3}\",\"reason\":{\"code\":{4},\"description\":\"{5}\"}}",
+                event.toString().toLowerCase(),
+                id,
+                from,
+                to,
+                reasonCode,
+                reasonDescription);
+
+        Envelope envelope = target.deserialize(json);
+
+        assertTrue(envelope instanceof Notification);
+        Notification notification = (Notification) envelope;
+        assertEquals(id, notification.getId());
+        assertEquals(from, notification.getFrom());
+        assertEquals(to, notification.getTo());
+        assertEquals(event, notification.getEvent());
+
+        assertNull(notification.getPp());
+        assertNull(notification.getMetadata());
+
+        assertNotNull(notification.getReason());
+
+        assertEquals(reasonCode, notification.getReason().getCode());
+        assertEquals(reasonDescription, notification.getReason().getDescription());
+    }
+
+    //endregion Notification
 
     //endregion deserialize
 
