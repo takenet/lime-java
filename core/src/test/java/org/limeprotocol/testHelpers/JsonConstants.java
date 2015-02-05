@@ -44,12 +44,12 @@ public class JsonConstants {
     }
 
     public static class Command {
-        public final String URI_KEY = "uri";
-        public final String TYPE_KEY = Message.TYPE_KEY;
-        public final String RESOURCE_KEY = "resource";
-        public final String METHOD_KEY = "method";
-        public final String STATUS_KEY = "status";
-        public final String REASON_KEY = "reason";
+        public static final String URI_KEY = "uri";
+        public static final String TYPE_KEY = Message.TYPE_KEY;
+        public static final String RESOURCE_KEY = "resource";
+        public static final String METHOD_KEY = "method";
+        public static final String STATUS_KEY = "status";
+        public static final String REASON_KEY = "reason";
     }
 
     public static class Message {
