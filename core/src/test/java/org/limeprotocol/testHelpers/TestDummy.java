@@ -57,10 +57,11 @@ public class TestDummy {
     }
 
     public static Map<String, String> createRandomMetadata(String... keys) {
-        HashMap<String, String> map = new HashMap<>();
-        keys = keys == null ?
+        keys = keys == null || keys.length == 0 ?
                 new String[] { "randomString1", "randomString2" } :
                 keys;
+
+        HashMap<String, String> map = new HashMap<>();
         for (String key : keys) {
             map.put(key, createRandomString(50));
         }
