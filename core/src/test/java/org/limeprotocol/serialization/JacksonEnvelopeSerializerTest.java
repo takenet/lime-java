@@ -152,7 +152,7 @@ public class JacksonEnvelopeSerializerTest {
 
         for (Map.Entry<String, Object> keyValuePair : content.entrySet())
         {
-            assertThatJson(resultString).node(keyValuePair.getKey()).isEqualTo(keyValuePair.getValue());
+            assertThatJson(resultString).node(keyValuePair.getKey()).isEqualTo(keyValuePair.getValue().toString());
         }
     }
 
@@ -172,7 +172,7 @@ public class JacksonEnvelopeSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
 
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getValue());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_VALUE_KEY).isEqualTo(content.getValue());
     }
 
     //endregion Message
