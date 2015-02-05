@@ -1,7 +1,6 @@
 package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Identity;
-import org.limeprotocol.LimeUri;
 import org.limeprotocol.Node;
 
 import java.net.URI;
@@ -9,7 +8,7 @@ import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.UUID;
 
-public class DataUtil {
+public class Dummy {
     
     private static Random random = new Random();
     private static String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -72,10 +71,10 @@ public class DataUtil {
 
         String randomKey1 = "randomString1";
         String randomKey2 = "randomString2";
-        String randomString1 = DataUtil.createRandomString(DataUtil.createRandomInt(50));
-        String randomString2 = DataUtil.createRandomString(DataUtil.createRandomInt(50));
+        String randomString1 = Dummy.createRandomString(Dummy.createRandomInt(50));
+        String randomString2 = Dummy.createRandomString(Dummy.createRandomInt(50));
 
-        String text = DataUtil.createRandomString(DataUtil.createRandomInt(50));
+        String text = Dummy.createRandomString(Dummy.createRandomInt(50));
 
         return String.format(
                 "{{\"type\":\"text/plain\",\"content\":\"%s\",\"id\":\"%s\",\"from\":\"%s\",\"pp\":\"%s\",\"to\":\"%s\",\"metadata\":{{\"%s\":\"%s\",\"%s\":\"%s\"}}}}",

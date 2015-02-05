@@ -13,7 +13,6 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.junit.Assert.*;
@@ -57,12 +56,12 @@ public class TcpTransportTest {
     
     private TcpTransport getAndOpenTarget() throws IOException, URISyntaxException {
         TcpTransport target = getTarget();
-        target.open(DataUtil.createUri());
+        target.open(Dummy.createUri());
         return target;
     }
     private TcpTransport getAndOpenTarget(InputStream inputStream, OutputStream outputStream) throws IOException, URISyntaxException {
         TcpTransport target = getTarget(inputStream, outputStream);
-        target.open(DataUtil.createUri());
+        target.open(Dummy.createUri());
         return target;
     }
     
@@ -70,7 +69,7 @@ public class TcpTransportTest {
     @Test
     public void open_notConnectedValidUri_callsConnectsAndGetStreams() throws URISyntaxException, IOException {
         // Arrange
-        URI uri = DataUtil.createUri();
+        URI uri = Dummy.createUri();
         TcpTransport target = getTarget();
         
         // Act
@@ -85,7 +84,7 @@ public class TcpTransportTest {
     @Test(expected = IllegalArgumentException.class)
     public void open_notConnectedInvalidUriScheme_throwsIllegalArgumentException() throws URISyntaxException, IOException {
         // Arrange
-        URI uri = DataUtil.createUri("http", 55321);
+        URI uri = Dummy.createUri("http", 55321);
         TcpTransport target = getTarget();
         
         // Act
@@ -95,7 +94,7 @@ public class TcpTransportTest {
     @Test(expected = IllegalStateException.class)
     public void open_alreadyConnected_throwsIllegalStateException() throws URISyntaxException, IOException {
         // Arrange
-        URI uri = DataUtil.createUri("net.tcp", 55321);
+        URI uri = Dummy.createUri("net.tcp", 55321);
         TcpTransport target = getAndOpenTarget();
         
         // Act
@@ -116,7 +115,7 @@ public class TcpTransportTest {
         TcpTransport target = getAndOpenTarget(new ByteArrayInputStream(new byte[0]), outputStream);
 
         Envelope envelope = mock(Envelope.class);
-        String serializedEnvelope = DataUtil.createRandomString(200);
+        String serializedEnvelope = Dummy.createRandomString(200);
         when(envelopeSerializer.serialize(envelope)).thenReturn(serializedEnvelope);
         when(traceWriter.isEnabled()).thenReturn(true);
 
@@ -152,7 +151,7 @@ public class TcpTransportTest {
     @Test
     public void onReceive_oneRead_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
-        String messageJson = DataUtil.createMessageJson();
+        String messageJson = Dummy.createMessageJson();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(messageJson.getBytes("UTF-8"));
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream());
         Envelope envelope = mock(Envelope.class);
@@ -161,21 +160,22 @@ public class TcpTransportTest {
         target.addListener(transportListener);
         
         // Act
-        target.open(DataUtil.createUri());
+        target.open(Dummy.createUri());
         Thread.sleep(100);
         
         // Assert
         verify(transportListener, times(1)).onReceive(envelope);
+        verify(transportListener, never()).onException(any(Exception.class));
     }
 
     @Test
     public void onReceive_multipleReads_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
-        String messageJson = DataUtil.createMessageJson();
+        String messageJson = Dummy.createMessageJson();
         byte[] messageBuffer = messageJson.getBytes("UTF-8");
         Envelope envelope = mock(Envelope.class);
         byte[][] messageBufferParts = splitBuffer(messageBuffer);
-        int bufferSize = messageBuffer.length + DataUtil.createRandomInt(1000);
+        int bufferSize = messageBuffer.length + Dummy.createRandomInt(1000);
         TestInputStream inputStream = new TestInputStream(messageBufferParts);
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
@@ -183,33 +183,33 @@ public class TcpTransportTest {
         target.addListener(transportListener);
 
         // Act
-        target.open(DataUtil.createUri());
+        target.open(Dummy.createUri());
         Thread.sleep(100);
 
         // Assert
         verify(transportListener, times(1)).onReceive(envelope);
+        verify(transportListener, never()).onException(any(Exception.class));
         assertEquals(messageBufferParts.length, inputStream.getReadCount());
     }
 
     @Test
     public void onReceive_multipleReadsMultipleEnvelopes_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
-        int messagesCount = DataUtil.createRandomInt(100) + 1;
+        int messagesCount = Dummy.createRandomInt(100) + 1;
         final Queue<String> messageJsonQueue = new LinkedBlockingQueue<>();
         StringBuilder messagesJsonBuilder = new StringBuilder();
         for (int i = 0; i < messagesCount; i++) {
             String messageJson;
             do {
-                messageJson = DataUtil.createMessageJson();
+                messageJson = Dummy.createMessageJson();
             } while (messageJsonQueue.contains(messageJson));
             messageJsonQueue.add(messageJson);
             messagesJsonBuilder.append(messageJson);
         }
         String messagesJson = messagesJsonBuilder.toString();
         byte[] messageBuffer = messagesJson.getBytes("UTF-8");
-        final Envelope envelope = mock(Envelope.class);
         byte[][] messageBufferParts = splitBuffer(messageBuffer);
-        int bufferSize = messageBuffer.length + DataUtil.createRandomInt(1000);
+        int bufferSize = messageBuffer.length + Dummy.createRandomInt(1000);
         TestInputStream inputStream = new TestInputStream(messageBufferParts);
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(anyString())).thenAnswer(new Answer<Object>() {
@@ -217,7 +217,53 @@ public class TcpTransportTest {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 if (messageJsonQueue.peek().equals(invocationOnMock.getArguments()[0])) {
                     messageJsonQueue.remove();
-                    return envelope;
+                    return mock(Envelope.class);
+                }
+                return null;
+            }
+        });
+        Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
+        target.addListener(transportListener);
+        
+        // Act
+        target.open(Dummy.createUri());
+        Thread.sleep(100);
+        
+        // Assert
+        verify(transportListener, times(messagesCount)).onReceive(any(Envelope.class));
+        verify(transportListener, never()).onException(any(Exception.class));
+        assertEquals(messageBufferParts.length, inputStream.getReadCount());
+        assertTrue(messageJsonQueue.isEmpty());
+    }
+    
+    @Test
+    public void onReceive_multipleReadsMultipleEnvelopesWithInvalidCharsBetween_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
+        // Arrange
+        int messagesCount = Dummy.createRandomInt(100) + 1;
+        final Queue<String> messageJsonQueue = new LinkedBlockingQueue<>();
+        StringBuilder messagesJsonBuilder = new StringBuilder();
+        messagesJsonBuilder.append("  \t\t ");
+        for (int i = 0; i < messagesCount; i++) {
+            String messageJson;
+            do {
+                messageJson = Dummy.createMessageJson();
+            } while (messageJsonQueue.contains(messageJson));
+            messageJsonQueue.add(messageJson);
+            messagesJsonBuilder.append(messageJson);
+            messagesJsonBuilder.append("\r\n   ");
+        }
+        String messagesJson = messagesJsonBuilder.toString();
+        byte[] messageBuffer = messagesJson.getBytes("UTF-8");
+        byte[][] messageBufferParts = splitBuffer(messageBuffer);
+        int bufferSize = messageBuffer.length + Dummy.createRandomInt(1000);
+        TestInputStream inputStream = new TestInputStream(messageBufferParts);
+        TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
+        when(envelopeSerializer.deserialize(anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                if (messageJsonQueue.peek().equals(invocationOnMock.getArguments()[0])) {
+                    messageJsonQueue.remove();
+                    return mock(Envelope.class);
                 }
                 return null;
             }
@@ -226,17 +272,39 @@ public class TcpTransportTest {
         target.addListener(transportListener);
 
         // Act
-        target.open(DataUtil.createUri());
+        target.open(Dummy.createUri());
         Thread.sleep(100);
         
         // Assert
-        verify(transportListener, times(messagesCount)).onReceive(envelope);
+        verify(transportListener, times(messagesCount)).onReceive(any(Envelope.class));
+        verify(transportListener, never()).onException(any(Exception.class));
         assertEquals(messageBufferParts.length, inputStream.getReadCount());
         assertTrue(messageJsonQueue.isEmpty());
     }
 
+    @Test
+    public void onReceive_multipleReadsBiggerThenBuffer_closesTheTransportAndCallsOnException() throws IOException, URISyntaxException, InterruptedException {
+        // Arrange
+        String messageJson = Dummy.createMessageJson();
+        byte[] messageBuffer = messageJson.getBytes("UTF-8");
+        byte[][] messageBufferParts = splitBuffer(messageBuffer);
+        int bufferSize = messageBuffer.length - 1;
+        TestInputStream inputStream = new TestInputStream(messageBufferParts);
+        TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
+        when(envelopeSerializer.deserialize(anyString())).thenReturn(mock(Envelope.class));
+        Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
+        target.addListener(transportListener);
+
+        // Act
+        target.open(Dummy.createUri());
+        Thread.sleep(100);
+
+        // Assert
+        verify(transportListener, times(1)).onException(any(BufferOverflowException.class));
+    }
+    
     private byte[][] splitBuffer(byte[] messageBuffer) {
-        int bufferParts = DataUtil.createRandomInt(10) + 1;
+        int bufferParts = Dummy.createRandomInt(10) + 1;
 
         byte[][] messageBufferParts = new byte[bufferParts][];
         int bufferPartSize = messageBuffer.length / bufferParts;
@@ -271,7 +339,10 @@ public class TcpTransportTest {
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             if (readCount >= buffers.length) {
-                throw new IllegalStateException("Buffer end reached");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) { }
+                return  0;
             }
             currentBuffer = buffers[readCount];
             readCount++;

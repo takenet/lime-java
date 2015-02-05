@@ -98,5 +98,12 @@ public interface Transport {
          * Occurs after the connection was closed.
          */
         void onClosed();
+
+        /**
+         * Occurs when an exception is thrown
+         * during the receive process.
+         * @param e The thrown exception.
+         */
+        void onException(Exception e);
     }
 }

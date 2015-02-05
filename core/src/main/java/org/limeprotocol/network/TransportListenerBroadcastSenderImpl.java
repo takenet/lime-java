@@ -51,6 +51,17 @@ public class TransportListenerBroadcastSenderImpl implements TransportListenerBr
     }
 
     @Override
+    public void broadcastOnException(Exception e) {
+        Set<Integer> orderedPriorities = listeners.keySet();
+        for (Integer i : orderedPriorities){
+            Set<Transport.TransportListener> listenersSet = listeners.get(i);
+            for (Transport.TransportListener listener : listenersSet){
+                listener.onException(e);
+            }
+        }
+    }
+
+    @Override
     public void broadcastOnClosing(){
         Set<Integer> orderedPriorities = listeners.keySet();
         for (Integer i : orderedPriorities){

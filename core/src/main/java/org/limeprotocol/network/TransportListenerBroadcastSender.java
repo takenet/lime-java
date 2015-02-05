@@ -15,6 +15,8 @@ public interface TransportListenerBroadcastSender {
 
     void broadcastOnReceive(Envelope envelope);
 
+    void broadcastOnException(Exception e);
+    
     void broadcastOnClosing();
 
     void broadcastOnClosed();

@@ -102,7 +102,7 @@ public class TcpTransport extends TransportBase implements Transport {
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
         outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
         inputStream = new BufferedInputStream(tcpClient.getInputStream());
-        inputListenerFuture = executorService.submit(new JsonStreamReader(DEFAULT_BUFFER_SIZE));
+        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize));
     }
 
     @Override
@@ -176,31 +176,35 @@ public class TcpTransport extends TransportBase implements Transport {
 
         @Override
         public Void call() throws Exception {
-            if (TcpTransport.this.inputStream == null) {
-                throw new IllegalStateException("The stream was not initialized. Call Open first.");
-            }
-
-            while (canRead()) {
-                Envelope envelope = null;
-                while (envelope == null) {
-                    JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
-                    if (jsonBufferReadResult.isSuccess()) {
-                        String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
-                        envelope = TcpTransport.this.envelopeSerializer.deserialize(jsonString);
-                    }
-
-                    if (envelope == null) {
-                        bufferCurPos += TcpTransport.this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
-                        if (bufferCurPos >= buffer.length) {
-                            TcpTransport.this.close();
-                            throw new IllegalStateException("Maximum buffer size reached");
-                        }
-                    }
+            try {
+                if (TcpTransport.this.inputStream == null) {
+                    throw new IllegalStateException("The stream was not initialized. Call Open first.");
                 }
 
-                TcpTransport.this.getListenerBroadcastSender().broadcastOnReceive(envelope);
-            }
+                while (canRead()) {
+                    Envelope envelope = null;
+                    while (envelope == null) {
+                        JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
+                        if (jsonBufferReadResult.isSuccess()) {
+                            String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
+                            envelope = TcpTransport.this.envelopeSerializer.deserialize(jsonString);
+                        }
 
+                        if (envelope == null) {
+                            bufferCurPos += TcpTransport.this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                            if (bufferCurPos >= buffer.length) {
+                                TcpTransport.this.close();
+                                throw new BufferOverflowException("Maximum buffer size reached");
+                            }
+                        }
+                    }
+
+                    TcpTransport.this.getListenerBroadcastSender().broadcastOnReceive(envelope);
+                }
+            } catch (Exception e) {
+                TcpTransport.this.getListenerBroadcastSender().broadcastOnException(e);
+                TcpTransport.this.close();
+            }
             return null;
         }
 
