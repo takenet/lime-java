@@ -3,12 +3,6 @@ package org.limeprotocol;
 import java.util.UUID;
 
 public class Command extends Envelope {
-    public final String URI_KEY = "uri";
-    public final String TYPE_KEY = Message.TYPE_KEY;
-    public final String RESOURCE_KEY = "resource";
-    public final String METHOD_KEY = "method";
-    public final String STATUS_KEY = "status";
-    public final String REASON_KEY = "reason";
 
     public Command() {
     }
@@ -22,11 +16,6 @@ public class Command extends Envelope {
      * of the resource
      */
     public LimeUri uri;
-
-    /**
-     *   MIME declaration of the resource type of the command.
-     */
-    public MediaType type;
 
     /**
      *  Server resource that are subject

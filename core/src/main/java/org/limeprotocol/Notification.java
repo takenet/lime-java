@@ -9,10 +9,6 @@ import org.limeprotocol.util.UUIDUtils;
 /// </summary>
 public class Notification extends Envelope {
 
-
-    public final String EVENT_KEY = "event";
-    public final String REASON_KEY = "reason";
-
     public Notification() {
         //Create a Envelope with a Empty Id
         super(UUIDUtils.empty());

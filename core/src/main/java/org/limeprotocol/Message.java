@@ -4,10 +4,6 @@ import java.util.UUID;
 
 public class Message extends Envelope {
 
-    public final static String TYPE_KEY = "type";
-    public final static String CONTENT_KEY = "content";
-
-    private MediaType Type;
     private Document content;
 
     public Message()

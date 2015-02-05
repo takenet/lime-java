@@ -40,4 +40,23 @@ public class JsonConstants {
         public static final String PASSWORD_KEY = "password";
         public static final String PASSWORK_KEY_FROM_ROOT = Session.AUTHENTICATION_KEY + "." + PASSWORD_KEY;
     }
+
+    public static class Command {
+        public final String URI_KEY = "uri";
+        public final String TYPE_KEY = Message.TYPE_KEY;
+        public final String RESOURCE_KEY = "resource";
+        public final String METHOD_KEY = "method";
+        public final String STATUS_KEY = "status";
+        public final String REASON_KEY = "reason";
+    }
+
+    public static class Message {
+        public final static String TYPE_KEY = "type";
+        public final static String CONTENT_KEY = "content";
+    }
+
+    public static class Notification {
+        public final String EVENT_KEY = "event";
+        public final String REASON_KEY = "reason";
+    }
 }
