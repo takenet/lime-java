@@ -56,6 +56,7 @@ public class TransportListenerBroadcastSenderImpl implements TransportListenerBr
         for (Integer i : orderedPriorities){
             Set<Transport.TransportListener> listenersSet = listeners.get(i);
             for (Transport.TransportListener listener : listenersSet){
+                e.printStackTrace();
                 listener.onException(e);
             }
         }

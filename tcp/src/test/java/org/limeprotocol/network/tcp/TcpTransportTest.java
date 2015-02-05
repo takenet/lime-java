@@ -13,12 +13,10 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -367,6 +365,18 @@ public class TcpTransportTest {
         assertEquals(2, actual.length);
         assertTrue(Arrays.asList(actual).contains(SessionEncryption.none));
         assertTrue(Arrays.asList(actual).contains(SessionEncryption.tls));
+    }
+    
+    @Test
+    public void setEncryption_setTls_callsStartTls() throws IOException, URISyntaxException {
+        // Arrange
+        TcpTransport target = getAndOpenTarget();
+    
+        // Act
+        target.setEncryption(SessionEncryption.tls);
+        
+        // Assert
+        verify(tcpClient, times(1)).startTls();
     }
     
     

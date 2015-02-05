@@ -19,6 +19,10 @@ public interface TcpClient {
     OutputStream getOutputStream() throws IOException;
 
     InputStream getInputStream() throws IOException;
+    
+    boolean isTlsStarted();
+    
+    void startTls() throws IOException;
 
     void close() throws IOException;
 }

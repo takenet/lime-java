@@ -57,7 +57,7 @@ public abstract class TransportBase implements Transport {
 
     @Override
     public void setCompression(SessionCompression compression) throws IOException  {
-        if (Arrays.asList(getSupportedCompression()).contains(compression)) {
+        if (!Arrays.asList(getSupportedCompression()).contains(compression)) {
             throw new IllegalArgumentException("compression");
         }
         this.compression = compression;
@@ -75,7 +75,7 @@ public abstract class TransportBase implements Transport {
 
     @Override
     public void setEncryption(SessionEncryption encryption) throws IOException {
-        if (Arrays.asList(getSupportedEncryption()).contains(encryption)) {
+        if (!Arrays.asList(getSupportedEncryption()).contains(encryption)) {
             throw new IllegalArgumentException("encryption");
         }
         this.encryption = encryption;

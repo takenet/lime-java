@@ -7,8 +7,6 @@ import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -99,9 +97,7 @@ public class TcpTransport extends TransportBase implements Transport {
         
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
-        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
-        inputStream = new BufferedInputStream(tcpClient.getInputStream());
-        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize));
+        startInputListener();
     }
 
     @Override
@@ -131,17 +127,21 @@ public class TcpTransport extends TransportBase implements Transport {
     public void setEncryption(SessionEncryption encryption) throws IOException {
         switch (encryption) {
             case tls:
-                SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
-                        tcpClient.getSocket(),
-                        tcpClient.getSocket().getInetAddress().getHostAddress(),
-                        tcpClient.getSocket().getPort(),
-                        true);
-                
+                if (!tcpClient.isTlsStarted()) {
+                    stopInputListener();
+                    tcpClient.startTls();
+                    startInputListener();
+                }
                 break;
-            
+            case none:
+                if (tcpClient.isTlsStarted()) {
+                    throw new IllegalStateException("Cannot downgrade an encrypted connection");
+                }
+                break;
         }
         
         super.setEncryption(encryption);
+        
     }
 
     private void ensureSocketOpen() {
@@ -150,27 +150,39 @@ public class TcpTransport extends TransportBase implements Transport {
         }
     }
 
+    private void startInputListener() throws IOException {
+        if (inputListenerFuture != null &&
+                !inputListenerFuture.isDone()) {
+            throw new IllegalStateException("The input listener is already started");
+        }
+        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
+        inputStream = new BufferedInputStream(tcpClient.getInputStream());
+        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize, true));
+    }
+    
     private void stopInputListener() {
         if (inputListenerFuture != null &&
                 !inputListenerFuture.isDone()) {
             if (!inputListenerFuture.cancel(true)) {
-                throw new IllegalStateException("Could not stop the reader");
+                throw new IllegalStateException("Could not stop the input listener");
             }
+            inputListenerFuture = null;
         }
     }
 
     class JsonStreamReader implements Callable<Void> {
-        private boolean canRead;
+        private final boolean multiRead;
+        
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
         private int jsonCurPos;
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
-        
-        JsonStreamReader(int bufferSize) {
+
+        JsonStreamReader(int bufferSize, boolean multiRead) {
+            this.multiRead = multiRead;
             buffer = new byte[bufferSize];
-            canRead = true;
         }
 
         @Override
@@ -180,7 +192,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     throw new IllegalStateException("The stream was not initialized. Call Open first.");
                 }
 
-                while (canRead()) {
+                do {
                     Envelope envelope = null;
                     while (envelope == null) {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
@@ -199,7 +211,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     }
 
                     TcpTransport.this.getListenerBroadcastSender().broadcastOnReceive(envelope);
-                }
+                } while (multiRead);
             } catch (Exception e) {
                 TcpTransport.this.getListenerBroadcastSender().broadcastOnException(e);
             }
@@ -249,14 +261,6 @@ public class TcpTransport extends TransportBase implements Transport {
             }
 
             return new JsonBufferReadResult(false, null);
-        }
-
-        public boolean canRead() {
-            return canRead;
-        }
-
-        public void setCanRead(boolean canRead) {
-            this.canRead = canRead;
         }
 
         class JsonBufferReadResult {
