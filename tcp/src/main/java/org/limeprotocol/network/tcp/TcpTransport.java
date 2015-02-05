@@ -14,7 +14,6 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
@@ -107,14 +106,9 @@ public class TcpTransport extends TransportBase implements Transport {
 
     @Override
     protected void performClose() throws IOException {
+        stopInputListener();
         if (tcpClient != null) {
             tcpClient.close();
-        }
-        if (inputListenerFuture != null &&
-                !inputListenerFuture.isDone()) {
-            if (!inputListenerFuture.cancel(true)) {
-                throw new IllegalStateException("Could not stop the reader");
-            }
         }
     }
 
@@ -153,6 +147,15 @@ public class TcpTransport extends TransportBase implements Transport {
     private void ensureSocketOpen() {
         if (tcpClient == null) {
             throw new IllegalStateException("The client is not open");
+        }
+    }
+
+    private void stopInputListener() {
+        if (inputListenerFuture != null &&
+                !inputListenerFuture.isDone()) {
+            if (!inputListenerFuture.cancel(true)) {
+                throw new IllegalStateException("Could not stop the reader");
+            }
         }
     }
 
