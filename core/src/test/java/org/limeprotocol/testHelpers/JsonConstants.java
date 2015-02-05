@@ -8,6 +8,8 @@ public class JsonConstants {
         public static final String TO_KEY = "to";
         public static final String METADATA_KEY = "metadata";
 
+        public static final String[] ALL_KEYS = new String[] { ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY };
+
         public static String getMetadataKeyFromRoot(String metadataKey) {
             return METADATA_KEY + "." + metadataKey;
         }
