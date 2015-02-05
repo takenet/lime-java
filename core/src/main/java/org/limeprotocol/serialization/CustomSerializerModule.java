@@ -3,10 +3,10 @@ package org.limeprotocol.serialization;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.Deserializers;
-import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonAnyFormatVisitor;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import org.limeprotocol.Command;
+import org.limeprotocol.MediaType;
 import org.limeprotocol.Node;
 
 public class CustomSerializerModule extends SimpleModule {
@@ -18,6 +18,7 @@ public class CustomSerializerModule extends SimpleModule {
         addSerializer(new MediaTypeSerializer());
         addSerializer(new LimeUriSerializer());
         addDeserializer(Node.class, new NodeDeserializer());
+        addDeserializer(MediaType.class, new MediaTypeDeserializer());
     }
 
     @Override
@@ -37,7 +38,7 @@ public class CustomSerializerModule extends SimpleModule {
             @Override
             public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc, JsonSerializer<?> serializer) {
                 if (beanDesc.getBeanClass() == Command.class) {
-                    return new CommandSerializer((JsonSerializer<Object>)serializer);
+                    return new CommandSerializer((JsonSerializer<Object>) serializer);
                 }
                 return super.modifySerializer(config, beanDesc, serializer);
             }
