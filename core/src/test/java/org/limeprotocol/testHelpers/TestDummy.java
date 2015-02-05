@@ -1,15 +1,7 @@
 package org.limeprotocol.testHelpers;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import com.sun.istack.internal.NotNull;
 import org.limeprotocol.*;
-import org.limeprotocol.Session.*;
-import org.limeprotocol.messaging.contents.PlainText;
+import org.limeprotocol.Session.SessionState;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.util.StringUtils;
 
@@ -80,11 +72,6 @@ public class TestDummy {
         session.setState(state);
 
         return session;
-    }
-
-    public static PlainText createTextContent()
-    {
-        return new PlainText(createRandomString(150));
     }
 
     public static JsonDocument createJsonDocument()

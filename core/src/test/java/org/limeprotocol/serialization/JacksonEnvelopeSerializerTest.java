@@ -5,12 +5,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.Session.SessionState;
-import org.limeprotocol.messaging.contents.PlainText;
-import org.limeprotocol.security.*;
+import org.limeprotocol.security.GuestAuthentication;
+import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
-import java.util.HashMap;
 import java.util.*;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
@@ -134,24 +133,8 @@ public class JacksonEnvelopeSerializerTest {
 
     //region Message
 
-    public void serialize_TextMessage_ReturnsValidJsonString()
-    {
-        PlainText content = createTextContent();
-        Message message = createMessage(content);
-        message.setPp(createNode());
 
-        message.setMetadata(createRandomMetadata());
-
-        String resultString = target.serialize(message);
-
-        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
-
-        assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
-
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
-    }
-
+    @Test
     public void serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
     {
         JsonDocument content = createJsonDocument();
@@ -173,6 +156,7 @@ public class JacksonEnvelopeSerializerTest {
         }
     }
 
+    @Test
     public void serialize_UnknownPlainContentMessage_ReturnsValidJsonString()
     {
         PlainDocument content = createPlainDocument();
@@ -189,33 +173,7 @@ public class JacksonEnvelopeSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
 
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getValue());
-
     }
-
-
-//
-//    public void Serialize_FireAndForgetTextMessage_ReturnsValidJsonString()
-//    {
-//        var target = GetTarget();
-//
-//        var content = DataUtil.CreateTextContent();
-//        var message = DataUtil.CreateMessage(content);
-//        message.Id = Guid.Empty;
-//
-//        var resultString = target.Serialize(message);
-//
-//        Assert.IsTrue(resultString.HasValidJsonStackedBrackets());
-//
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.FROM_KEY, message.From));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Envelope.TO_KEY, message.To));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.TYPE_KEY, message.Content.GetMediaType()));
-//        Assert.IsTrue(resultString.ContainsJsonKey(Message.CONTENT_KEY));
-//        Assert.IsTrue(resultString.ContainsJsonProperty(Message.CONTENT_KEY, content.Text));
-//
-//        Assert.IsFalse(resultString.ContainsJsonKey(Envelope.ID_KEY));
-//        Assert.IsFalse(resultString.ContainsJsonKey(Envelope.PP_KEY));
-//        Assert.IsFalse(resultString.ContainsJsonKey(Envelope.METADATA_KEY));
-//    }
 
     //endregion Message
 
@@ -365,7 +323,7 @@ public class JacksonEnvelopeSerializerTest {
 
     //endregion deserialize
 
-    private void assertJsonEnvelopeProperties(Envelope expected, String jsonString, String... properties) {
+    public static void assertJsonEnvelopeProperties(Envelope expected, String jsonString, String... properties) {
         List<String> missingKeys = new ArrayList<>(Arrays.asList(JsonConstants.Envelope.ALL_KEYS));
 
         for(String property : properties) {
