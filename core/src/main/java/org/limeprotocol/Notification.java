@@ -1,7 +1,5 @@
 package org.limeprotocol;
 
-import org.limeprotocol.util.UUIDUtils;
-
 /// <summary>
 /// Transports information about events associated to a message
 /// sent in a session. Can be originated by a server
@@ -11,7 +9,7 @@ public class Notification extends Envelope {
 
     public Notification() {
         //Create a Envelope with a Empty Id
-        super(UUIDUtils.empty());
+        super(null);
     }
 
     /// <summary>
