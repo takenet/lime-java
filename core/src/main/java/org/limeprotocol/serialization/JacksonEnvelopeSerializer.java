@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Message;
+import org.limeprotocol.Notification;
 import org.limeprotocol.Session;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.GuestAuthentication;
@@ -47,7 +48,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
             if (node.has("content")) {
                 return parseMessage(node);
             } else if (node.has("event")) {
-                return null;
+                return mapper.convertValue(node, Notification.class);
             } else if (node.has("method")) {
                 return null;
             } else if (node.has("state")) {
