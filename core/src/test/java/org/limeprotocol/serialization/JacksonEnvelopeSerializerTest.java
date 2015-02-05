@@ -1,5 +1,6 @@
 package org.limeprotocol.serialization;
 
+import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
@@ -11,12 +12,13 @@ import org.limeprotocol.util.StringUtils;
 
 import javax.swing.text.AbstractDocument;
 import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
 
 public class JacksonEnvelopeSerializerTest {
@@ -163,10 +165,12 @@ public class JacksonEnvelopeSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Envelope.getMetadataKeyFromRoot(metadataKey2)).isEqualTo(metadataValue2);
 
     }
-
+//
 //    public void Serialize_UnknownJsonContentMessage_ReturnsValidJsonString()
 //    {
-//        Content content = DataUtil.CreateJsonDocument();
+//        var target = GetTarget();
+//
+//        var content = DataUtil.CreateJsonDocument();
 //        var message = DataUtil.CreateMessage(content);
 //        message.Pp = DataUtil.CreateNode();
 //
