@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.sun.istack.internal.NotNull;
 import org.limeprotocol.*;
 import org.limeprotocol.Session.*;
 import org.limeprotocol.messaging.contents.PlainText;
@@ -56,6 +57,10 @@ public class TestDummy {
     }
 
     public static Map<String, String> createRandomMetadata(String... keys) {
+        keys = keys == null || keys.length == 0 ?
+                new String[] { "randomString1", "randomString2" } :
+                keys;
+
         HashMap<String, String> map = new HashMap<>();
         for (String key : keys) {
             map.put(key, createRandomString(50));
