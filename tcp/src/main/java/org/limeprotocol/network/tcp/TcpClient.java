@@ -11,9 +11,6 @@ import java.net.SocketAddress;
  * to allow better testing.
  */
 public interface TcpClient {
-    
-    Socket getSocket();
-    
     void connect(SocketAddress endpoint) throws IOException;
 
     OutputStream getOutputStream() throws IOException;

@@ -26,11 +26,6 @@ public class SocketTcpClient implements TcpClient {
     }
 
     @Override
-    public Socket getSocket() {
-        return socket;
-    }
-
-    @Override
     public void connect(SocketAddress endpoint) throws IOException {
         socket.connect(endpoint);
     }
@@ -67,6 +62,8 @@ public class SocketTcpClient implements TcpClient {
                 socket.getInetAddress().getHostAddress(),
                 socket.getPort(),
                 true);
+
+        sslSocket.startHandshake();
     }
 
     @Override
@@ -88,11 +85,10 @@ public class SocketTcpClient implements TcpClient {
         if (sslSocketFactory == null) {
             if (trustManager != null) {
                 TrustManager[] tm = new TrustManager[] { trustManager };
-                SSLContext context = null;
                 try {
-                    context = SSLContext.getInstance("SSL");
+                    SSLContext context = SSLContext.getInstance("SSL");
                     context.init(new KeyManager[0], tm, new SecureRandom());
-                    sslSocketFactory = (SSLSocketFactory) context.getSocketFactory();
+                    sslSocketFactory = context.getSocketFactory();
                 } catch (NoSuchAlgorithmException | KeyManagementException e) {
                     throw new RuntimeException("Could not set the custom TLS trust manager", e);
                 }
