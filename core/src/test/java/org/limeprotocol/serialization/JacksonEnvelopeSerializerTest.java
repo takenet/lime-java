@@ -99,7 +99,7 @@ public class JacksonEnvelopeSerializerTest {
         assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
 
         assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
-        assertThatJson(resultString).node(URI_KEY).isEqualTo(command.getUri());
+        assertThatJson(resultString).node(URI_KEY).isEqualTo(command.getUri().toString());
 
         assertThatJson(resultString).node(STATUS_KEY).isAbsent();
         assertThatJson(resultString).node(JsonConstants.Command.REASON_KEY).isAbsent();

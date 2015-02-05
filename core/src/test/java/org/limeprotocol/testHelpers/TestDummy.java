@@ -143,7 +143,7 @@ public class TestDummy {
     }
 
     public static LimeUri createAbsoluteLimeUri(){
-        return new LimeUri(LimeUri.LIME_URI_SCHEME + ";//" + createIdentity() +
+        return new LimeUri(LimeUri.LIME_URI_SCHEME + "://" + createIdentity() +
                 "/" + createRandomString(10));
     }
 
