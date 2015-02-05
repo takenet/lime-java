@@ -35,10 +35,7 @@ public class TcpTransportTest {
     }
 
     private TcpTransport getTarget() throws IOException {
-        envelopeSerializer = mock(EnvelopeSerializer.class);
-        tcpClient = mock(TcpClient.class);
-        traceWriter = mock(TraceWriter.class);
-        return new TcpTransport(envelopeSerializer, new MockTcpClientFactory(), traceWriter);
+        return getTarget(mock(InputStream.class), mock(OutputStream.class));
     }
 
     private TcpTransport getTarget(InputStream inputStream, OutputStream outputStream) throws IOException {
@@ -55,9 +52,7 @@ public class TcpTransportTest {
     }
     
     private TcpTransport getAndOpenTarget() throws IOException, URISyntaxException {
-        TcpTransport target = getTarget();
-        target.open(Dummy.createUri());
-        return target;
+        return getAndOpenTarget(mock(InputStream.class), mock(OutputStream.class));
     }
     private TcpTransport getAndOpenTarget(InputStream inputStream, OutputStream outputStream) throws IOException, URISyntaxException {
         TcpTransport target = getTarget(inputStream, outputStream);
@@ -152,7 +147,7 @@ public class TcpTransportTest {
     public void onReceive_oneRead_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
         String messageJson = Dummy.createMessageJson();
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(messageJson.getBytes("UTF-8"));
+        TestInputStream inputStream = new TestInputStream(new byte[][] { messageJson.getBytes("UTF-8") });
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream());
         Envelope envelope = mock(Envelope.class);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
@@ -301,7 +296,24 @@ public class TcpTransportTest {
 
         // Assert
         verify(transportListener, times(1)).onException(any(BufferOverflowException.class));
+        verify(tcpClient, times(1)).close();
     }
+
+    @Test
+    public void performCloseAsync_streamOpened_closesClient() throws IOException, URISyntaxException {
+        // Arrange
+        TcpTransport target = getAndOpenTarget();
+        Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
+        target.addListener(transportListener);
+        
+        // Act
+        target.close();
+        
+        // Assert
+        verify(tcpClient, times(1)).close();
+        verify(transportListener, never()).onException(any(Exception.class));
+    }
+    
     
     private byte[][] splitBuffer(byte[] messageBuffer) {
         int bufferParts = Dummy.createRandomInt(10) + 1;
@@ -320,7 +332,7 @@ public class TcpTransportTest {
         return messageBufferParts;
     }
     
-    public class TestInputStream extends InputStream {
+    private class TestInputStream extends InputStream {
 
         private final byte[][] buffers;
         private byte[] currentBuffer;

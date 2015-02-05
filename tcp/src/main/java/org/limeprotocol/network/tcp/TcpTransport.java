@@ -107,17 +107,13 @@ public class TcpTransport extends TransportBase implements Transport {
 
     @Override
     protected void performClose() throws IOException {
-        ensureSocketOpen();
-        tcpClient.close();
-        if (inputListenerFuture != null) {
-            try {
-                inputListenerFuture.cancel(true);
-                inputListenerFuture.wait();
-                inputListenerFuture.get();
-            } catch (InterruptedException e) {
-                throw new IllegalStateException("The connection failed", e);
-            } catch (ExecutionException e) {
-                throw new IllegalStateException("The connection failed", e);
+        if (tcpClient != null) {
+            tcpClient.close();
+        }
+        if (inputListenerFuture != null &&
+                !inputListenerFuture.isDone()) {
+            if (!inputListenerFuture.cancel(true)) {
+                throw new IllegalStateException("Could not stop the reader");
             }
         }
     }
@@ -203,7 +199,6 @@ public class TcpTransport extends TransportBase implements Transport {
                 }
             } catch (Exception e) {
                 TcpTransport.this.getListenerBroadcastSender().broadcastOnException(e);
-                TcpTransport.this.close();
             }
             return null;
         }
