@@ -8,6 +8,8 @@ import org.limeprotocol.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -45,6 +47,14 @@ public class TestDummy {
         node.setInstance(createInstanceName());
 
         return node;
+    }
+
+    public static Map<String, String> createRandomMetadata(String... keys) {
+        HashMap<String, String> map = new HashMap<>();
+        for (String key : keys) {
+            map.put(key, createRandomString(50));
+        }
+        return map;
     }
 
     public static Session createSession() {
