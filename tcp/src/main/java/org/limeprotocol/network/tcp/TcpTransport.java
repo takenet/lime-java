@@ -28,16 +28,26 @@ public class TcpTransport extends TransportBase implements Transport {
     private final EnvelopeSerializer envelopeSerializer;
     private final TcpClientFactory tcpClientFactory;
     private final TraceWriter traceWriter;
+    private final int bufferSize;
     private TcpClient tcpClient;
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
     private Future<?> inputListenerFuture;
     private ExecutorService executorService;
 
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
+        this(envelopeSerializer, tcpClientFactory, null, DEFAULT_BUFFER_SIZE);
+    }
+    
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter) {
+        this(envelopeSerializer, tcpClientFactory, traceWriter, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter, int bufferSize) {
         this.envelopeSerializer = envelopeSerializer;
         this.tcpClientFactory = tcpClientFactory;
         this.traceWriter = traceWriter;
+        this.bufferSize = bufferSize;
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -99,7 +109,6 @@ public class TcpTransport extends TransportBase implements Transport {
     protected void performClose() throws IOException {
         ensureSocketOpen();
         tcpClient.close();
-
         if (inputListenerFuture != null) {
             try {
                 inputListenerFuture.cancel(true);
@@ -120,7 +129,6 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        
         return new SessionEncryption[] { SessionEncryption.none, SessionEncryption.tls };
     }
 
@@ -153,9 +161,7 @@ public class TcpTransport extends TransportBase implements Transport {
     }
 
     class JsonStreamReader implements Callable<Void> {
-        
         private boolean canRead;
-        
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
@@ -165,6 +171,7 @@ public class TcpTransport extends TransportBase implements Transport {
         
         JsonStreamReader(int bufferSize) {
             buffer = new byte[bufferSize];
+            canRead = true;
         }
 
         @Override
@@ -197,8 +204,7 @@ public class TcpTransport extends TransportBase implements Transport {
             return null;
         }
 
-        private JsonBufferReadResult tryExtractJsonFromBuffer()
-        {
+        private JsonBufferReadResult tryExtractJsonFromBuffer() {
             if (bufferCurPos > buffer.length) {
                 throw new IllegalArgumentException("Buffer current pos or length value is invalid", null);
             }
