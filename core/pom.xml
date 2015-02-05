@@ -27,8 +27,6 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
-    </dependencies>
-    <dependencies>
         <dependency>
             <groupId>org.limeprotocol</groupId>
             <artifactId>lime-java-messaging</artifactId>
