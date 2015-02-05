@@ -1,27 +1,62 @@
 package org.limeprotocol.serialization;
 
 import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.limeprotocol.*;
+import org.limeprotocol.Command;
+import org.limeprotocol.Envelope;
+import org.limeprotocol.JsonDocument;
+import org.limeprotocol.Message;
+import org.limeprotocol.Node;
+import org.limeprotocol.Notification;
+import org.limeprotocol.PlainDocument;
+import org.limeprotocol.Session;
 import org.limeprotocol.Session.SessionState;
 import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
-import static org.limeprotocol.testHelpers.JsonConstants.Command.REASON_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
-import static org.limeprotocol.testHelpers.JsonConstants.Session.*;
-import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
-import static org.limeprotocol.testHelpers.TestDummy.*;
+import static org.limeprotocol.testHelpers.JsonConstants.Command.METHOD_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Command.STATUS_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Command.URI_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.FROM_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.ID_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.METADATA_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.PP_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.TO_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.getMetadataKeyFromRoot;
+import static org.limeprotocol.testHelpers.JsonConstants.Notification.CODE_FROM_REASON_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Notification.DESCRIPTION_FROM_REASON_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Notification.EVENT_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Session.AUTHENTICATION_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Session.STATE_KEY;
+import static org.limeprotocol.testHelpers.TestDummy.createAbsoluteLimeUri;
+import static org.limeprotocol.testHelpers.TestDummy.createCommand;
+import static org.limeprotocol.testHelpers.TestDummy.createJsonDocument;
+import static org.limeprotocol.testHelpers.TestDummy.createMessage;
+import static org.limeprotocol.testHelpers.TestDummy.createNode;
+import static org.limeprotocol.testHelpers.TestDummy.createNotification;
+import static org.limeprotocol.testHelpers.TestDummy.createPlainAuthentication;
+import static org.limeprotocol.testHelpers.TestDummy.createPlainDocument;
+import static org.limeprotocol.testHelpers.TestDummy.createRandomMetadata;
+import static org.limeprotocol.testHelpers.TestDummy.createRandomString;
+import static org.limeprotocol.testHelpers.TestDummy.createReason;
+import static org.limeprotocol.testHelpers.TestDummy.createSession;
+
 
 public class JacksonEnvelopeSerializerTest {
 
@@ -268,6 +303,55 @@ public class JacksonEnvelopeSerializerTest {
 
     //endregion Message
 
+    //region Notification
+
+    @Test
+    public void Serialize_FailedNotification_ReturnsValidJsonString()
+    {
+        Notification notification = createNotification(Notification.Event.Failed);
+        notification.setId(UUID.randomUUID());
+        notification.setReason(createReason());
+
+        String resultString = target.serialize(notification);
+
+        assertJsonEnvelopeProperties(notification, resultString, ID_KEY, FROM_KEY, TO_KEY);
+
+        assertThatJson(resultString).node(EVENT_KEY).isEqualTo(notification.event.toString().toLowerCase());
+        assertThatJson(resultString).node(CODE_FROM_REASON_KEY).isEqualTo(notification.getReason().getCode());
+        assertThatJson(resultString).node(DESCRIPTION_FROM_REASON_KEY).isEqualTo(notification.getReason().getDescription());
+
+        assertThatJson(resultString).node(PP_KEY).isAbsent();
+        assertThatJson(resultString).node(METADATA_KEY).isAbsent();
+    }
+
+    @Test
+    public void serialize_ReceivedNotification_ReturnsValidJsonString()
+    {
+        Notification notification = createNotification(Notification.Event.Received);
+        notification.setId(UUID.randomUUID());
+        notification.setPp(createNode());
+
+        String metadataKey1 = "randomString1";
+        String metadataValue1 = createRandomString(50);
+        String metadataKey2 = "randomString2";
+        String metadataValue2 = createRandomString(50);
+
+        Map <String, String> metadata = new HashMap<>();
+        metadata.put(metadataKey1, metadataValue1);
+        metadata.put(metadataKey2, metadataValue2);
+        notification.setMetadata(metadata);
+
+        String resultString = target.serialize(notification);
+
+        assertJsonEnvelopeProperties(notification, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
+
+        assertThatJson(resultString).node(EVENT_KEY).isEqualTo(notification.event.toString().toLowerCase());
+
+        assertThatJson(resultString).node(JsonConstants.Notification.REASON_KEY).isAbsent();
+    }
+
+    //endregion Notification
+
     //endregion serialize
 
     //region deserialize method
@@ -277,7 +361,6 @@ public class JacksonEnvelopeSerializerTest {
         // Arrange
         UUID id = UUID.randomUUID();
         Node from = createNode();
-        Node pp = createNode();
         Node to = createNode();
 
         String password = StringUtils.toBase64(createRandomString(10));
@@ -332,7 +415,6 @@ public class JacksonEnvelopeSerializerTest {
         // Arrange
         UUID id = UUID.randomUUID();
         Node from = createNode();
-        Node pp = createNode();
         Node to = createNode();
 
         SessionState state = SessionState.Authenticating;

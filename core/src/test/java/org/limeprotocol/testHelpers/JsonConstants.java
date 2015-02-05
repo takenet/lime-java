@@ -58,7 +58,9 @@ public class JsonConstants {
     }
 
     public static class Notification {
-        public final String EVENT_KEY = "event";
-        public final String REASON_KEY = "reason";
+        public final static String EVENT_KEY = "event";
+        public final static String REASON_KEY = "reason";
+        public final static String CODE_FROM_REASON_KEY = REASON_KEY + "." + Reason.CODE_KEY;
+        public final static String DESCRIPTION_FROM_REASON_KEY = REASON_KEY + "." + Reason.DESCRIPTION_KEY;
     }
 }
