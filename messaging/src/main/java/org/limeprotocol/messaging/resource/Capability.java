@@ -9,7 +9,7 @@ import org.limeprotocol.MediaType;
  */
 public class Capability implements Document {
 
-    public final String MIME_TYPE = "application/vnd.lime.capability+json";
+    public static final String MIME_TYPE = "application/vnd.lime.capability+json";
 
     public MediaType mediaType;
 
