@@ -150,7 +150,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY);
 
-        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod());
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
 
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
         assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType());

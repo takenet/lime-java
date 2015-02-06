@@ -1,6 +1,5 @@
 package org.limeprotocol.messaging.resource;
 
-import org.limeprotocol.Document;
 import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
@@ -68,7 +67,7 @@ public class Contact extends DocumentBase {
         this.identity = identity;
     }
 
-    public boolean isPending() {
+    public Boolean isPending() {
         return isPending;
     }
 
@@ -76,7 +75,7 @@ public class Contact extends DocumentBase {
         this.isPending = isPending;
     }
 
-    public boolean getShareAccountInfo() {
+    public Boolean getShareAccountInfo() {
         return shareAccountInfo;
     }
 
@@ -84,7 +83,7 @@ public class Contact extends DocumentBase {
         this.shareAccountInfo = shareAccountInfo;
     }
 
-    public boolean getSharePresence() {
+    public Boolean getSharePresence() {
         return sharePresence;
     }
 
