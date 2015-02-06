@@ -1,9 +1,9 @@
 package org.limeprotocol.messaging.serialization;
 
-import org.fest.assertions.core.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
+import org.limeprotocol.messaging.contents.ChatState;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Capability;
 import org.limeprotocol.messaging.resource.Contact;
@@ -19,13 +19,15 @@ import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.limeprotocol.Command.*;
-import static org.limeprotocol.Command.CommandMethod.*;
-import static org.limeprotocol.Notification.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
+import static org.junit.Assert.*;
+import static org.limeprotocol.Command.CommandMethod;
+import static org.limeprotocol.Command.CommandMethod.Set;
+import static org.limeprotocol.Notification.Event;
+import static org.limeprotocol.messaging.contents.ChatState.*;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_CONTENT_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createCapability;
+import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createTextContent;
 import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
