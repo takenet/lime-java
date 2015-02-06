@@ -72,4 +72,8 @@ public class JsonConstants {
         public final static String CONTENT_TEXT_KEY = CONTENT_KEY + "." + TEXT_KEY;
     }
 
+    public static class DocumentCollection{
+        public final static String ITEMS_KEY = "items";
+    }
+
 }

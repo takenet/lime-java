@@ -7,13 +7,7 @@ import org.limeprotocol.util.StringUtils;
 
 public class Contact implements Document {
 
-    public final String MIME_TYPE = "application/vnd.lime.contact+json";
-
-    public final String IDENTITY_KEY = "identity";
-    public final String NAME_KEY = "name";
-    public final String IS_PENDING_KEY = "isPending";
-    public final String SHARE_PRESENCE_KEY = "sharePresence";
-    public final String SHARE_ACCOUNT_INFO_KEY = "shareAccountInfo";
+    public static final String MIME_TYPE = "application/vnd.lime.contact+json";
     private MediaType mediaType;
 
     public Contact() {
@@ -37,7 +31,7 @@ public class Contact implements Document {
      * acceptance by the roster owner.
      * The default value is false.
      */
-    private Boolean isPending;
+    private boolean isPending;
 
     /**
      * Indicates if the roster owner wants to share
@@ -46,7 +40,7 @@ public class Contact implements Document {
      * to the contact identity into the roster owner
      * presence resource. The default value is true.
      */
-    private Boolean sharePresence;
+    private boolean sharePresence;
 
     /**
      * Indicates if the roster owner wants to share account
@@ -55,7 +49,7 @@ public class Contact implements Document {
      * into the roster owner account resource.
      * The default value is true.
      */
-    private Boolean shareAccountInfo;
+    private boolean shareAccountInfo;
 
 
     public String getName() {
@@ -74,7 +68,7 @@ public class Contact implements Document {
         this.identity = identity;
     }
 
-    public Boolean isPending() {
+    public boolean isPending() {
         return isPending;
     }
 
@@ -82,7 +76,7 @@ public class Contact implements Document {
         this.isPending = isPending;
     }
 
-    public Boolean getShareAccountInfo() {
+    public boolean getShareAccountInfo() {
         return shareAccountInfo;
     }
 
@@ -90,7 +84,7 @@ public class Contact implements Document {
         this.shareAccountInfo = shareAccountInfo;
     }
 
-    public Boolean getSharePresence() {
+    public boolean getSharePresence() {
         return sharePresence;
     }
 

@@ -1,14 +1,11 @@
 package org.limeprotocol.messaging.serialization;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.limeprotocol.Command;
-import org.limeprotocol.Envelope;
-import org.limeprotocol.Message;
-import org.limeprotocol.Notification;
+import org.limeprotocol.*;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Capability;
+import org.limeprotocol.messaging.resource.Contact;
 import org.limeprotocol.messaging.resource.Receipt;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
@@ -20,14 +17,19 @@ import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.limeprotocol.Command.CommandMethod.*;
-import static org.limeprotocol.Notification.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
+import static org.limeprotocol.Command.CommandMethod.Set;
+import static org.limeprotocol.Notification.Event;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_CONTENT_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createCapability;
+import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createTextContent;
 import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
+import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
+import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Contact.*;
 
 public class JacksonEnvelopeMessagingSerializerTest {
 
@@ -119,6 +121,56 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[2]").isEqualTo(resource.getResourceTypes()[2].toString());
 
         assertThatJson(resultString).node(STATUS_KEY).isAbsent();
+        assertThatJson(resultString).node(REASON_KEY).isAbsent();
+    }
+
+    @Test
+    public void serialize_RosterResponseCommand_ReturnsValidJsonString()
+    {
+        DocumentCollection resource = createRoster();
+        Command command = createCommand(resource);
+        command.setPp(createNode());
+        command.setMethod(Command.CommandMethod.Get);
+        command.setStatus(Command.CommandStatus.Success);
+
+        String metadataKey1 = "randomString1";
+        String metadataValue1 = createRandomString(50);
+        String metadataKey2 = "randomString2";
+        String metadataValue2 = createRandomString(50);
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put(metadataKey1, metadataValue1);
+        metadata.put(metadataKey2, metadataValue2);
+        command.setMetadata(metadata);
+
+        String resultString = target.serialize(command);
+
+        assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY);
+
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod());
+
+        assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType());
+
+        assertThatJson(resultString).node(ITEMS_KEY).isPresent();
+
+        Contact[] contacts = (Contact[]) resource.getItems();
+
+        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ IDENTITY_KEY).isEqualTo(contacts[0].getIdentity());
+        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ NAME_KEY).isEqualTo(contacts[0].getName());
+        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ IS_PENDING_KEY).isEqualTo(contacts[0].isPending());
+        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contacts[0].getShareAccountInfo());
+
+        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ IDENTITY_KEY).isEqualTo(contacts[1].getIdentity());
+        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ NAME_KEY).isEqualTo(contacts[1].getName());
+        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ IS_PENDING_KEY).isEqualTo(contacts[1].isPending());
+        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contacts[1].getShareAccountInfo());
+
+        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ IDENTITY_KEY).isEqualTo(contacts[2].getIdentity());
+        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ NAME_KEY).isEqualTo(contacts[2].getName());
+        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ IS_PENDING_KEY).isEqualTo(contacts[2].isPending());
+        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contacts[2].getShareAccountInfo());
+
+        assertThatJson(resultString).node(STATUS_KEY).isPresent();
         assertThatJson(resultString).node(REASON_KEY).isAbsent();
     }
 
