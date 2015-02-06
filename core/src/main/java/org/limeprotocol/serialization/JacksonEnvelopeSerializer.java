@@ -1,21 +1,20 @@
 package org.limeprotocol.serialization;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.*;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.security.TransportAuthentication;
+import org.limeprotocol.serialization.jackson.CustomSerializerModule;
 
 import java.io.IOException;
 
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
-import static org.limeprotocol.serialization.SerializationUtil.deserializeDocument;
+import static org.limeprotocol.serialization.jackson.SerializationUtil.deserializeDocument;
 
 public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 

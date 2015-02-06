@@ -1,22 +1,18 @@
-package org.limeprotocol.serialization;
+package org.limeprotocol.serialization.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
-import org.limeprotocol.Session;
 
 import java.io.IOException;
 import java.util.Iterator;
-
-import static org.limeprotocol.serialization.SerializationUtil.deserializeDocument;
 
 public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCollection> {
     private final JsonDeserializer<Object> deserializer;
