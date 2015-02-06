@@ -298,7 +298,6 @@ public class JacksonEnvelopeMessagingSerializerTest {
     //region Command
 
     @Test
-    @Ignore("Dealing with resources deserialization")
     public void deserialize_ReceiptRequestCommand_ReturnsValidInstance() {
         // Arrange
         Command.CommandMethod method = Set;
