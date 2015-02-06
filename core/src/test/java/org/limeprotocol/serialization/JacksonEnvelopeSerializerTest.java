@@ -195,7 +195,7 @@ public class JacksonEnvelopeSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_VALUE_KEY).isEqualTo(content.getValue());
     }
 
-    
+    @Test
     public void deserialize_UnknownPlainContentMessage_ReturnsValidInstance()
     {
         UUID id = UUID.randomUUID();
