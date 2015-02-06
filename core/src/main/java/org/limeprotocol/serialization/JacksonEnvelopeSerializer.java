@@ -152,6 +152,14 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 
         Class<?> clazz = documentTypesMap.get(mediaType);
         if (clazz == null) {
+
+            if(typeNode.asText().endsWith("+json")){
+                clazz = JsonDocument.class;
+                JsonDocument jsonDocument = (JsonDocument) mapper.convertValue(documentNode, clazz);
+                jsonDocument.setMediaType(MediaType.parse(typeNode.asText()));
+                return jsonDocument;
+            }
+
             return new PlainDocument(documentNode.asText(), MediaType.parse(typeNode.asText()));
         }
         return (Document) mapper.convertValue(documentNode, clazz);
