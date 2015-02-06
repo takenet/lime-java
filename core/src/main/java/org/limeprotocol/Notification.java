@@ -1,27 +1,27 @@
 package org.limeprotocol;
 
-/// <summary>
-/// Transports information about events associated to a message
-/// sent in a session. Can be originated by a server
-/// or by the message destination node.
-/// </summary>
+/**
+ * Transports information about events associated to a message
+ * sent in a session. Can be originated by a server
+ * or by the message destination node.
+ */
 public class Notification extends Envelope {
 
     public Notification() {
         //Create a Envelope with a Empty Id
-        super(null);
+        super();
     }
 
-    /// <summary>
-    /// Related event to the notification
-    /// </summary>
+    /**
+     * Related event to the notification
+     */
     public Event event;
 
-    /// <summary>
-    /// In the case of a failed event,
-    /// brings more details about
-    /// the problem.
-    /// </summary>
+    /**
+     * In the case of a failed event,
+     * brings more details about
+     * the problem.
+     */
     public Reason reason;
 
     public Event getEvent() {
@@ -40,59 +40,58 @@ public class Notification extends Envelope {
         this.reason = reason;
     }
 
-    /// <summary>
-    /// Events that can happen
-    /// in the message pipeline
-    /// </summary>
+    /**
+     * Events that can happen in the message pipeline
+     */
     public enum Event {
-        /// <summary>
-        /// A problem occurred during the processing
-        /// of the message. In this case, the reason
-        /// property of the notification SHOULD be
-        /// present.
-        /// </summary>
-        Failed,
+        /**
+         * A problem occurred during the processing
+         * of the message. In this case, the reason
+         * property of the notification SHOULD be
+         * present.
+         */
+        FAILED,
 
-        /// <summary>
-        /// The message was received
-        /// and accepted by the server.
-        /// </summary>
-        Accepted,
+        /**
+         * The message was received
+         * and accepted by the server.
+         */
+        ACCEPTED,
 
-        /// <summary>
-        /// The message format was
-        /// validated by the server.
-        /// </summary>
+        /**
+         * The message format was
+         * validated by the server.
+         */
 
-        Validated,
+        VALIDATED,
 
-        /// <summary>
-        /// The dispatch of the message
-        /// was authorized by the server.
-        /// </summary>
+        /**
+         * The dispatch of the message
+         * was authorized by the server.
+         */
 
-        Authorized,
+        AUTHORIZED,
 
-        /// <summary>
-        /// The message was dispatched to
-        /// the destination by the server.
-        /// </summary>
+        /**
+         * The message was dispatched to
+         * the destination by the server.
+         */
 
-        Dispatched,
+        DISPATCHED,
 
-        /// <summary>
-        /// The destination has
-        /// received the message.
-        /// </summary>
+        /**
+         * The destination has
+         * received the message.
+         */
 
-        Received,
+        RECEIVED,
 
-        /// <summary>
-        /// The destination has
-        /// consumed the content of
-        /// the message.
-        /// </summary>
-        Consumed
+        /**
+         * The destination has
+         * consumed the content of
+         * the message.
+         */
+        CONSUMED
     }
 
 }

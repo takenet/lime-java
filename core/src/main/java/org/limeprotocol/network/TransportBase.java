@@ -19,8 +19,8 @@ public abstract class TransportBase implements Transport {
     private SessionEncryption encryption;
     
     protected TransportBase() {
-        compression = SessionCompression.none;
-        encryption = SessionEncryption.none;
+        compression = SessionCompression.NONE;
+        encryption = SessionEncryption.NONE;
         //TODO use dependency injection ?
         transportListenerBroadcastSender = new TransportListenerBroadcastSenderImpl();
     }

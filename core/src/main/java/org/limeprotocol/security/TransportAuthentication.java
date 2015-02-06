@@ -6,6 +6,6 @@ package org.limeprotocol.security;
  */
 public class TransportAuthentication extends Authentication {
     public TransportAuthentication() {
-        super(AuthenticationScheme.Transport);
+        super(AuthenticationScheme.TRANSPORT);
     }
 }

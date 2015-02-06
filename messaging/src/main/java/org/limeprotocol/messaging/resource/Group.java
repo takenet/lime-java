@@ -21,7 +21,7 @@ public class Group implements Document {
     }
 
     /**
-     * Identity of the group, in the group-id@groups.domain.com format.
+     * IDENTITY of the group, in the group-id@groups.domain.com format.
      */
     public Identity identity;
 
@@ -84,18 +84,18 @@ public class Group implements Document {
          * application is optimized to send large amounts of messages.
          * The temporary groups are private.
          */
-        Temporary,
+        TEMPORARY,
 
         /**
          * The group is not discoverable and someone
          * can join only if is invited by owner or a moderator.
          */
-        Private,
+        PRIVATE,
 
         /**
          * Any authenticated node in the domain can join the group.
          */
-        Public
+        PUBLIC
     }
 
     public class GroupMember implements Document {
@@ -132,26 +132,26 @@ public class Group implements Document {
          * messages to the group.
          * It's the default value.
          */
-        Member,
+        MEMBER,
 
         /**
          * The member can only receive messages
          * from the group, and doesn't have permission to send.
          */
-        Listener,
+        LISTENER,
 
         /**
          * The member can send and receive messages to
          * the group and can kick and
          * ban contacts from it.
          */
-        Moderator,
+        MODERATOR,
 
         /**
          * The owner have the permission to manage moderators,
          * change and delete the group.
          */
-        Owner
+        OWNER
     }
 
 }

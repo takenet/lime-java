@@ -89,33 +89,34 @@ public class Command extends Envelope {
         this.reason = reason;
     }
 
-    /// <summary>
-    /// Defines method for the manipulation
-    /// of messaging.
-    /// </summary>
+    /**
+     * Defines method for the manipulation
+     * of messaging.
+     */
     public enum CommandMethod {
-        /// <summary>
-        /// Gets an existing value of the resource.
-        /// </summary>
-        Get,
-        /// <summary>
-        /// Sets or updates a for the resource.
-        /// </summary>
-        Set,
-        /// <summary>
-        /// Deletes a value of the resource
-        /// or the resource itself.
-        /// </summary>
-        Delete,
-        CommandMethod, /// <summary>
-        /// Notify the destination about a change
-        /// in the resource value of the sender.
-        /// This method is one way and the destination
-        /// SHOULD NOT send a response for it.
-        /// Because of that, a command envelope with this
-        /// method MAY NOT have an id.
-        /// </summary>
-        Observe
+        /**
+         * Gets an existing value of the resource.
+         */
+        GET,
+        /**
+         * Sets or updates a for the resource.
+         */
+        SET,
+        /**
+         * Deletes a value of the resource
+         * or the resource itself.
+         */
+        DELETE,
+        COMMAND_METHOD,
+        /**
+         * Notify the destination about a change
+         * in the resource value of the sender.
+         * This method is one way and the destination
+         * SHOULD NOT send a response for it.
+         * Because of that, a command envelope with this
+         * method MAY NOT have an id.
+         */
+        OBSERVE
     }
 
     /// <summary>
@@ -126,16 +127,16 @@ public class Command extends Envelope {
         /// <summary>
         /// The resource action is pending
         /// </summary>
-        Pending,
+        PENDING,
         /// <summary>
         /// The resource action was
         /// sucessfully
         /// </summary>
-        Success,
+        SUCCESS,
         /// <summary>
         ///
         /// </summary>
-        Failure
+        FAILURE
     }
 
 

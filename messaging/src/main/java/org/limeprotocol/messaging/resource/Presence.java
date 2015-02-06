@@ -119,14 +119,14 @@ public class Presence implements Document {
          * Only deliver envelopes addressed
          * to the current session instance (name@domain/instance).
          */
-        Instance,
+        INSTANCE,
 
         /**
          * Deliver envelopes addressed to the current session instance
          * (name@domain/instance) and envelopes addressed to the
          * identity (name@domain)
          */
-        Identity,
+        IDENTITY,
 
         /**
          * Deliver envelopes addressed to the current session
@@ -135,7 +135,7 @@ public class Presence implements Document {
          * origitator is the smallest among the available
          * nodes of the identity with this setting.
          */
-        IdentityByDistance,
+        IDENTITY_BY_DISTANCE,
 
         /**
          * Deliver envelopes addressed to the current session
@@ -144,13 +144,13 @@ public class Presence implements Document {
          * priority property is the largest among the available
          * nodes of the identity with this setting.
          */
-        IdentityByPriority,
+        IDENTITY_BY_PRIORITY,
 
         /**
          * Deliver any envelopes addressed to the identity name@domain,
          * including the envelopes addressed to any specific instance.
          */
-        Promiscuous,
+        PROMISCUOUS,
 
         /**
          * This rule is intended to be used only for external domain authorities
@@ -158,7 +158,7 @@ public class Presence implements Document {
          * deliver envelopes addressed to their domain using the smallest distance
          * from the origitator among the available connected nodes for these authorities.
          */
-        DomainByDistance
+        DOMAIN_BY_DISTANCE
     }
 
     /**
@@ -171,7 +171,7 @@ public class Presence implements Document {
          * SHOULD not receive any envelope by any node,
          * except by the connected server.
          */
-        Unavailable,
+        UNAVAILABLE,
 
         /**
          * The node is available for messaging
@@ -179,7 +179,7 @@ public class Presence implements Document {
          * according to the defined routing rule.
          */
 
-        Available,
+        AVAILABLE,
 
         /**
          * The node is available but the senders should notice
@@ -187,14 +187,14 @@ public class Presence implements Document {
          * or it is on heavy load and don't want to receive
          * any envelope.
          */
-        Busy,
+        BUSY,
 
         /**
          * The node is available but the senders should notice
          * that it may not be reading or processing
          * the received envelopes.
          */
-        Away
+        AWAY
     }
 
 }

@@ -1,7 +1,6 @@
 package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
-import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
@@ -114,7 +113,7 @@ public class TcpTransport extends TransportBase implements Transport {
     @Override
     public SessionEncryption[] getSupportedEncryption() {
         
-        return new SessionEncryption[] { SessionEncryption.none, SessionEncryption.tls };
+        return new SessionEncryption[] { SessionEncryption.NONE, SessionEncryption.TLS};
     }
 
     /**
@@ -125,7 +124,7 @@ public class TcpTransport extends TransportBase implements Transport {
     @Override
     public void setEncryption(SessionEncryption encryption) throws IOException {
         switch (encryption) {
-            case tls:
+            case TLS:
                 sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
                         socket,
                         socket.getInetAddress().getHostAddress(),

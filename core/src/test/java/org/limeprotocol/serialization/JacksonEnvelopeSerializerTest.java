@@ -13,7 +13,6 @@ import org.limeprotocol.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -56,7 +55,7 @@ public class JacksonEnvelopeSerializerTest {
     //TODO: Instability
     public void serialize_AuthenticatingSession_ReturnsValidJsonString() {
         // Arrange
-        Session session = createSession(SessionState.Authenticating);
+        Session session = createSession(SessionState.AUTHENTICATING);
         PlainAuthentication plainAuthentication = createPlainAuthentication();
         session.setAuthentication(plainAuthentication);
 
@@ -80,7 +79,7 @@ public class JacksonEnvelopeSerializerTest {
     public void serialize_FailedSession_ReturnsValidJsonString() {
         // Arrange
         Session session = createSession();
-        session.setState(SessionState.Failed);
+        session.setState(SessionState.FAILED);
         session.setReason(createReason());
 
         // Act
@@ -131,7 +130,7 @@ public class JacksonEnvelopeSerializerTest {
 
         Command command = createCommand(resource);
         command.setPp(createNode());
-        command.setMethod(Set);
+        command.setMethod(SET);
         command.setUri(createRelativeLimeUri());
 
         // Act
@@ -203,7 +202,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void Serialize_FailedNotification_ReturnsValidJsonString()
     {
-        Notification notification = createNotification(Notification.Event.Failed);
+        Notification notification = createNotification(Notification.Event.FAILED);
         notification.setId(UUID.randomUUID());
         notification.setReason(createReason());
 
@@ -222,7 +221,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void serialize_ReceivedNotification_ReturnsValidJsonString()
     {
-        Notification notification = createNotification(Notification.Event.Received);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
         notification.setId(UUID.randomUUID());
         notification.setPp(createNode());
 
@@ -259,9 +258,9 @@ public class JacksonEnvelopeSerializerTest {
         String randomString1 = createRandomString(50);
         String randomString2 = createRandomString(50);
 
-        SessionState state = SessionState.Authenticating;
+        SessionState state = SessionState.AUTHENTICATING;
 
-        AuthenticationScheme scheme = AuthenticationScheme.Plain;
+        AuthenticationScheme scheme = AuthenticationScheme.PLAIN;
 
         String json = StringUtils.format("{\"state\":\"{0}\",\"scheme\":\"{9}\",\"authentication\":{\"password\":\"{1}\"},\"id\":\"{2}\",\"from\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
                 state.toString().toLowerCase(),
@@ -296,7 +295,7 @@ public class JacksonEnvelopeSerializerTest {
         assertThat(session.getPp()).isNull();
         assertThat(session.getReason()).isNull();
 
-        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Plain);
+        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.PLAIN);
     }
 
     @Test
@@ -306,7 +305,7 @@ public class JacksonEnvelopeSerializerTest {
         Node from = createNode();
         Node to = createNode();
 
-        SessionState state = SessionState.Authenticating;
+        SessionState state = SessionState.AUTHENTICATING;
 
         int reasonCode = 57;
         String reasonDescription = "Unit test";
@@ -349,7 +348,7 @@ public class JacksonEnvelopeSerializerTest {
         assertThat(envelope).isInstanceOf(Session.class);
 
         Session session = (Session)envelope;
-        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Plain);
+        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.PLAIN);
         assertThat(session.getAuthentication()).isInstanceOf(PlainAuthentication.class);
 
         PlainAuthentication authentication = (PlainAuthentication)session.getAuthentication();
@@ -368,7 +367,7 @@ public class JacksonEnvelopeSerializerTest {
         assertThat(envelope).isInstanceOf(Session.class);
 
         Session session = (Session)envelope;
-        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Guest);
+        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.GUEST);
         assertThat(session.getAuthentication()).isInstanceOf(GuestAuthentication.class);
     }
 
@@ -379,7 +378,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_AbsoluteUriRequestCommand_ReturnsValidInstance() {
         // Arrange
-        CommandMethod method = Get;
+        CommandMethod method = GET;
         UUID id = UUID.randomUUID();
 
         Node from = createNode();
@@ -649,7 +648,7 @@ public class JacksonEnvelopeSerializerTest {
         String randomString1 = createRandomString(50);
         String randomString2 = createRandomString(50);
 
-        Notification.Event event = Notification.Event.Received;
+        Notification.Event event = Notification.Event.RECEIVED;
 
         String json = StringUtils.format(
                 "{\"event\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
@@ -687,7 +686,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_FailedNotification_ReturnsValidInstance()
     {
-        Notification.Event event = Notification.Event.Received;
+        Notification.Event event = Notification.Event.RECEIVED;
         int reasonCode = createRandomInt(100);
         String reasonDescription = createRandomString(100);
 
