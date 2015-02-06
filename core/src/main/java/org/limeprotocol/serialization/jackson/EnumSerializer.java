@@ -27,6 +27,6 @@ public class EnumSerializer extends StdScalarSerializer<Enum> {
 
     @Override
     public void serialize(Enum value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonGenerationException {
-        jgen.writeString(value.name().toLowerCase());
+        jgen.writeString(value.name().toLowerCase()); //TODO Instead of lowercase must be camelCase (from ALL_CAPS)
     }
 }
