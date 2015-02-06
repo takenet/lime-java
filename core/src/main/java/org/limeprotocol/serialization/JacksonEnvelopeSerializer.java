@@ -118,30 +118,31 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     }
 
     private Command parseCommand(ObjectNode node) {
-        JsonNode resourceType = node.get("type");
-        JsonNode resource = node.get("resource");
-
-        node.remove("type");
-        node.remove("resource");
 
         Command command = mapper.convertValue(node, Command.class);
 
-        Document document = deserializeDocument(resource, resourceType);
+        Document document = deserializeDocument(node, "resource");
         command.setResource(document);
         return command;
     }
 
     private Message parseMessage(ObjectNode node){
 
-        JsonNode contentNode = node.get("content");
-
-        node.remove("content");
-
         Message message = mapper.convertValue(node, Message.class);
+        Document document = deserializeDocument(node, "content");
+
+        message.setContent(document);
         return message;
     }
 
-    private Document deserializeDocument(JsonNode documentNode, JsonNode typeNode) {
+    private Document deserializeDocument(ObjectNode node, String documentName) {
+
+        JsonNode documentNode = node.get(documentName);
+        JsonNode typeNode = node.get("type");
+
+        node.remove(documentName);
+        node.remove("type");
+
         MediaType mediaType = mapper.convertValue(typeNode, MediaType.class);
 
         Class<?> clazz = documentTypesMap.get(mediaType);
