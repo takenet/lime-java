@@ -2,9 +2,8 @@ package org.limeprotocol;
 
 import org.limeprotocol.util.StringUtils;
 
-public class PlainDocument implements Document {
+public class PlainDocument extends DocumentBase {
 
-    private MediaType mediaType;
     /**
      * The value of the document
      */
@@ -14,9 +13,8 @@ public class PlainDocument implements Document {
         this(null, mediaType);
     }
 
-    public PlainDocument(String value, MediaType mediaType)
-    {
-        this.mediaType = mediaType;
+    public PlainDocument(String value, MediaType mediaType) {
+        super(mediaType);
 
         if (!StringUtils.isNullOrWhiteSpace(mediaType.getSuffix()))
         {

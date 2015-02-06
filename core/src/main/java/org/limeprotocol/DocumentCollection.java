@@ -7,10 +7,6 @@ public class DocumentCollection implements Document, Iterable {
 
     public static final String MIME_TYPE = "application/vnd.lime.collection+json";
 
-    public final String TOTAL_KEY = "total";
-    public final String ITEM_TYPE_KEY = "itemType";
-    public final String ITEMS_KEY = "items";
-
     private MediaType mediaType;
 
     private int total;
