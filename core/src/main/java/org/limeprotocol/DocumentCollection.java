@@ -5,7 +5,7 @@ import java.util.Iterator;
 
 public class DocumentCollection implements Document, Iterable {
 
-    public final String MIME_TYPE = "application/vnd.lime.collection+json";
+    public static final String MIME_TYPE = "application/vnd.lime.collection+json";
 
     public final String TOTAL_KEY = "total";
     public final String ITEM_TYPE_KEY = "itemType";

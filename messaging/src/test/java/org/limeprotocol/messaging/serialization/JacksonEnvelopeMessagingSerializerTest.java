@@ -13,6 +13,7 @@ import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -394,16 +395,15 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThat(command.getMethod()).isEqualTo(method);
 
-        assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
-        assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
-
-        assertThat(envelope).isInstanceOf(DocumentCollection.class);
+        assertThat(command.getType().toString()).isEqualTo(DocumentCollection.MIME_TYPE);
+        assertThat(command.getResource()).isNotNull().isInstanceOf(DocumentCollection.class);
 
         DocumentCollection documents = (DocumentCollection)command.getResource();
 
-        assertThat(documents.getItems()).isNotNull().hasSize(3);
+        Document[] items = documents.getItems();
+        assertThat(items).isNotNull().hasSize(3);
 
-        Contact[] contacts = (Contact[]) documents.getItems();
+        Contact[] contacts = Arrays.copyOf(items, items.length, Contact[].class);
 
         assertThat(contacts[0].getIdentity()).isEqualTo(identity1);
         assertThat(contacts[0].getName()).isEqualTo(name1);
