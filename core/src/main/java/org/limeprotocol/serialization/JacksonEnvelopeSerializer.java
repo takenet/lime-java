@@ -125,8 +125,8 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         Document document = deserializeDocument(node, "resource");
 
         Command command = mapper.convertValue(node, Command.class);
-
         command.setResource(document);
+
         return command;
     }
 
@@ -142,8 +142,13 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 
     private Document deserializeDocument(ObjectNode node, String documentName) {
 
-        JsonNode documentNode = node.get(documentName);
         JsonNode typeNode = node.get("type");
+
+        if (typeNode == null) {
+            return null;
+        }
+
+        JsonNode documentNode = node.get(documentName);
 
         node.remove(documentName);
         node.remove("type");

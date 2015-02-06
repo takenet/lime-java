@@ -420,15 +420,7 @@ public class JacksonEnvelopeSerializerTest {
         notification.setId(UUID.randomUUID());
         notification.setPp(createNode());
 
-        String metadataKey1 = "randomString1";
-        String metadataValue1 = createRandomString(50);
-        String metadataKey2 = "randomString2";
-        String metadataValue2 = createRandomString(50);
-
-        Map <String, String> metadata = new HashMap<>();
-        metadata.put(metadataKey1, metadataValue1);
-        metadata.put(metadataKey2, metadataValue2);
-        notification.setMetadata(metadata);
+        notification.setMetadata(createRandomMetadata("randomString1", "randomString2"));
 
         String resultString = target.serialize(notification);
 
