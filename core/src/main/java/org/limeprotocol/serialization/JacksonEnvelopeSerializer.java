@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.*;
-import org.limeprotocol.security.*;
+import org.limeprotocol.security.Authentication;
+import org.limeprotocol.security.GuestAuthentication;
+import org.limeprotocol.security.PlainAuthentication;
+import org.limeprotocol.security.TransportAuthentication;
 import org.reflections.Reflections;
 
 import java.io.IOException;
@@ -28,7 +31,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         Set<Class<? extends Document>> documentTypes = reflections.getSubTypesOf(Document.class);
 
         documentTypesMap = new HashMap<MediaType, Class<? extends Document>>(documentTypes.size());
-        for(Class<? extends Document> documentType : documentTypes) {
+        for (Class<? extends Document> documentType : documentTypes) {
             Document document = null;
             try {
                 document = documentType.getConstructor().newInstance(new Object[]{});
@@ -85,10 +88,10 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         }
     }
 
-    private Authentication parseAuthentication(JsonNode schemeNode, JsonNode authenticationNode){
+    private Authentication parseAuthentication(JsonNode schemeNode, JsonNode authenticationNode) {
         AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
 
-        if (scheme == null){
+        if (scheme == null) {
             return null;
         }
         switch (scheme) {
@@ -118,37 +121,39 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     }
 
     private Command parseCommand(ObjectNode node) {
-        JsonNode resourceType = node.get("type");
-        JsonNode resource = node.get("resource");
 
-        node.remove("type");
-        node.remove("resource");
+        Document document = deserializeDocument(node, "resource");
 
         Command command = mapper.convertValue(node, Command.class);
 
-        Document document = deserializeDocument(resource, resourceType);
         command.setResource(document);
         return command;
     }
 
-    private Message parseMessage(ObjectNode node){
+    private Message parseMessage(ObjectNode node) {
 
-        JsonNode contentNode = node.get("content");
-
-        node.remove("content");
+        Document document = deserializeDocument(node, "content");
 
         Message message = mapper.convertValue(node, Message.class);
+
+        message.setContent(document);
         return message;
     }
 
-    private Document deserializeDocument(JsonNode documentNode, JsonNode typeNode) {
+    private Document deserializeDocument(ObjectNode node, String documentName) {
+
+        JsonNode documentNode = node.get(documentName);
+        JsonNode typeNode = node.get("type");
+
+        node.remove(documentName);
+        node.remove("type");
+
         MediaType mediaType = mapper.convertValue(typeNode, MediaType.class);
 
         Class<?> clazz = documentTypesMap.get(mediaType);
-        if (clazz != null) {
-            return (Document) mapper.convertValue(documentNode, clazz);
-        } else {
-            throw new IllegalStateException("There is no document with the media type " + typeNode.asText());
+        if (clazz == null) {
+            return new PlainDocument(documentNode.asText(), MediaType.parse(typeNode.asText()));
         }
+        return (Document) mapper.convertValue(documentNode, clazz);
     }
 }
