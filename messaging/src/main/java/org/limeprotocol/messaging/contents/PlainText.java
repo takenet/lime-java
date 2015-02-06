@@ -1,18 +1,17 @@
 package org.limeprotocol.messaging.contents;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
 /**
  * Represents a flat text content
  */
-public class PlainText implements Document {
-    public final String MIME_TYPE = "text/plain";
-    private MediaType mediaType;
-
+public class PlainText extends DocumentBase {
+    public static final String MIME_TYPE = "text/plain";
 
     public PlainText() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     public PlainText(String value) {
@@ -48,11 +47,5 @@ public class PlainText implements Document {
     public String toString() {
         return this.text;
     }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
-    }
-
 
 }

@@ -1,6 +1,7 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
 import java.util.Date;
@@ -13,19 +14,11 @@ import java.util.Date;
  * is enforced by the existing session).
  * In a new session, the node starts with an unavailable status.
  */
-public class Presence implements Document {
-    public final String MIME_TYPE = "application/vnd.lime.presence+json";
-
-    public final String STATUS_KEY = "status";
-    public final String MESSAGE_KEY = "message";
-    public final String ROUTING_RULE_KEY = "routingRule";
-    public final String LAST_SEEN_KEY = "lastSeen";
-    public final String PRIORITY_KEY = "priority";
-    public final String INSTANCES_KEY = "instances";
-    private MediaType mediaType;
+public class Presence extends DocumentBase {
+    public static final String MIME_TYPE = "application/vnd.lime.presence+json";
 
     public Presence() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -107,12 +100,6 @@ public class Presence implements Document {
     public void setInstances(String[] instances) {
         this.instances = instances;
     }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
-    }
-
 
     public enum RoutingRule {
         /**

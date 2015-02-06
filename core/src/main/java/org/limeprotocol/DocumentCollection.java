@@ -3,18 +3,16 @@ package org.limeprotocol;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class DocumentCollection implements Document, Iterable {
+public class DocumentCollection extends DocumentBase implements Iterable {
 
     public static final String MIME_TYPE = "application/vnd.lime.collection+json";
-
-    private MediaType mediaType;
 
     private int total;
     private MediaType itemType;
     private Document[] items;
 
     public DocumentCollection() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     public int getTotal() {
@@ -39,11 +37,6 @@ public class DocumentCollection implements Document, Iterable {
 
     public void setItems(Document[] items) {
         this.items = items;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 
     @Override

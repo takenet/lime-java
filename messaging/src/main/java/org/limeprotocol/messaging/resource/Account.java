@@ -1,85 +1,68 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
-public class Account implements Document {
+public class Account extends DocumentBase {
 
-    public final String RESOURCE_PATH = "/account";
+    public static final String RESOURCE_PATH = "/account";
 
-    public final String MIME_TYPE = "application/vnd.lime.account+json";
-
-    public final String FULL_NAME_KEY = "fullName";
-    public final String ADDRESS_KEY = "address";
-    public final String CITY_KEY = "city";
-    public final String EMAIL_KEY = "email";
-    public final String PHONE_NUMBER_KEY = "phoneNumber";
-    public final String CELL_PHONE_NUMBER_KEY = "cellPhoneNumber";
-    public final String IS_TEMPORARY_KEY = "isTemporary";
-    public final String PASSWORD_KEY = "password";
-    public final String OLD_PASSWORD_KEY = "oldPassword";
-    public final String INBOX_SIZE_KEY = "inboxSize";
-    public final String ALLOW_ANONYMOUS_SENDER_KEY = "allowAnonymousSender";
-    public final String ALLOW_UNKNOWN_SENDER_KEY = "allowUnknownSender";
-    public final String STORE_MESSAGE_CONTENT_KEY = "storeMessageContent";
-
-    private MediaType mediaType;
+    public static final String MIME_TYPE = "application/vnd.lime.account+json";
 
     public Account() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
      * The user full name
      */
-    public String fullName;
+    private String fullName;
 
     /**
      * The user address
      */
-
-    public String address;
+    private String address;
 
     /**
      * The user city
      */
-    public String city;
+    private String city;
 
     /**
      * The user e-mail address
      */
-    public String email;
+    private String email;
 
     /**
      * The user phone number
      */
-    public String phoneNumber;
+    private String phoneNumber;
 
     /**
      * The user cellphone number
      */
-    public String cellPhoneNumber;
+    private String cellPhoneNumber;
 
     /**
      * Indicates that the account is
      * temporary is valid only in
      * the current session
      */
-    public Boolean isTemporary;
-
+    private Boolean isTemporary;
 
     /**
      * Size of account inbox
      * for storing offline messages
      */
-    public Integer inboxSize;
+    private Integer inboxSize;
 
     /**
      * Indicates if this account
      * allows receive messages from
      * anonymous users
      */
-    public Boolean allowAnonymousSender;
+    private Boolean allowAnonymousSender;
 
     /**
      * Indicates if this account
@@ -87,7 +70,7 @@ public class Account implements Document {
      * users that are not in
      * the account contact list
      */
-    public Boolean allowUnknownSender;
+    private Boolean allowUnknownSender;
 
     /**
      * Indicates if the content of messages
@@ -95,7 +78,7 @@ public class Account implements Document {
      * the server. Note that for offline messages,
      * this will always happens.
      */
-    public Boolean storeMessageContent;
+    private Boolean storeMessageContent;
 
     public Boolean getAllowAnonymousSender() {
         return allowAnonymousSender;
@@ -183,10 +166,5 @@ public class Account implements Document {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }

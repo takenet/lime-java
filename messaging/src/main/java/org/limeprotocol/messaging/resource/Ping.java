@@ -1,19 +1,14 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
-public class Ping implements Document {
+public class Ping extends DocumentBase {
 
-    public final String MIME_TYPE = "application/vnd.lime.ping+json";
-    private final MediaType mediaType;
+    public static final String MIME_TYPE = "application/vnd.lime.ping+json";
 
     public Ping() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
+        super(MediaType.parse(MIME_TYPE));
     }
 }

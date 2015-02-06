@@ -1,23 +1,17 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.util.StringUtils;
 
-public class Contact implements Document {
+public class Contact extends DocumentBase {
 
-    public final String MIME_TYPE = "application/vnd.lime.contact+json";
-
-    public final String IDENTITY_KEY = "identity";
-    public final String NAME_KEY = "name";
-    public final String IS_PENDING_KEY = "isPending";
-    public final String SHARE_PRESENCE_KEY = "sharePresence";
-    public final String SHARE_ACCOUNT_INFO_KEY = "shareAccountInfo";
-    private MediaType mediaType;
+    public static final String MIME_TYPE = "application/vnd.lime.contact+json";
 
     public Contact() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -99,7 +93,7 @@ public class Contact implements Document {
     }
 
     /**
-     *Returns a <see cref="System.String" /> that represents this instance.
+     * Returns a <see cref="System.String" /> that represents this instance.
      */
     @Override
     public String toString() {
@@ -107,7 +101,7 @@ public class Contact implements Document {
     }
 
     /**
-     *Determines whether the specified <see cref="System.Object" }, is equal to this instance.
+     * Determines whether the specified <see cref="System.Object" }, is equal to this instance.
      */
     @Override
     public boolean equals(Object obj) {
@@ -119,15 +113,10 @@ public class Contact implements Document {
     }
 
     /**
-     *Returns a hash code for this instance.
+     * Returns a hash code for this instance.
      */
     @Override
     public int hashCode() {
         return this.identity != null ? this.identity.hashCode() : 0;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }

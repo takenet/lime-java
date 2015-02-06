@@ -1,6 +1,7 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
 
@@ -12,12 +13,11 @@ import org.limeprotocol.MediaType;
  * caller, like a resource in a server. To be able to subscribe to another node resource,
  * the subscriber must have a get delegation for the resource in the publisher node.
  */
-public class Subscription implements Document {
-    public final String MIME_TYPE = "application/vnd.lime.subscription+json";
-    private final MediaType mediaType;
+public class Subscription extends DocumentBase {
+    public static final String MIME_TYPE = "application/vnd.lime.subscription+json";
 
     public Subscription() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -25,15 +25,26 @@ public class Subscription implements Document {
      * The default value is the identity of the
      * from property of the envelope.
      */
-    public Identity owner;
+    private Identity owner;
 
     /**
      * The MIME type of the resource for subscription.
      */
-    public MediaType type;
+    private MediaType type;
 
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
+    public Identity getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Identity owner) {
+        this.owner = owner;
+    }
+
+    public MediaType getType() {
+        return type;
+    }
+
+    public void setType(MediaType type) {
+        this.type = type;
     }
 }
