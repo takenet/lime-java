@@ -66,11 +66,11 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
             return null;
         }
         switch (scheme) {
-            case Guest:
+            case GUEST:
                 return new GuestAuthentication();
-            case Plain:
+            case PLAIN:
                 return mapper.convertValue(authenticationNode, PlainAuthentication.class);
-            case Transport:
+            case TRANSPORT:
                 return new TransportAuthentication();
             default:
                 throw new IllegalArgumentException("JSON string is not a valid session envelope");

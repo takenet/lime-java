@@ -9,20 +9,20 @@ public class Notification extends Envelope {
 
     public Notification() {
         //Create a Envelope with a Empty Id
-        super(null);
+        super();
     }
 
     /**
      * Related event to the notification
      */
-    private Event event;
+    public Event event;
 
     /**
      * In the case of a failed event,
      * brings more details about
      * the problem.
      */
-    private Reason reason;
+    public Reason reason;
 
     public Event getEvent() {
         return event;
@@ -41,8 +41,7 @@ public class Notification extends Envelope {
     }
 
     /**
-     * Events that can happen
-     * in the message pipeline
+     * Events that can happen in the message pipeline
      */
     public enum Event {
         /**
@@ -51,44 +50,48 @@ public class Notification extends Envelope {
          * property of the notification SHOULD be
          * present.
          */
-        Failed,
+        FAILED,
 
         /**
          * The message was received
          * and accepted by the server.
          */
-        Accepted,
+        ACCEPTED,
 
         /**
          * The message format was
          * validated by the server.
          */
-        Validated,
+
+        VALIDATED,
 
         /**
          * The dispatch of the message
          * was authorized by the server.
          */
-        Authorized,
+
+        AUTHORIZED,
 
         /**
          * The message was dispatched to
          * the destination by the server.
          */
-        Dispatched,
+
+        DISPATCHED,
 
         /**
          * The destination has
          * received the message.
          */
-        Received,
+
+        RECEIVED,
 
         /**
          * The destination has
          * consumed the content of
          * the message.
          */
-        Consumed
+        CONSUMED
     }
 
 }

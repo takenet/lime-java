@@ -20,7 +20,7 @@ import java.util.UUID;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.limeprotocol.Command.CommandMethod.Set;
+import static org.limeprotocol.Command.CommandMethod.SET;
 import static org.limeprotocol.Notification.Event;
 import static org.limeprotocol.messaging.contents.ChatState.ChatStateEvent;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_CONTENT_TYPES_KEY;
@@ -91,7 +91,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         Capability resource = createCapability();
         Command command = createCommand(resource);
         command.setPp(createNode());
-        command.setMethod(Command.CommandMethod.Get);
+        command.setMethod(Command.CommandMethod.GET);
 
         String metadataKey1 = "randomString1";
         String metadataValue1 = createRandomString(50);
@@ -305,7 +305,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void deserialize_ReceiptRequestCommand_ReturnsValidInstance() {
         // Arrange
-        Command.CommandMethod method = Set;
+        Command.CommandMethod method = SET;
         UUID id = UUID.randomUUID();
 
         String json = StringUtils.format(
@@ -332,7 +332,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
         assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
         Receipt receipt = (Receipt) command.getResource();
-        assertThat(receipt.getEvents()).containsOnly(new Event[] {Event.Dispatched, Event.Received });
+        assertThat(receipt.getEvents()).containsOnly(new Event[] {Event.DISPATCHED, Event.RECEIVED});
 
         assertThat(command.getUri()).isNull();
     }
@@ -347,7 +347,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         Identity identity3 = createIdentity();
         String name3 = createRandomString(50);
 
-        Command.CommandMethod method = Command.CommandMethod.Get;
+        Command.CommandMethod method = Command.CommandMethod.GET;
 
         UUID id = UUID.randomUUID();
         Node from = createNode();
