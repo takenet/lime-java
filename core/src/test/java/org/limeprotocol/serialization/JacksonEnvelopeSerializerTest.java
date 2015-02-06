@@ -53,6 +53,7 @@ public class JacksonEnvelopeSerializerTest {
     //region Session
 
     @Test
+    //TODO: Instability
     public void serialize_AuthenticatingSession_ReturnsValidJsonString() {
         // Arrange
         Session session = createSession(SessionState.Authenticating);
@@ -248,147 +249,149 @@ public class JacksonEnvelopeSerializerTest {
         PlainDocument content = (PlainDocument)message.getContent();
         assertEquals(text, content.getValue());
     }
-//
-//    [Test]
-//            [Category("Deserialize")]
-//    public void Deserialize_UnknownJsonContentMessage_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var id = Guid.NewGuid();
-//        var from = DataUtil.CreateNode();
-//        var pp = DataUtil.CreateNode();
-//        var to = DataUtil.CreateNode();
-//
-//        string randomKey1 = "randomString1";
-//        string randomKey2 = "randomString2";
-//        string randomString1 = DataUtil.CreateRandomString(50);
-//        string randomString2 = DataUtil.CreateRandomString(50);
-//
-//
-//        var type = DataUtil.CreateJsonMediaType();
-//
-//        var propertyName1 = DataUtil.CreateRandomString(10);
-//        var propertyName2 = DataUtil.CreateRandomString(10);
-//        var propertyValue1 = DataUtil.CreateRandomString(10);
-//        var propertyValue2 = (long)DataUtil.CreateRandomInt(1000);
-//
-//
-//        string json = string.Format(
-//                "{{\"type\":\"{0}\",\"content\":{{\"{1}\":\"{2}\",\"{3}\":{4}}},\"id\":\"{5}\",\"from\":\"{6}\",\"pp\":\"{7}\",\"to\":\"{8}\",\"metadata\":{{\"{9}\":\"{10}\",\"{11}\":\"{12}\"}}}}",
-//                type,
-//                propertyName1,
-//                propertyValue1,
-//                propertyName2,
-//                propertyValue2,
-//                id,
-//                from,
-//                pp,
-//                to,
-//                randomKey1,
-//                randomString1,
-//                randomKey2,
-//                randomString2
-//        );
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Message);
-//
-//        var message = (Message)envelope;
-//        Assert.AreEqual(id, message.Id);
-//        Assert.AreEqual(from, message.From);
-//        Assert.AreEqual(pp, message.Pp);
-//        Assert.AreEqual(to, message.To);
-//        Assert.IsNotNull(message.Metadata);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey1));
-//        Assert.AreEqual(message.Metadata[randomKey1], randomString1);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey2));
-//        Assert.AreEqual(message.Metadata[randomKey2], randomString2);
-//
-//        Assert.IsNotNull(message.Type);
-//        Assert.AreEqual(message.Type, type);
-//
-//        Assert.IsTrue(message.Content is JsonDocument);
-//
-//        var content = (JsonDocument)message.Content;
-//
-//        Assert.IsTrue(content.ContainsKey(propertyName1));
-//        Assert.AreEqual(content[propertyName1], propertyValue1);
-//        Assert.IsTrue(content.ContainsKey(propertyName2));
-//        Assert.AreEqual(content[propertyName2], propertyValue2);
-//
-//    }
-//
-//    [Test]
-//            [Category("Deserialize")]
-//    public void Deserialize_GenericJsonContentMessage_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var id = Guid.NewGuid();
-//        var from = DataUtil.CreateNode();
-//        var pp = DataUtil.CreateNode();
-//        var to = DataUtil.CreateNode();
-//
-//        string randomKey1 = "randomString1";
-//        string randomKey2 = "randomString2";
-//        string randomString1 = DataUtil.CreateRandomString(50);
-//        string randomString2 = DataUtil.CreateRandomString(50);
-//
-//        var type = new MediaType(MediaType.DiscreteTypes.Application, MediaType.SubTypes.JSON, null);
-//
-//        var propertyName1 = DataUtil.CreateRandomString(10);
-//        var propertyName2 = DataUtil.CreateRandomString(10);
-//        var propertyValue1 = DataUtil.CreateRandomString(10);
-//        var propertyValue2 = (long)DataUtil.CreateRandomInt(1000);
-//
-//
-//        string json = string.Format(
-//                "{{\"type\":\"{0}\",\"content\":{{\"{1}\":\"{2}\",\"{3}\":{4}}},\"id\":\"{5}\",\"from\":\"{6}\",\"pp\":\"{7}\",\"to\":\"{8}\",\"metadata\":{{\"{9}\":\"{10}\",\"{11}\":\"{12}\"}}}}",
-//                type,
-//                propertyName1,
-//                propertyValue1,
-//                propertyName2,
-//                propertyValue2,
-//                id,
-//                from,
-//                pp,
-//                to,
-//                randomKey1,
-//                randomString1,
-//                randomKey2,
-//                randomString2
-//        );
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Message);
-//
-//        var message = (Message)envelope;
-//        Assert.AreEqual(id, message.Id);
-//        Assert.AreEqual(from, message.From);
-//        Assert.AreEqual(pp, message.Pp);
-//        Assert.AreEqual(to, message.To);
-//        Assert.IsNotNull(message.Metadata);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey1));
-//        Assert.AreEqual(message.Metadata[randomKey1], randomString1);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey2));
-//        Assert.AreEqual(message.Metadata[randomKey2], randomString2);
-//
-//        Assert.IsNotNull(message.Type);
-//        Assert.AreEqual(message.Type, type);
-//
-//        Assert.IsTrue(message.Content is JsonDocument);
-//
-//        var content = (JsonDocument)message.Content;
-//
-//        Assert.IsTrue(content.ContainsKey(propertyName1));
-//        Assert.AreEqual(content[propertyName1], propertyValue1);
-//        Assert.IsTrue(content.ContainsKey(propertyName2));
-//        Assert.AreEqual(content[propertyName2], propertyValue2);
-//
-//    }
+
+    @Test
+    public void deserialize_UnknownJsonContentMessage_ReturnsValidInstance()
+    {
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+
+        MediaType type = createJsonMediaType();
+
+        String propertyName1 = createRandomString(10);
+        String propertyName2 = createRandomString(10);
+        String propertyValue1 = createRandomString(10);
+        long propertyValue2 = createRandomLong();
+
+        String json = StringUtils.format(
+                "{\"type\":\"{0}\",\"content\":{\"{1}\":\"{2}\",\"{3}\":{4}},\"id\":\"{5}\",\"from\":\"{6}\",\"pp\":\"{7}\",\"to\":\"{8}\",\"metadata\":{\"{9}\":\"{10}\",\"{11}\":\"{12}\"}}",
+                type,
+                propertyName1,
+                propertyValue1,
+                propertyName2,
+                propertyValue2,
+                id,
+                from,
+                pp,
+                to,
+                randomKey1,
+                randomString1,
+                randomKey2,
+                randomString2
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        assertThat(envelope instanceof Message);
+
+        Message message = (Message)envelope;
+
+        assertEquals(id, message.getId());
+        assertEquals(from, message.getFrom());
+        assertEquals(pp, message.getPp());
+        assertEquals(to, message.getTo());
+
+        assertNotNull(message.getMetadata());
+
+        assertTrue(message.getMetadata().containsKey(randomKey1));
+        assertEquals(message.getMetadata().get(randomKey1), randomString1);
+
+        assertTrue(message.getMetadata().containsKey(randomKey2));
+        assertEquals(message.getMetadata().get(randomKey2), randomString2);
+
+        assertNotNull(message.getType());
+        assertEquals(message.getType(), type);
+
+        assertTrue(message.getContent() instanceof JsonDocument);
+
+        JsonDocument content = (JsonDocument)message.getContent();
+
+        assertTrue(content.containsKey(propertyName1));
+        assertEquals(content.get(propertyName1), propertyValue1);
+
+        assertTrue(content.containsKey(propertyName2));
+        assertEquals(content.get(propertyName2), propertyValue2);
+    }
+
+    @Test
+    public void deserialize_GenericJsonContentMessage_ReturnsValidInstance()
+    {
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+        MediaType type = new MediaType(MediaType.DiscreteTypes.Application, MediaType.SubTypes.JSON, null);
+
+        String propertyName1 = createRandomString(10);
+        String propertyName2 = createRandomString(10);
+        String propertyValue1 = createRandomString(10);
+        long propertyValue2 = (long) createRandomLong();
+
+
+        String json = StringUtils.format(
+                "{\"type\":\"{0}\",\"content\":{\"{1}\":\"{2}\",\"{3}\":{4}},\"id\":\"{5}\",\"from\":\"{6}\",\"pp\":\"{7}\",\"to\":\"{8}\",\"metadata\":{\"{9}\":\"{10}\",\"{11}\":\"{12}\"}}",
+                type,
+                propertyName1,
+                propertyValue1,
+                propertyName2,
+                propertyValue2,
+                id,
+                from,
+                pp,
+                to,
+                randomKey1,
+                randomString1,
+                randomKey2,
+                randomString2
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        assertTrue(envelope instanceof Message);
+
+        Message message = (Message)envelope;
+
+        assertEquals(id, message.getId());
+        assertEquals(from, message.getFrom());
+        assertEquals(pp, message.getPp());
+        assertEquals(to, message.getTo());
+
+        assertNotNull(message.getMetadata());
+
+        assertTrue(message.getMetadata().containsKey(randomKey1));
+        assertEquals(message.getMetadata().get(randomKey1), randomString1);
+
+        assertTrue(message.getMetadata().containsKey(randomKey2));
+        assertEquals(message.getMetadata().get(randomKey2), randomString2);
+
+        assertNotNull(message.getType());
+        assertEquals(message.getType(), type);
+
+        assertTrue(message.getContent() instanceof JsonDocument);
+
+        JsonDocument content = (JsonDocument)message.getContent();
+
+        assertTrue(content.containsKey(propertyName1));
+        assertEquals(content.get(propertyName1), propertyValue1);
+
+        assertTrue(content.containsKey(propertyName2));
+        assertEquals(content.get(propertyName2), propertyValue2);
+
+    }
 
     //endregion Message
 

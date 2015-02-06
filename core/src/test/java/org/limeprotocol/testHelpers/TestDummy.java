@@ -31,6 +31,10 @@ public class TestDummy {
         return new Random().nextInt(size);
     }
 
+    public static long createRandomLong() {
+        return new Random().nextLong();
+    }
+
     public static String createDomainName() {
         return StringUtils.format("{0}.com", createRandomString(10));
     }
