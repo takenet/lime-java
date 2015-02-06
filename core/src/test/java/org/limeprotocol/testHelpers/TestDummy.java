@@ -117,7 +117,7 @@ public class TestDummy {
 
     public static Message createMessage(Document content)
     {
-        Message message = new Message();
+        Message message = new Message(UUID.randomUUID());
 
         message.setContent(content);
         message.setFrom(createNode());
@@ -131,7 +131,7 @@ public class TestDummy {
     }
 
     public static Command createCommand(Document resource) {
-        Command command = new Command();
+        Command command = new Command(UUID.randomUUID());
         command.setFrom(TestDummy.createNode());
         command.setTo(TestDummy.createNode());
         command.setMethod(Command.CommandMethod.Get);
