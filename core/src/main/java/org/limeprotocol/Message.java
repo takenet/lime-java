@@ -6,9 +6,7 @@ public class Message extends Envelope {
 
     private Document content;
 
-    public Message()
-    {
-    }
+    public Message(){}
 
     public Message(UUID id)
     {

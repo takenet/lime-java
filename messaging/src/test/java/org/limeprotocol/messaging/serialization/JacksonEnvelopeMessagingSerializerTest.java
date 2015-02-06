@@ -24,8 +24,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.limeprotocol.Command.CommandMethod.Set;
 import static org.limeprotocol.Notification.Event;
-import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.CONTENT_TYPES_KEY;
-import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createCapability;
 import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createTextContent;
 import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
@@ -232,74 +231,72 @@ public class JacksonEnvelopeMessagingSerializerTest {
         ChatState textContent = (ChatState)message.getContent();
         assertEquals(state, textContent.getState());
     }
-//
-//    public void Deserialize_FireAndForgetTextMessage_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var from = DataUtil.CreateNode();
-//        var to = DataUtil.CreateNode();
-//
-//        var text = DataUtil.CreateRandomString(50);
-//
-//        string json = string.Format(
-//                "{{\"type\":\"text/plain\",\"content\":\"{0}\",\"from\":\"{1}\",\"to\":\"{2}\"}}",
-//                text,
-//                from,
-//                to
-//        );
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Message);
-//
-//        var message = (Message)envelope;
-//        Assert.AreEqual(from, message.From);
-//        Assert.AreEqual(to, message.To);
-//
-//        Assert.AreEqual(message.Id, Guid.Empty);
-//        Assert.IsNull(message.Pp);
-//        Assert.IsNull(message.Metadata);
-//
-//        Assert.IsTrue(message.Content is PlainText);
-//        var textContent = (PlainText)message.Content;
-//        Assert.AreEqual(text, textContent.Text);
-//    }
-//
-//    [Test]
-//            [Category("Deserialize")]
-//    public void Deserialize_FireAndForgetChatStateMessage_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var from = DataUtil.CreateNode();
-//        var to = DataUtil.CreateNode();
-//
-//        var state = ChatStateEvent.COMPOSING;
-//
-//        string json = string.Format(
-//                "{{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{{\"state\":\"{0}\"}},\"from\":\"{1}\",\"to\":\"{2}\"}}",
-//                state.ToString().ToCamelCase(),
-//                from,
-//                to
-//        );
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Message);
-//
-//        var message = (Message)envelope;
-//        Assert.AreEqual(from, message.From);
-//        Assert.AreEqual(to, message.To);
-//
-//        Assert.AreEqual(message.Id, Guid.Empty);
-//        Assert.IsNull(message.Pp);
-//        Assert.IsNull(message.Metadata);
-//
-//        Assert.IsTrue(message.Content is ChatState);
-//        var textContent = (ChatState)message.Content;
-//        Assert.AreEqual(state, textContent.State);
-//    }
+
+    //@Test
+    public void deserialize_FireAndForgetTextMessage_ReturnsValidInstance()
+    {
+        Node from = createNode();
+        Node to = createNode();
+
+        String text = createRandomString(50);
+
+        String json = StringUtils.format(
+                "{\"type\":\"text/plain\",\"content\":\"{0}\",\"from\":\"{1}\",\"to\":\"{2}\"}",
+                text,
+                from,
+                to
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        assertTrue(envelope instanceof Message);
+
+        Message message = (Message)envelope;
+
+        assertEquals(from, message.getFrom());
+        assertEquals(to, message.getTo());
+
+        assertEquals(message.getId(), null);
+
+        assertNull(message.getPp());
+        assertNull(message.getMetadata());
+
+        assertTrue(message.getContent() instanceof PlainText);
+        PlainText textContent = (PlainText)message.getContent();
+        assertEquals(text, textContent.getText());
+    }
+
+    //@Test
+    public void deserialize_FireAndForgetChatStateMessage_ReturnsValidInstance()
+    {
+        Node from = createNode();
+        Node to = createNode();
+
+        ChatStateEvent state = ChatStateEvent.COMPOSING;
+
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{\"state\":\"{0}\"},\"from\":\"{1}\",\"to\":\"{2}\"}",
+                state.toString().toLowerCase(),
+                from,
+                to
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        Message message = (Message)envelope;
+
+        assertEquals(from, message.getFrom());
+        assertEquals(to, message.getTo());
+
+        assertEquals(message.getId(), null);
+
+        assertNull(message.getPp());
+        assertNull(message.getMetadata());
+
+        assertTrue(message.getContent() instanceof ChatState);
+        ChatState textContent = (ChatState)message.getContent();
+        assertEquals(state, textContent.getState());
+    }
 
     //endregion Message
 
