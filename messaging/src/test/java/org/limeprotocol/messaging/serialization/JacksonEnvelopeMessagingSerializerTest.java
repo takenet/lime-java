@@ -112,11 +112,18 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
         assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
 
-        assertThatJson(resultString).node(CONTENT_TYPES_KEY).isEqualTo(resource.getContentTypes());
-        assertThatJson(resultString).node(RESOURCE_TYPES_KEY).isEqualTo(resource.getResourceTypes());
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY).isArray().ofLength(3);
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY + "[0]").isEqualTo(resource.getContentTypes()[0].toString());
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY + "[1]").isEqualTo(resource.getContentTypes()[1].toString());
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY + "[2]").isEqualTo(resource.getContentTypes()[2].toString());
 
-        assertThatJson(resultString).node(STATUS_KEY).isPresent();
-        assertThatJson(resultString).node(REASON_KEY).isPresent();
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY).isArray().ofLength(3);
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[0]").isEqualTo(resource.getResourceTypes()[0].toString());
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[1]").isEqualTo(resource.getResourceTypes()[1].toString());
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[2]").isEqualTo(resource.getResourceTypes()[2].toString());
+
+        assertThatJson(resultString).node(STATUS_KEY).isAbsent();
+        assertThatJson(resultString).node(REASON_KEY).isAbsent();
     }
 
     //endregion Command
