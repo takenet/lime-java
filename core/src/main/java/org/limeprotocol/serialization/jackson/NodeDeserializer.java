@@ -1,4 +1,4 @@
-package org.limeprotocol.serialization;
+package org.limeprotocol.serialization.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;

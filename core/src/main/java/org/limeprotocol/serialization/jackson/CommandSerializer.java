@@ -1,15 +1,11 @@
-package org.limeprotocol.serialization;
+package org.limeprotocol.serialization.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.ser.BeanSerializer;
-import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.limeprotocol.Command;
-import org.limeprotocol.Node;
 
-import javax.swing.tree.TreeNode;
 import java.io.IOException;
 
 public class CommandSerializer extends StdSerializer<Command> {
@@ -23,7 +19,7 @@ public class CommandSerializer extends StdSerializer<Command> {
 
     @Override
     public void serialize(Command command, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-        if(command.getStatus() == Command.CommandStatus.Pending) {
+        if(command.getStatus() == Command.CommandStatus.PENDING) {
             command.setStatus(null);
         }
 

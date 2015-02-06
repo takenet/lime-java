@@ -1,17 +1,17 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.util.StringUtils;
 
-public class Contact implements Document {
+public class Contact extends DocumentBase {
 
     public static final String MIME_TYPE = "application/vnd.lime.contact+json";
-    private MediaType mediaType;
 
     public Contact() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -31,7 +31,7 @@ public class Contact implements Document {
      * acceptance by the roster owner.
      * The default value is false.
      */
-    private boolean isPending;
+    private Boolean isPending;
 
     /**
      * Indicates if the roster owner wants to share
@@ -40,7 +40,7 @@ public class Contact implements Document {
      * to the contact identity into the roster owner
      * presence resource. The default value is true.
      */
-    private boolean sharePresence;
+    private Boolean sharePresence;
 
     /**
      * Indicates if the roster owner wants to share account
@@ -49,7 +49,7 @@ public class Contact implements Document {
      * into the roster owner account resource.
      * The default value is true.
      */
-    private boolean shareAccountInfo;
+    private Boolean shareAccountInfo;
 
 
     public String getName() {
@@ -118,10 +118,5 @@ public class Contact implements Document {
     @Override
     public int hashCode() {
         return this.identity != null ? this.identity.hashCode() : 0;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }

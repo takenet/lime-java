@@ -6,6 +6,6 @@ package org.limeprotocol.security;
 public class GuestAuthentication extends Authentication {
 
     public GuestAuthentication() {
-        super(AuthenticationScheme.Guest);
+        super(AuthenticationScheme.GUEST);
     }
 }

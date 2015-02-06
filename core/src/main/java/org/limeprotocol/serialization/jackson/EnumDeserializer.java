@@ -1,4 +1,4 @@
-package org.limeprotocol.serialization;
+package org.limeprotocol.serialization.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,7 +27,7 @@ public class EnumDeserializer extends StdScalarDeserializer<Enum<?>> {
         Class<?> type = handledType();
         for (Object value: type.getEnumConstants()) {
             Enum<?> enumValue = (Enum<?>)type.cast(value);
-            if (enumValue.toString().toLowerCase().equals(text.toLowerCase())) {
+            if (enumValue.toString().toLowerCase().equals(text.toLowerCase())) { //TODO Must deal with '_'
                 return enumValue;
             }
         }

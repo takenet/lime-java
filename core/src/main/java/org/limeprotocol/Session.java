@@ -148,7 +148,7 @@ public class Session extends Envelope {
          * established context. It is sent by a client
          * node to start a session with a server.
          */
-        New,
+        NEW,
 
         /**
          * The server and the client are negotiating the
@@ -159,7 +159,7 @@ public class Session extends Envelope {
          * is already encrypted or the transport protocol doesn't
          * support these options), the server SHOULD skip the negotiation.
          */
-        Negotiating,
+        NEGOTIATING,
 
         /**
          * The session is being authenticated. The server sends to
@@ -168,26 +168,26 @@ public class Session extends Envelope {
          * data. The authentication can occurs in multiple roundtrips,
          * according to the selected schema.
          */
-        Authenticating,
+        AUTHENTICATING,
 
         /**
          * The session is active and is possible to send and receive
          * messages and commands. The server sends this state
          * after the session was authenticated.
          */
-        Established,
+        ESTABLISHED,
 
         /**
          * The client node is requesting to
          * the server to finish the session.
          */
-        Finishing,
+        FINISHING,
 
         /**
          * The session was gracefully
          * finished by the server.
          */
-        Finished,
+        FINISHED,
 
         /**
          * A problem occurred while the session was established, under
@@ -195,6 +195,6 @@ public class Session extends Envelope {
          * In this case, the property reason MUST be present to provide
          * more details about the problem.
          */
-        Failed
+        FAILED
     }
 }

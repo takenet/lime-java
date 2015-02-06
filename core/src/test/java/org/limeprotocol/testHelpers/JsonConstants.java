@@ -53,27 +53,29 @@ public class JsonConstants {
     }
 
     public static class Message {
-        public final static String TYPE_KEY = "type";
-        public final static String CONTENT_KEY = "content";
-        public final static String VALUE_KEY = "value";
-        public final static String CONTENT_VALUE_KEY = CONTENT_KEY + "." + VALUE_KEY;
+        public static final String TYPE_KEY = "type";
+        public static final String CONTENT_KEY = "content";
+        public static final String VALUE_KEY = "value";
+        public static final String CONTENT_VALUE_KEY = CONTENT_KEY + "." + VALUE_KEY;
     }
 
     public static class Notification {
-        public final static String EVENT_KEY = "event";
-        public final static String REASON_KEY = "reason";
-        public final static String CODE_FROM_REASON_KEY = REASON_KEY + "." + Reason.CODE_KEY;
-        public final static String DESCRIPTION_FROM_REASON_KEY = REASON_KEY + "." + Reason.DESCRIPTION_KEY;
+        public static final String EVENT_KEY = "event";
+        public static final String REASON_KEY = "reason";
+        public static final String CODE_FROM_REASON_KEY = REASON_KEY + "." + Reason.CODE_KEY;
+        public static final String DESCRIPTION_FROM_REASON_KEY = REASON_KEY + "." + Reason.DESCRIPTION_KEY;
     }
 
     public static class PlainText {
-        public final static String CONTENT_KEY = "content";
-        public final static String TEXT_KEY = "text";
-        public final static String CONTENT_TEXT_KEY = CONTENT_KEY + "." + TEXT_KEY;
+        public static final String CONTENT_KEY = "content";
+        public static final String TEXT_KEY = "text";
+        public static final String CONTENT_TEXT_KEY = CONTENT_KEY + "." + TEXT_KEY;
     }
 
-    public static class DocumentCollection{
-        public final static String ITEMS_KEY = "items";
-    }
+    public static class DocumentCollection {
+        public static final String TOTAL_KEY = "total";
+        public static final String ITEM_TYPE_KEY = "itemType";
+        public static final String ITEMS_KEY = "items";
 
+    }
 }

@@ -1,13 +1,12 @@
 package org.limeprotocol.security;
 
 import org.limeprotocol.util.StringUtils;
-import org.apache.commons.codec.binary.Base64;
 
 public class PlainAuthentication extends Authentication {
     private String password;
 
     public PlainAuthentication() {
-        super(AuthenticationScheme.Plain);
+        super(AuthenticationScheme.PLAIN);
     }
 
     public String getPassword() {

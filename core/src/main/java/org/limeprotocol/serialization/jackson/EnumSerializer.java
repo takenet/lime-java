@@ -1,4 +1,4 @@
-package org.limeprotocol.serialization;
+package org.limeprotocol.serialization.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -27,6 +27,6 @@ public class EnumSerializer extends StdScalarSerializer<Enum> {
 
     @Override
     public void serialize(Enum value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonGenerationException {
-        jgen.writeString(value.name().toLowerCase());
+        jgen.writeString(value.name().toLowerCase()); //TODO Instead of lowercase must be camelCase (from ALL_CAPS)
     }
 }

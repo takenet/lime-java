@@ -11,8 +11,7 @@ import java.util.Set;
 /**
  * Represents a generic JSON document.
  */
-public final class JsonDocument implements Document, Map<String, Object> {
-    private MediaType mediaType;
+public final class JsonDocument extends DocumentBase implements Map<String, Object> {
     private Map<String, Object> json;
 
 
@@ -28,7 +27,7 @@ public final class JsonDocument implements Document, Map<String, Object> {
     }
 
     public JsonDocument(Map<String, Object> json, MediaType mediaType) {
-        this.mediaType = mediaType;
+        super(mediaType);
 
         if (json == null) {
             throw new IllegalArgumentException("json");
@@ -69,11 +68,6 @@ public final class JsonDocument implements Document, Map<String, Object> {
             e.printStackTrace();
             return null;
         }
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 
     @Override
