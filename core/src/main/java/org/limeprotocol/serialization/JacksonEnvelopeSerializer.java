@@ -5,14 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.limeprotocol.Envelope;
-import org.limeprotocol.Message;
-import org.limeprotocol.Notification;
-import org.limeprotocol.Session;
-import org.limeprotocol.security.Authentication;
-import org.limeprotocol.security.GuestAuthentication;
-import org.limeprotocol.security.PlainAuthentication;
-import org.limeprotocol.security.TransportAuthentication;
+import org.limeprotocol.*;
+import org.limeprotocol.security.*;
 
 import java.io.IOException;
 
@@ -50,7 +44,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
             } else if (node.has("event")) {
                 return mapper.convertValue(node, Notification.class);
             } else if (node.has("method")) {
-                return null;
+                return mapper.convertValue(node, Command.class);
             } else if (node.has("state")) {
                 return parseSession(node);
             } else {

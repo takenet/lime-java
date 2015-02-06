@@ -21,6 +21,7 @@ import java.util.UUID;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
+import static org.limeprotocol.Command.*;
 import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
@@ -522,67 +523,148 @@ public class JacksonEnvelopeSerializerTest {
                 reasonDescription
         );
 
-
-        // ACT
+        // Act
         Envelope envelope = target.deserialize(json);
 
-        // ASSERT
-        assertTrue(envelope instanceof Session);
+        // Assert
+        assertThat(envelope).isInstanceOf(Session.class);
 
-        Session session = (Session) envelope;
+        Session session = (Session)envelope;
+        assertThat(session.getId()).isEqualTo(id);
+        assertThat(session.getFrom()).isEqualTo(from);
+        assertThat(session.getTo()).isEqualTo(to);
+        assertThat(session.getState()).isEqualTo(state);
 
-        assertEquals(id, session.getId());
-        assertEquals(from, session.getFrom());
-        assertEquals(to, session.getTo());
-        assertEquals(state, session.getState());
-        assertNotNull(session.getReason());
-        assertEquals(reasonCode, session.getReason().getCode());
-        assertNull(session.getPp());
-        assertNull(session.getMetadata());
-
+        assertThat(session.getReason()).isNotNull();
+        assertThat(session.getReason().getCode()).isEqualTo(reasonCode);
     }
 
     @Test
-    public void deserialize_SessionAuthenticatingWithPlainAuthentication_ReturnsValidInstance()
-    {
+    public void deserialize_SessionAuthenticatingWithPlainAuthentication_ReturnsValidInstance() {
         // Arrange
-
         String json = "{\"state\":\"authenticating\",\"scheme\":\"plain\",\"authentication\":{\"password\":\"Zg==\"},\"id\":\"ec9c196c-da09-43b0-923b-8ec162705c32\",\"from\":\"andre@takenet.com.br/MINELLI-NOTE\"}";
 
         // Act
         Envelope envelope = target.deserialize(json);
 
         // Assert
+        assertThat(envelope).isInstanceOf(Session.class);
 
-        assertTrue(envelope instanceof Session);
         Session session = (Session)envelope;
-        assertEquals(session.getScheme(), AuthenticationScheme.Plain);
-        assertTrue(session.getAuthentication() instanceof PlainAuthentication );
-        PlainAuthentication authentication = (PlainAuthentication)session.getAuthentication();
-        assertFalse(StringUtils.isNullOrEmpty(authentication.getPassword()));
+        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Plain);
+        assertThat(session.getAuthentication()).isInstanceOf(PlainAuthentication.class);
 
+        PlainAuthentication authentication = (PlainAuthentication)session.getAuthentication();
+        assertThat(authentication.getPassword()).isNotNull().isNotEmpty();
     }
 
     @Test
-    public void deserialize_SessionAuthenticatingWithGuestAuthentication_ReturnsValidInstance()
-    {
+    public void deserialize_SessionAuthenticatingWithGuestAuthentication_ReturnsValidInstance() {
         // Arrange
-
         String json = "{\"state\":\"authenticating\",\"scheme\":\"guest\",\"id\":\"feeb88e2-c209-40cd-b8ab-e14aeebe57ab\",\"from\":\"ca6829ff-1ac8-4dad-ad78-c25a3e4f8f7b@takenet.com.br/MINELLI-NOTE\"}";
 
         // Act
         Envelope envelope = target.deserialize(json);
 
         // Assert
-
-        assertTrue(envelope instanceof Session);
+        assertThat(envelope).isInstanceOf(Session.class);
 
         Session session = (Session)envelope;
-        assertTrue(session.getScheme().equals(AuthenticationScheme.Guest));
-        assertTrue(session.getAuthentication() instanceof GuestAuthentication);
+        assertThat(session.getScheme()).isEqualTo(AuthenticationScheme.Guest);
+        assertThat(session.getAuthentication()).isInstanceOf(GuestAuthentication.class);
     }
 
     //endregion Session
+
+    //region Command
+
+    @Test
+    public void deserialize_AbsoluteUriRequestCommand_ReturnsValidInstance() {
+        // Arrange
+        CommandMethod method = Get;
+
+        UUID id = UUID.randomUUID();
+
+        Node from = createNode();
+        Node pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+        LimeUri resourceUri = createAbsoluteLimeUri();
+
+        String json = StringUtils.format("{\"uri\":\"{0}\",\"method\":\"get\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
+                resourceUri,
+                id,
+                from,
+                pp,
+                to,
+                randomKey1,
+                randomString1,
+                randomKey2,
+                randomString2
+        );
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+
+        Command command = (Command)envelope;
+
+        assertThat(command.getId()).isEqualTo(id);
+        assertThat(command.getFrom()).isEqualTo(from);
+        assertThat(command.getTo()).isEqualTo(to);
+        assertThat(command.getPp()).isEqualTo(pp);
+        assertThat(command.getMetadata()).isNotNull();
+        assertThat(command.getMetadata()).containsKey(randomKey1);
+        assertThat(command.getMetadata().get(randomKey1)).isEqualTo(randomString1);
+        assertThat(command.getMetadata()).containsKey(randomKey2);
+        assertThat(command.getMetadata().get(randomKey2)).isEqualTo(randomString2);
+
+        assertThat(command.getMethod()).isEqualTo(method);
+        assertThat(command.getUri()).isNotNull();
+        assertThat(command.getUri()).isEqualTo(resourceUri);
+
+        assertThat(command.getType()).isNull();
+        assertThat(command.getResource()).isNull();
+    }
+
+//    [Test]
+//            [Category("Deserialize")]
+//    public void Deserialize_ReceiptRequestCommand_ReturnsValidInstance()
+//    {
+//        var target = GetTarget();
+//
+//        var method = CommandMethod.Set;
+//        var id = Guid.NewGuid();
+//
+//        string json = string.Format(
+//                "{{\"type\":\"application/vnd.lime.receipt+json\",\"resource\":{{\"events\":[\"dispatched\",\"received\"]},\"method\":\"{0}\",\"id\":\"{1}\"}",
+//                method.ToString().ToCamelCase(),
+//                id);
+//
+//        var envelope = target.Deserialize(json);
+//
+//        Assert.IsTrue(envelope is Command);
+//        var command = (Command)envelope;
+//        Assert.AreEqual(id, command.Id);
+//        Assert.IsNull(command.From);
+//        Assert.IsNull(command.Pp);
+//        Assert.IsNull(command.To);
+//
+//        Assert.AreEqual(method, command.Method);
+//        Assert.IsNull(command.Metadata);
+//        Assert.AreEqual(command.Type.ToString(), Receipt.MIME_TYPE);
+//        Assert.IsNotNull(command.Resource);
+//        Assert.IsTrue(command.Resource is Receipt);
+//    }
+
+    //endregion Command
 
     //region Notification
 
