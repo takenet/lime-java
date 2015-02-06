@@ -3,10 +3,10 @@ package org.limeprotocol.messaging.contents;
 import org.limeprotocol.Document;
 import org.limeprotocol.MediaType;
 
-/// <summary>
-/// Allows the chat clients to exchange
-/// information about conversation events.
-/// </summary>
+/**
+ * Allows the chat clients to exchange
+ * information about conversation events.
+ */
 public class ChatState implements Document {
     public final String MIME_TYPE = "application/vnd.lime.chatstate+json";
 
@@ -19,6 +19,14 @@ public class ChatState implements Document {
 
     private ChatStateEvent state;
 
+    public ChatStateEvent getState() {
+        return state;
+    }
+
+    public void setState(ChatStateEvent state) {
+        this.state = state;
+    }
+
     @Override
     public String toString() {
         return this.state.toString();
@@ -26,7 +34,7 @@ public class ChatState implements Document {
 
     @Override
     public MediaType getMediaType() {
-        return null;
+        return this.mediaType;
     }
 
 
@@ -38,25 +46,25 @@ public class ChatState implements Document {
          * The other chat party started
          * a new chat a conversation.
          */
-        Starting,
+        STARTING,
         /**
          * The other party is typing.
          */
-        Composing,
+        COMPOSING,
         /**
          * The other party was
          * typing but stopped.
          */
-        Paused,
+        PAUSED,
         /**
          * The other party is
          * deleting a text.
          */
-        Deleting,
+        DELETING,
         /**
          * The other party
          * left the conversation.
          */
-        Gone
+        GONE
     }
 }

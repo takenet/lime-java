@@ -2,7 +2,6 @@ package org.limeprotocol.messaging.serialization;
 
 import org.fest.assertions.core.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.messaging.contents.PlainText;
@@ -111,11 +110,18 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
         assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
 
-        assertThatJson(resultString).node(CONTENT_TYPES_KEY).isEqualTo(resource.getContentTypes());
-        assertThatJson(resultString).node(RESOURCE_TYPES_KEY).isEqualTo(resource.getResourceTypes());
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY).isArray().ofLength(3);
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY + "[0]").isEqualTo(resource.getContentTypes()[0].toString());
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY + "[1]").isEqualTo(resource.getContentTypes()[1].toString());
+        assertThatJson(resultString).node(RESOURCE_CONTENT_TYPES_KEY + "[2]").isEqualTo(resource.getContentTypes()[2].toString());
 
-        assertThatJson(resultString).node(STATUS_KEY).isPresent();
-        assertThatJson(resultString).node(REASON_KEY).isPresent();
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY).isArray().ofLength(3);
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[0]").isEqualTo(resource.getResourceTypes()[0].toString());
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[1]").isEqualTo(resource.getResourceTypes()[1].toString());
+        assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[2]").isEqualTo(resource.getResourceTypes()[2].toString());
+
+        assertThatJson(resultString).node(STATUS_KEY).isAbsent();
+        assertThatJson(resultString).node(REASON_KEY).isAbsent();
     }
 
     //endregion Command
@@ -128,107 +134,104 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
     //region Message
 
-//    public void Deserialize_TextMessage_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var id = Guid.NewGuid();
-//        var from = DataUtil.CreateNode();
-//        var pp = DataUtil.CreateNode();
-//        var to = DataUtil.CreateNode();
-//
-//        string randomKey1 = "randomString1";
-//        string randomKey2 = "randomString2";
-//        string randomString1 = DataUtil.CreateRandomString(50);
-//        string randomString2 = DataUtil.CreateRandomString(50);
-//
-//        var text = DataUtil.CreateRandomString(50);
-//
-//        string json = string.Format(
-//                "{{\"type\":\"text/plain\",\"content\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}}}",
-//                text,
-//                id,
-//                from,
-//                pp,
-//                to,
-//                randomKey1,
-//                randomString1,
-//                randomKey2,
-//                randomString2
-//        );
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Message);
-//
-//        var message = (Message)envelope;
-//        Assert.AreEqual(id, message.Id);
-//        Assert.AreEqual(from, message.From);
-//        Assert.AreEqual(pp, message.Pp);
-//        Assert.AreEqual(to, message.To);
-//        Assert.IsNotNull(message.Metadata);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey1));
-//        Assert.AreEqual(message.Metadata[randomKey1], randomString1);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey2));
-//        Assert.AreEqual(message.Metadata[randomKey2], randomString2);
-//
-//        Assert.IsTrue(message.Content is PlainText);
-//
-//        var textContent = (PlainText)message.Content;
-//        Assert.AreEqual(text, textContent.Text);
-//    }
-//
-//    [Test]
-//            [Category("Deserialize")]
-//    public void Deserialize_ChatStateMessage_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var id = Guid.NewGuid();
-//        var from = DataUtil.CreateNode();
-//        var pp = DataUtil.CreateNode();
-//        var to = DataUtil.CreateNode();
-//
-//        string randomKey1 = "randomString1";
-//        string randomKey2 = "randomString2";
-//        string randomString1 = DataUtil.CreateRandomString(50);
-//        string randomString2 = DataUtil.CreateRandomString(50);
-//
-//        var state = ChatStateEvent.Deleting;
-//
-//        string json = string.Format(
-//                "{{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{{\"state\":\"{0}\"}},\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}}}",
-//                state.ToString().ToLowerInvariant(),
-//                id,
-//                from,
-//                pp,
-//                to,
-//                randomKey1,
-//                randomString1,
-//                randomKey2,
-//                randomString2
-//        );
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Message);
-//
-//        var message = (Message)envelope;
-//        Assert.AreEqual(id, message.Id);
-//        Assert.AreEqual(from, message.From);
-//        Assert.AreEqual(pp, message.Pp);
-//        Assert.AreEqual(to, message.To);
-//        Assert.IsNotNull(message.Metadata);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey1));
-//        Assert.AreEqual(message.Metadata[randomKey1], randomString1);
-//        Assert.IsTrue(message.Metadata.ContainsKey(randomKey2));
-//        Assert.AreEqual(message.Metadata[randomKey2], randomString2);
-//
-//        Assert.IsTrue(message.Content is ChatState);
-//
-//        var textContent = (ChatState)message.Content;
-//        Assert.AreEqual(state, textContent.State);
-//    }
+    @Test
+    public void deserialize_TextMessage_ReturnsValidInstance()
+    {
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+        String text = createRandomString(50);
+
+        String json = StringUtils.format(
+                "{\"type\":\"text/plain\",\"content\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
+                text,
+                id,
+                from,
+                pp,
+                to,
+                randomKey1,
+                randomString1,
+                randomKey2,
+                randomString2
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        assertThat(envelope instanceof Message);
+
+        Message message = (Message)envelope;
+        assertEquals(id, message.getId());
+        assertEquals(from, message.getFrom());
+        assertEquals(pp, message.getPp());
+        assertEquals(to, message.getTo());
+        assertNotNull(message.getMetadata());
+        assertTrue(message.getMetadata().containsKey(randomKey1));
+        assertEquals(message.getMetadata().get(randomKey1), randomString1);
+        assertTrue(message.getMetadata().containsKey(randomKey2));
+        assertEquals(message.getMetadata().get(randomKey2), randomString2);
+
+        assertTrue(message.getContent() instanceof PlainText);
+
+        PlainText textContent = (PlainText)message.getContent();
+        assertEquals(text, textContent.getText());
+    }
+
+    @Test
+    public void deserialize_ChatStateMessage_ReturnsValidInstance()
+    {
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+        ChatStateEvent state = ChatStateEvent.DELETING;
+
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{\"state\":\"{0}\"},\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
+                state.toString().toLowerCase(),
+                id,
+                from,
+                pp,
+                to,
+                randomKey1,
+                randomString1,
+                randomKey2,
+                randomString2
+        );
+
+        Envelope envelope = target.deserialize(json);
+
+        assertThat(envelope instanceof Message);
+
+        Message message = (Message)envelope;
+        assertEquals(id, message.getId());
+        assertEquals(from, message.getFrom());
+        assertEquals(pp, message.getPp());
+        assertEquals(to, message.getTo());
+        assertNotNull(message.getMetadata());
+        assertTrue(message.getMetadata().containsKey(randomKey1));
+        assertEquals(message.getMetadata().get(randomKey1), randomString1);
+        assertTrue(message.getMetadata().containsKey(randomKey2));
+        assertEquals(message.getMetadata().get(randomKey2), randomString2);
+
+
+        assertTrue(message.getContent() instanceof ChatState);
+
+        ChatState textContent = (ChatState)message.getContent();
+        assertEquals(state, textContent.getState());
+    }
 //
 //    public void Deserialize_FireAndForgetTextMessage_ReturnsValidInstance()
 //    {
@@ -272,7 +275,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 //        var from = DataUtil.CreateNode();
 //        var to = DataUtil.CreateNode();
 //
-//        var state = ChatStateEvent.Composing;
+//        var state = ChatStateEvent.COMPOSING;
 //
 //        string json = string.Format(
 //                "{{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{{\"state\":\"{0}\"}},\"from\":\"{1}\",\"to\":\"{2}\"}}",
@@ -332,7 +335,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
         assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
         Receipt receipt = (Receipt) command.getResource();
-        assertThat(receipt.getEvents()).containsOnly(new Event[]{Event.Dispatched, Event.Received});
+        assertThat(receipt.getEvents()).containsOnly(new Event[] {Event.Dispatched, Event.Received });
 
         assertThat(command.getUri()).isNull();
     }
