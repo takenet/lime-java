@@ -211,7 +211,7 @@ public class JacksonEnvelopeSerializerTest {
 
         assertJsonEnvelopeProperties(notification, resultString, ID_KEY, FROM_KEY, TO_KEY);
 
-        assertThatJson(resultString).node(EVENT_KEY).isEqualTo(notification.event.toString().toLowerCase());
+        assertThatJson(resultString).node(EVENT_KEY).isEqualTo(notification.getEvent().toString().toLowerCase());
         assertThatJson(resultString).node(CODE_FROM_REASON_KEY).isEqualTo(notification.getReason().getCode());
         assertThatJson(resultString).node(DESCRIPTION_FROM_REASON_KEY).isEqualTo(notification.getReason().getDescription());
 
@@ -232,7 +232,7 @@ public class JacksonEnvelopeSerializerTest {
 
         assertJsonEnvelopeProperties(notification, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
 
-        assertThatJson(resultString).node(EVENT_KEY).isEqualTo(notification.event.toString().toLowerCase());
+        assertThatJson(resultString).node(EVENT_KEY).isEqualTo(notification.getEvent().toString().toLowerCase());
 
         assertThatJson(resultString).node(JsonConstants.Notification.REASON_KEY).isAbsent();
     }
