@@ -17,8 +17,9 @@ public interface MessageChannel {
     /**
      * Sets the listener for receiving messages.
      * @param listener
+     * @param singleReceive
      */
-    void addMessageListener(MessageChannelListener listener);
+    void addMessageListener(MessageChannelListener listener, boolean singleReceive);
 
     /**
      * Removes the specified listener.

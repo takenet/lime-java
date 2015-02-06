@@ -117,9 +117,10 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving commands.
      *
      * @param listener
+     * @param singleReceive
      */
     @Override
-    public void addCommandListener(CommandChannelListener listener) {
+    public void addCommandListener(CommandChannelListener listener, boolean singleReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -156,9 +157,10 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving messages.
      *
      * @param listener
+     * @param singleReceive
      */
     @Override
-    public void addMessageListener(MessageChannelListener listener) {
+    public void addMessageListener(MessageChannelListener listener, boolean singleReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -195,9 +197,10 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving notifications.
      *
      * @param listener
+     * @param singleReceive
      */
     @Override
-    public void addNotificationListener(NotificationChannelListener listener) {
+    public void addNotificationListener(NotificationChannelListener listener, boolean singleReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -234,9 +237,10 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving sessions.
      *
      * @param listener
+     * @param singleReceive
      */
     @Override
-    public void addSessionListener(SessionChannelListener listener) {
+    public void addSessionListener(SessionChannelListener listener, boolean singleReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
