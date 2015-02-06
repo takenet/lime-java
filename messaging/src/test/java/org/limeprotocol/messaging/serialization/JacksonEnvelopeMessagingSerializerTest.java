@@ -1,24 +1,30 @@
 package org.limeprotocol.messaging.serialization;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.Command;
-import org.limeprotocol.MediaType;
+import org.limeprotocol.Envelope;
 import org.limeprotocol.Message;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Capability;
+import org.limeprotocol.messaging.resource.Receipt;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
+import org.limeprotocol.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
-import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.createTextContent;
-import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
-import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
+import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
+import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
+import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
 
 public class JacksonEnvelopeMessagingSerializerTest {
@@ -29,6 +35,8 @@ public class JacksonEnvelopeMessagingSerializerTest {
     public void setUp() throws Exception {
         target = new JacksonEnvelopeSerializer();
     }
+
+    //region serialize method
 
     //region Message
 
@@ -68,6 +76,10 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(JsonConstants.PlainText.CONTENT_TEXT_KEY).isEqualTo(content.getText());
     }
 
+    //endregion Message
+
+    //region Command
+
     @Test
     public void serialize_CapabilityRequestCommand_ReturnsValidJsonString()
     {
@@ -92,7 +104,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
 
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
-        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType());
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
 
         assertThatJson(resultString).node(CONTENT_TYPES_KEY).isEqualTo(resource.getContentTypes());
         assertThatJson(resultString).node(RESOURCE_TYPES_KEY).isEqualTo(resource.getResourceTypes());
@@ -101,19 +113,15 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(REASON_KEY).isPresent();
     }
 
-    private Capability createCapability() {
-        Capability capability = new Capability();
-        capability.setContentTypes(
-                new MediaType[] {createJsonMediaType(),
-                        createJsonMediaType(),
-                        createJsonMediaType()});
-        capability.setResourceTypes(
-                new MediaType[] {createJsonMediaType(),
-                        createJsonMediaType(),
-                        createJsonMediaType()});
-        return capability;
-    }
+    //endregion Command
 
+    //endregion Message
+
+    //endregion serialize method
+
+    //region deserialize method
+
+    //region Message
 
 //    public void Deserialize_TextMessage_ReturnsValidInstance()
 //    {
@@ -286,4 +294,44 @@ public class JacksonEnvelopeMessagingSerializerTest {
 //    }
 
     //endregion Message
+
+    //region Command
+
+    @Test
+    @Ignore("Dealing with resources deserialization")
+    public void deserialize_ReceiptRequestCommand_ReturnsValidInstance() {
+        // Arrange
+        Command.CommandMethod method = Set;
+        UUID id = UUID.randomUUID();
+
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.receipt+json\",\"resource\":{\"events\":[\"dispatched\",\"received\"]},\"method\":\"{0}\",\"id\":\"{1}\"}",
+                method.toString(),
+                id);
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+
+        Command command = (Command)envelope;
+
+        assertThat(command.getId()).isEqualTo(id);
+        assertThat(command.getFrom()).isNull();
+        assertThat(command.getTo()).isNull();
+        assertThat(command.getPp()).isNull();
+        assertThat(command.getMetadata()).isNull();
+
+        assertThat(command.getMethod()).isEqualTo(method);
+
+        assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
+        assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
+
+        assertThat(command.getUri()).isNull();
+    }
+
+    //endregion Command
+
+    //endregion deserialize method
 }

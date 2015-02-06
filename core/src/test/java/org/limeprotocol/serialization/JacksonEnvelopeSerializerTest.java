@@ -582,7 +582,6 @@ public class JacksonEnvelopeSerializerTest {
     public void deserialize_AbsoluteUriRequestCommand_ReturnsValidInstance() {
         // Arrange
         CommandMethod method = Get;
-
         UUID id = UUID.randomUUID();
 
         Node from = createNode();
@@ -633,36 +632,6 @@ public class JacksonEnvelopeSerializerTest {
         assertThat(command.getType()).isNull();
         assertThat(command.getResource()).isNull();
     }
-
-//    [Test]
-//            [Category("Deserialize")]
-//    public void Deserialize_ReceiptRequestCommand_ReturnsValidInstance()
-//    {
-//        var target = GetTarget();
-//
-//        var method = CommandMethod.Set;
-//        var id = Guid.NewGuid();
-//
-//        string json = string.Format(
-//                "{{\"type\":\"application/vnd.lime.receipt+json\",\"resource\":{{\"events\":[\"dispatched\",\"received\"]},\"method\":\"{0}\",\"id\":\"{1}\"}",
-//                method.ToString().ToCamelCase(),
-//                id);
-//
-//        var envelope = target.Deserialize(json);
-//
-//        Assert.IsTrue(envelope is Command);
-//        var command = (Command)envelope;
-//        Assert.AreEqual(id, command.Id);
-//        Assert.IsNull(command.From);
-//        Assert.IsNull(command.Pp);
-//        Assert.IsNull(command.To);
-//
-//        Assert.AreEqual(method, command.Method);
-//        Assert.IsNull(command.Metadata);
-//        Assert.AreEqual(command.Type.ToString(), Receipt.MIME_TYPE);
-//        Assert.IsNotNull(command.Resource);
-//        Assert.IsTrue(command.Resource is Receipt);
-//    }
 
     //endregion Command
 

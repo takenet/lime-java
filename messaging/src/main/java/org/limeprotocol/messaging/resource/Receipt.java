@@ -11,23 +11,21 @@ import org.limeprotocol.MediaType;
 import org.limeprotocol.Notification.Event;
 
 public class Receipt implements Document {
-    public final String MIME_TYPE = "application/vnd.lime.receipt+json";
-
-    public final String EVENTS_KEY = "events";
+    public static final String MIME_TYPE = "application/vnd.lime.receipt+json";
 
     private MediaType mediaType;
-
-    public Receipt()
-    {
-        this.mediaType = MediaType.parse(MIME_TYPE);
-    }
 
     /**
      * Indicates which message events
      * that the node is receiving
      * in the current session.
      */
-    public Event[] events;
+    private Event[] events;
+
+    public Receipt()
+    {
+        this.mediaType = MediaType.parse(MIME_TYPE);
+    }
 
     public Event[] getEvents() {
         return events;

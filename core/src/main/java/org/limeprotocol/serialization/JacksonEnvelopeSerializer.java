@@ -44,7 +44,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
             } else if (node.has("event")) {
                 return mapper.convertValue(node, Notification.class);
             } else if (node.has("method")) {
-                return mapper.convertValue(node, Command.class);
+                return parseCommand(node);
             } else if (node.has("state")) {
                 return parseSession(node);
             } else {
@@ -86,6 +86,17 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         session.setAuthentication(authentication);
 
         return session;
+    }
+
+    private Command parseCommand(ObjectNode node) {
+        JsonNode resourceType = node.get("type");
+        JsonNode resource = node.get("resource");
+
+        node.remove("type");
+        node.remove("resource");
+
+        Command command = mapper.convertValue(node, Command.class);
+        return command;
     }
 
     private Message parseMessage(ObjectNode node){
