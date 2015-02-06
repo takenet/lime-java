@@ -11,38 +11,30 @@ import java.util.Arrays;
  */
 public abstract class TransportBase implements Transport {
     
-    private TransportListenerBroadcastSender transportListenerBroadcastSender;
     private boolean closingInvoked;
     private boolean closedInvoked;
 
     private SessionCompression compression;
     private SessionEncryption encryption;
-    
+    private TransportListener transportListener;
+
     protected TransportBase() {
         compression = SessionCompression.none;
         encryption = SessionEncryption.none;
-        //TODO use dependency injection ?
-        transportListenerBroadcastSender = new TransportListenerBroadcastSenderImpl();
     }
 
     /**
      * Closes the transport.
      */
     protected abstract void performClose() throws IOException;
-
-
+    
     @Override
-    public void addListener(TransportListener transportListener) {
-        transportListenerBroadcastSender.addListener(transportListener);
+    public void setTransportListener(TransportListener transportListener) {
+        this.transportListener = transportListener;
     }
-
-    @Override
-    public void addListener(TransportListener transportListener, Integer priority) {
-        transportListenerBroadcastSender.addListener(transportListener, priority);
-    }
-
-    protected TransportListenerBroadcastSender getListenerBroadcastSender() {
-        return transportListenerBroadcastSender;
+    
+    protected TransportListener getTransportListener() {
+        return transportListener;
     }
 
     @Override
@@ -82,14 +74,18 @@ public abstract class TransportBase implements Transport {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (!closingInvoked) {
-            transportListenerBroadcastSender.broadcastOnClosing();
+            if (transportListener != null) {
+                transportListener.onClosing();
+            }
             closingInvoked = true;
         }
         performClose();
         if (!closedInvoked) {
-            transportListenerBroadcastSender.broadcastOnClosed();
+            if (transportListener != null) {
+                transportListener.onClosed();
+            }
             closedInvoked = true;
         }
     }

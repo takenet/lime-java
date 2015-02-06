@@ -12,7 +12,7 @@ import java.security.SecureRandom;
 
 public class SocketTcpClient implements TcpClient {
 
-    private final TrustManager trustManager;
+    private final X509TrustManager trustManager;
     private final Socket socket;
     private SSLSocket sslSocket;
     private SSLSocketFactory sslSocketFactory;
@@ -20,7 +20,7 @@ public class SocketTcpClient implements TcpClient {
     public SocketTcpClient() {
         this(null);
     }
-    public SocketTcpClient(TrustManager trustManager) {
+    public SocketTcpClient(X509TrustManager trustManager) {
         this.trustManager = trustManager;
         socket = new Socket();
     }
@@ -63,6 +63,9 @@ public class SocketTcpClient implements TcpClient {
                 socket.getPort(),
                 true);
 
+        String[] cypherSuites = sslSocket.getSupportedCipherSuites();
+        sslSocket.setEnabledCipherSuites(cypherSuites);
+        
         sslSocket.startHandshake();
     }
 
@@ -84,11 +87,10 @@ public class SocketTcpClient implements TcpClient {
     private final SSLSocketFactory getSslSocketFactory() {
         if (sslSocketFactory == null) {
             if (trustManager != null) {
-                TrustManager[] tm = new TrustManager[] { trustManager };
                 try {
-                    SSLContext context = SSLContext.getInstance("SSL");
-                    context.init(new KeyManager[0], tm, new SecureRandom());
-                    sslSocketFactory = context.getSocketFactory();
+                    SSLContext sslContext = SSLContext.getInstance("SSL");
+                    sslContext.init(null, new TrustManager[]{ trustManager }, null);
+                    sslSocketFactory = sslContext.getSocketFactory();
                 } catch (NoSuchAlgorithmException | KeyManagementException e) {
                     throw new RuntimeException("Could not set the custom TLS trust manager", e);
                 }

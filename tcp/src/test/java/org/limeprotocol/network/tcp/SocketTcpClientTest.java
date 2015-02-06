@@ -2,6 +2,7 @@ package org.limeprotocol.network.tcp;
 
 import org.junit.Test;
 
+import javax.net.ServerSocketFactory;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +12,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -24,26 +27,9 @@ public class SocketTcpClientTest {
     private ServerSocket serverSocket;
     private SocketAddress socketAddress;
     private SSLSocket sslSocket;
-    
-    private Future<?> handshakeFuture;
 
     private SocketTcpClient getTarget() {
         return new SocketTcpClient();
-    }
-
-    private SocketTcpClient getTargetAndConnectWithTls() throws IOException, NoSuchAlgorithmException {
-        SocketTcpClient target = getTargetAndConnect();
-        Socket socket = serverSocket.accept();
-        sslSocket = (SSLSocket)SSLContext.getDefault().getSocketFactory().createSocket(socket, null, socket.getPort(), false);
-        handshakeFuture = Executors.newSingleThreadExecutor().submit(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-                sslSocket.startHandshake();
-                return null;
-            }
-        });
-        
-        return target;
     }
 
     private SocketTcpClient getTargetAndConnect() throws IOException {
@@ -59,7 +45,7 @@ public class SocketTcpClientTest {
     public void connect_validEndpoint_connects() throws Exception {
         // Arrange
         int port = Dummy.createRandomInt(9999) + 50000;
-        serverSocket = new ServerSocket(port);
+        serverSocket = ServerSocketFactory.getDefault().createServerSocket(port);
         socketAddress = new InetSocketAddress("localhost", port);
         SocketTcpClient target = getTarget();
 
@@ -95,20 +81,6 @@ public class SocketTcpClientTest {
         assertEquals("java.net.SocketOutputStream", actual.getClass().getName());
     }
 
-    @Test
-    public void getOutputStream_connectedWithTls_returnsAppOutputStream() throws Exception {
-        // Arrange
-        SocketTcpClient target = getTargetAndConnect();
-        target.startTls();
-
-        // Act
-        OutputStream actual = target.getOutputStream();
-
-        // Assert
-        assertNotNull(actual);
-        assertEquals("sun.security.ssl.AppOutputStream", actual.getClass().getName());
-    }
-
     @Test(expected = IOException.class)
     public void getOutputStream_notConnected_throwsIOException() throws Exception {
         // Arrange
@@ -131,19 +103,6 @@ public class SocketTcpClientTest {
         assertEquals("java.net.SocketInputStream", actual.getClass().getName());
     }
 
-    @Test
-    public void getInputStream_connectedWithTls_returnsAppInputStream() throws Exception {
-        // Arrange
-        SocketTcpClient target = getTargetAndConnect();
-        target.startTls();
-
-        // Act
-        InputStream actual = target.getInputStream();
-
-        // Assert
-        assertNotNull(actual);
-        assertEquals("sun.security.ssl.AppInputStream", actual.getClass().getName());
-    }
 
     @Test(expected = IOException.class)
     public void getInputStream_notConnected_throwsIOException() throws Exception {
@@ -178,30 +137,7 @@ public class SocketTcpClientTest {
         assertFalse(actual);
     }
 
-    @Test
-    public void isTlsStarted_connectedWithTls_returnsTrue() throws Exception {
-        // Arrange
-        SocketTcpClient target = getTargetAndConnect();
-        target.startTls();
-
-        // Act
-        boolean actual = target.isTlsStarted();
-
-        // Assert
-        assertTrue(actual);
-    }
 
 
-    @Test
-    public void startTls_connectedWithoutTls_upgradeConnection() throws Exception {
-        // Arrange
-        SocketTcpClient target = getTargetAndConnectWithTls();
 
-        // Act
-        target.startTls();
-        
-        // Assert
-        assertTrue(sslSocket.isBound());
-
-    }
 }

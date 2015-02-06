@@ -7,10 +7,7 @@ import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -97,7 +94,24 @@ public class TcpTransport extends TransportBase implements Transport {
         
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
-        startInputListener();
+        getStreams();
+        if (getTransportListener() != null) {
+            startInputListener();
+        }
+    }
+
+    @Override
+    public void setTransportListener(TransportListener transportListener) {
+        super.setTransportListener(transportListener);
+        if (transportListener != null && tcpClient != null) {
+            stopInputListener();
+            try {
+                startInputListener();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("An error occurred while starting the listener task", e);
+            }
+        }
     }
 
     @Override
@@ -130,7 +144,10 @@ public class TcpTransport extends TransportBase implements Transport {
                 if (!tcpClient.isTlsStarted()) {
                     stopInputListener();
                     tcpClient.startTls();
-                    startInputListener();
+                    getStreams();
+                    if (getTransportListener() != null) {
+                        startInputListener();
+                    }
                 }
                 break;
             case none:
@@ -150,14 +167,17 @@ public class TcpTransport extends TransportBase implements Transport {
         }
     }
 
+    private void getStreams() throws IOException {
+        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
+        inputStream = new BufferedInputStream(tcpClient.getInputStream());
+    }
+
     private void startInputListener() throws IOException {
         if (inputListenerFuture != null &&
                 !inputListenerFuture.isDone()) {
             throw new IllegalStateException("The input listener is already started");
         }
-        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
-        inputStream = new BufferedInputStream(tcpClient.getInputStream());
-        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize, true));
+        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize, inputStream, getTransportListener()));
     }
     
     private void stopInputListener() {
@@ -171,8 +191,9 @@ public class TcpTransport extends TransportBase implements Transport {
     }
 
     class JsonStreamReader implements Callable<Void> {
-        private final boolean multiRead;
-        
+
+        private final InputStream inputStream;
+        private final TransportListener transportListener;
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
@@ -180,18 +201,21 @@ public class TcpTransport extends TransportBase implements Transport {
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
 
-        JsonStreamReader(int bufferSize, boolean multiRead) {
-            this.multiRead = multiRead;
+        JsonStreamReader(int bufferSize, InputStream inputStream, TransportListener transportListener) {
+            if (inputStream == null) {
+                throw new IllegalArgumentException("inputStream");
+            }
+            if (transportListener == null) {
+                throw new IllegalArgumentException("transportListener");
+            }
+            this.inputStream = inputStream;
+            this.transportListener = transportListener;
             buffer = new byte[bufferSize];
         }
 
         @Override
         public Void call() throws Exception {
             try {
-                if (TcpTransport.this.inputStream == null) {
-                    throw new IllegalStateException("The stream was not initialized. Call Open first.");
-                }
-
                 do {
                     Envelope envelope = null;
                     while (envelope == null) {
@@ -202,7 +226,7 @@ public class TcpTransport extends TransportBase implements Transport {
                         }
 
                         if (envelope == null) {
-                            bufferCurPos += TcpTransport.this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                            bufferCurPos += inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
                             if (bufferCurPos >= buffer.length) {
                                 TcpTransport.this.close();
                                 throw new BufferOverflowException("Maximum buffer size reached");
@@ -210,11 +234,13 @@ public class TcpTransport extends TransportBase implements Transport {
                         }
                     }
 
-                    TcpTransport.this.getListenerBroadcastSender().broadcastOnReceive(envelope);
-                } while (multiRead);
+                    transportListener.onReceive(envelope);
+                } while (transportListener.isListening());
             } catch (Exception e) {
-                TcpTransport.this.getListenerBroadcastSender().broadcastOnException(e);
+                transportListener.onException(e);
             }
+            
+            TcpTransport.this.setTransportListener(null);
             return null;
         }
 

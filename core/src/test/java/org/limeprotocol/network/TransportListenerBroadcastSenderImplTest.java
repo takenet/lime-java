@@ -40,6 +40,16 @@ public class TransportListenerBroadcastSenderImplTest {
         public void onException(Exception e) {
             onExceptionCount++;
         }
+
+        /**
+         * Indicates if the listener is active.
+         *
+         * @return
+         */
+        @Override
+        public boolean isListening() {
+            return true;
+        }
     }
 
     private DummyTransportListener listener1;
@@ -85,6 +95,16 @@ public class TransportListenerBroadcastSenderImplTest {
             @Override
             public void onException(Exception e) {
 
+            }
+
+            /**
+             * Indicates if the listener is active.
+             *
+             * @return
+             */
+            @Override
+            public boolean isListening() {
+                return false;
             }
         };
 
