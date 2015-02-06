@@ -1,42 +1,47 @@
 package org.limeprotocol.network;
 
+import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  *  Base class for transport implementation.
  */
 public abstract class TransportBase implements Transport {
     
-    private boolean closingInvoked;
-    private boolean closedInvoked;
-
     private SessionCompression compression;
     private SessionEncryption encryption;
-    private TransportListener transportListener;
+    private Set<TransportListener> transportListeners;
+    private boolean closingInvoked;
+    private boolean closedInvoked;
 
     protected TransportBase() {
         compression = SessionCompression.none;
         encryption = SessionEncryption.none;
+        transportListeners = new HashSet<>();
     }
-
-    /**
-     * Closes the transport.
-     */
-    protected abstract void performClose() throws IOException;
     
     @Override
-    public void setTransportListener(TransportListener transportListener) {
-        this.transportListener = transportListener;
+    public void addListener(TransportListener transportListener) {
+        if (transportListener == null) {
+            throw new IllegalArgumentException("transportListener");
+        }
+        transportListeners.add(transportListener);
     }
     
-    protected TransportListener getTransportListener() {
-        return transportListener;
+    @Override
+    public void removeListener(TransportListener transportListener) {
+        if (transportListener == null) {
+            throw new IllegalArgumentException("transportListener");
+        }
+        transportListeners.remove(transportListener);
     }
-
+    
     @Override
     public SessionCompression[] getSupportedCompression() {
         return new SessionCompression[] { getCompression() };
@@ -76,17 +81,64 @@ public abstract class TransportBase implements Transport {
     @Override
     public synchronized void close() throws IOException {
         if (!closingInvoked) {
-            if (transportListener != null) {
-                transportListener.onClosing();
-            }
+            raiseOnClosing();
             closingInvoked = true;
         }
         performClose();
         if (!closedInvoked) {
-            if (transportListener != null) {
-                transportListener.onClosed();
-            }
+            raiseOnClosed();
             closedInvoked = true;
+        }
+    }
+    
+    /**
+     * Closes the transport.
+     */
+    protected abstract void performClose() throws IOException;
+
+    protected void raiseOnReceive(Envelope envelope) {
+        for (TransportListener transportListener : transportListeners) {
+            transportListener.onReceive(envelope);
+        }
+        removeInactiveListeners();
+    }
+
+    protected void raiseOnException(Exception e) {
+        for (TransportListener transportListener : transportListeners) {
+            transportListener.onException(e);
+        }
+        removeInactiveListeners();
+    }
+
+    protected boolean hasAnyListener() {
+        return !transportListeners.isEmpty();
+    }
+
+    private void raiseOnClosing() {
+        for (TransportListener transportListener : transportListeners) {
+            transportListener.onClosing();
+        }
+        removeInactiveListeners();
+    }
+
+    private void raiseOnClosed() {
+        for (TransportListener transportListener : transportListeners) {
+            transportListener.onClosed();
+        }
+        removeInactiveListeners();
+    }
+    
+    private void removeInactiveListeners() {
+        Set<TransportListener> inactiveListeners = new HashSet<TransportListener>();
+
+        for (TransportListener transportListener : transportListeners) {
+            if (!transportListener.isActive()) {
+                inactiveListeners.add(transportListener);
+            }
+        }
+
+        for (TransportListener inactiveListener : inactiveListeners) {
+            transportListeners.remove(inactiveListener);
         }
     }
 }

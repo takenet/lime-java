@@ -155,7 +155,7 @@ public class TcpTransportTest {
         Envelope envelope = mock(Envelope.class);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.setTransportListener(transportListener);
+        target.addListener(transportListener);
 
         // Act
         target.open(Dummy.createUri());
@@ -178,8 +178,8 @@ public class TcpTransportTest {
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isListening()).thenReturn(true);
-        target.setTransportListener(transportListener);
+        when(transportListener.isActive()).thenReturn(true);
+        target.addListener(transportListener);
 
         // Act
         target.open(Dummy.createUri());
@@ -222,8 +222,8 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isListening()).thenReturn(true);
-        target.setTransportListener(transportListener);
+        when(transportListener.isActive()).thenReturn(true);
+        target.addListener(transportListener);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
@@ -286,8 +286,8 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isListening()).thenReturn(true);
-        target.setTransportListener(transportListener);
+        when(transportListener.isActive()).thenReturn(true);
+        target.addListener(transportListener);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
@@ -328,7 +328,8 @@ public class TcpTransportTest {
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(anyString())).thenReturn(mock(Envelope.class));
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.setTransportListener(transportListener);
+        when(transportListener.isActive()).thenReturn(true);
+        target.addListener(transportListener);
 
         // Act
         target.open(Dummy.createUri());
@@ -344,7 +345,8 @@ public class TcpTransportTest {
         // Arrange
         TcpTransport target = getAndOpenTarget();
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.setTransportListener(transportListener);
+        when(transportListener.isActive()).thenReturn(true);
+        target.addListener(transportListener);
         
         // Act
         target.close();

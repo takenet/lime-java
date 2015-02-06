@@ -95,15 +95,15 @@ public class TcpTransport extends TransportBase implements Transport {
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
         getStreams();
-        if (getTransportListener() != null) {
+        if (hasAnyListener()) {
             startInputListener();
         }
     }
 
     @Override
-    public void setTransportListener(TransportListener transportListener) {
-        super.setTransportListener(transportListener);
-        if (transportListener != null && tcpClient != null) {
+    public void addListener(TransportListener transportListener) {
+        super.addListener(transportListener);
+        if (hasAnyListener() && tcpClient != null) {
             stopInputListener();
             try {
                 startInputListener();
@@ -145,7 +145,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     stopInputListener();
                     tcpClient.startTls();
                     getStreams();
-                    if (getTransportListener() != null) {
+                    if (hasAnyListener()) {
                         startInputListener();
                     }
                 }
@@ -177,7 +177,7 @@ public class TcpTransport extends TransportBase implements Transport {
                 !inputListenerFuture.isDone()) {
             throw new IllegalStateException("The input listener is already started");
         }
-        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize, inputStream, getTransportListener()));
+        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize, inputStream));
     }
     
     private void stopInputListener() {
@@ -193,7 +193,6 @@ public class TcpTransport extends TransportBase implements Transport {
     class JsonStreamReader implements Callable<Void> {
 
         private final InputStream inputStream;
-        private final TransportListener transportListener;
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
@@ -201,22 +200,19 @@ public class TcpTransport extends TransportBase implements Transport {
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
 
-        JsonStreamReader(int bufferSize, InputStream inputStream, TransportListener transportListener) {
+        JsonStreamReader(int bufferSize, InputStream inputStream) {
             if (inputStream == null) {
                 throw new IllegalArgumentException("inputStream");
             }
-            if (transportListener == null) {
-                throw new IllegalArgumentException("transportListener");
-            }
+
             this.inputStream = inputStream;
-            this.transportListener = transportListener;
             buffer = new byte[bufferSize];
         }
 
         @Override
         public Void call() throws Exception {
             try {
-                do {
+                while (TcpTransport.this.hasAnyListener()) {
                     Envelope envelope = null;
                     while (envelope == null) {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
@@ -233,14 +229,13 @@ public class TcpTransport extends TransportBase implements Transport {
                             }
                         }
                     }
-
-                    transportListener.onReceive(envelope);
-                } while (transportListener.isListening());
+                    
+                    TcpTransport.this.raiseOnReceive(envelope);
+                }
             } catch (Exception e) {
-                transportListener.onException(e);
+                TcpTransport.this.raiseOnException(e);
             }
-            
-            TcpTransport.this.setTransportListener(null);
+
             return null;
         }
 
@@ -306,5 +301,5 @@ public class TcpTransport extends TransportBase implements Transport {
                 return jsonBytes;
             }
         }
-    }    
+    }
 }

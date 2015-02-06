@@ -19,11 +19,17 @@ public interface Transport {
     void send(Envelope envelope) throws IOException;
 
     /**
-     *  Add a listener for receiving envelopes with default priority
+     *  Register the specified listener for receiving envelopes.
      * @param transportListener
      */
-    void setTransportListener(TransportListener transportListener);
+    void addListener(TransportListener transportListener);
 
+    /**
+     * Unregister the specified listener.
+     * @param transportListener
+     */
+    void removeListener(TransportListener transportListener);
+    
     /**
      * Opens the transport connection with the specified Uri.
      * @param uri
@@ -83,12 +89,12 @@ public interface Transport {
         void onReceive(Envelope envelope);
 
         /**
-         * Occurs when the channel is about to be closed. 
+         * Occurs when the transport is about to be closed.
          */
         void onClosing();
 
         /**
-         * Occurs after the connection was closed.
+         * Occurs after the transport was closed.
          */
         void onClosed();
 
@@ -101,8 +107,9 @@ public interface Transport {
 
         /**
          * Indicates if the listener is active.
+         * If not, it can be removed from the registered listeners.
          * @return
          */
-        boolean isListening();
+        boolean isActive();
     }
 }
