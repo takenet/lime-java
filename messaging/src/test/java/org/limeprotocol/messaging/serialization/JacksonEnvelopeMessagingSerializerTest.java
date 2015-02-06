@@ -2,10 +2,8 @@ package org.limeprotocol.messaging.serialization;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.limeprotocol.Command;
-import org.limeprotocol.Envelope;
-import org.limeprotocol.Message;
-import org.limeprotocol.Notification;
+import org.limeprotocol.*;
+import org.limeprotocol.messaging.contents.ChatState;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Capability;
 import org.limeprotocol.messaging.resource.Contact;
@@ -19,8 +17,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static junit.framework.TestCase.assertNotNull;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.Notification.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
@@ -132,8 +134,8 @@ public class JacksonEnvelopeMessagingSerializerTest {
         DocumentCollection resource = createRoster();
         Command command = createCommand(resource);
         command.setPp(createNode());
-        command.setMethod(Command.CommandMethod.Get);
-        command.setStatus(Command.CommandStatus.Success);
+        command.setMethod(Command.CommandMethod.GET);
+        command.setStatus(Command.CommandStatus.SUCCESS);
 
         String metadataKey1 = "randomString1";
         String metadataValue1 = createRandomString(50);
@@ -246,7 +248,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         String randomString1 = createRandomString(50);
         String randomString2 = createRandomString(50);
 
-        ChatStateEvent state = ChatStateEvent.DELETING;
+        ChatState.ChatStateEvent state = ChatState.ChatStateEvent.DELETING;
 
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{\"state\":\"{0}\"},\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
@@ -323,7 +325,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         Node from = createNode();
         Node to = createNode();
 
-        ChatStateEvent state = ChatStateEvent.COMPOSING;
+        ChatState.ChatStateEvent state = ChatState.ChatStateEvent.COMPOSING;
 
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{\"state\":\"{0}\"},\"from\":\"{1}\",\"to\":\"{2}\"}",
