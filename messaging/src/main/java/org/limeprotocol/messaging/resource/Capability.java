@@ -11,9 +11,6 @@ public class Capability implements Document {
 
     public final String MIME_TYPE = "application/vnd.lime.capability+json";
 
-    public final String CONTENT_TYPES_KEY = "contentTypes";
-    public final String RESOURCE_TYPES_KEY = "resourceTypes";
-
     public MediaType mediaType;
 
     public Capability()
