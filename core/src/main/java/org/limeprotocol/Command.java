@@ -107,7 +107,7 @@ public class Command extends Envelope {
         /// or the resource itself.
         /// </summary>
         Delete,
-        /// <summary>
+        CommandMethod, /// <summary>
         /// Notify the destination about a change
         /// in the resource value of the sender.
         /// This method is one way and the destination

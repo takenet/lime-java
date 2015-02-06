@@ -2,12 +2,11 @@ package org.limeprotocol.serialization;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import org.limeprotocol.Command;
-import org.limeprotocol.MediaType;
-import org.limeprotocol.Node;
+import org.limeprotocol.*;
 
 public class CustomSerializerModule extends SimpleModule {
 
@@ -18,6 +17,7 @@ public class CustomSerializerModule extends SimpleModule {
         addSerializer(new MediaTypeSerializer());
         addSerializer(new LimeUriSerializer());
         addDeserializer(Node.class, new NodeDeserializer());
+        addDeserializer(Identity.class, new IdentityDeserializer());
         addDeserializer(MediaType.class, new MediaTypeDeserializer());
     }
 
@@ -34,6 +34,15 @@ public class CustomSerializerModule extends SimpleModule {
             }
         };
         context.addDeserializers(deser);
+        context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
+            @Override
+            public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+                if (beanDesc.getBeanClass() == DocumentCollection.class) {
+                    return new DocumentCollectionDeserializer((JsonDeserializer<Object>) deserializer);
+                }
+                return super.modifyDeserializer(config, beanDesc, deserializer);
+            }
+        });
         context.addBeanSerializerModifier(new BeanSerializerModifier() {
             @Override
             public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc, JsonSerializer<?> serializer) {

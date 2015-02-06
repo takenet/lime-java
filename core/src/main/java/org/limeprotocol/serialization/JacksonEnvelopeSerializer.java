@@ -10,42 +10,15 @@ import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.security.TransportAuthentication;
-import org.reflections.Reflections;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
+import static org.limeprotocol.serialization.SerializationUtil.deserializeDocument;
 
 public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
-    private static Map<MediaType, Class<? extends Document>> documentTypesMap;
 
     private final ObjectMapper mapper;
-
-    static {
-        Reflections reflections = new Reflections("org.limeprotocol.*");
-
-        Set<Class<? extends Document>> documentTypes = reflections.getSubTypesOf(Document.class);
-
-        documentTypesMap = new HashMap<MediaType, Class<? extends Document>>(documentTypes.size());
-        for (Class<? extends Document> documentType : documentTypes) {
-            Document document = null;
-            try {
-                document = documentType.getConstructor().newInstance(new Object[]{});
-            } catch (NoSuchMethodException e) {
-            } catch (InvocationTargetException e) {
-            } catch (InstantiationException e) {
-            } catch (IllegalAccessException e) {
-            }
-
-            if (document != null) {
-                documentTypesMap.put(document.getMediaType(), documentType);
-            }
-        }
-    }
 
     public JacksonEnvelopeSerializer() {
         this.mapper = new ObjectMapper();
@@ -122,46 +95,21 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 
     private Command parseCommand(ObjectNode node) {
 
-        Document document = deserializeDocument(node, "resource");
+        Document document = deserializeDocument(mapper, node, "resource");
 
         Command command = mapper.convertValue(node, Command.class);
-
         command.setResource(document);
+
         return command;
     }
 
     private Message parseMessage(ObjectNode node) {
 
-        Document document = deserializeDocument(node, "content");
+        Document document = deserializeDocument(mapper, node, "content");
 
         Message message = mapper.convertValue(node, Message.class);
 
         message.setContent(document);
         return message;
-    }
-
-    private Document deserializeDocument(ObjectNode node, String documentName) {
-
-        JsonNode documentNode = node.get(documentName);
-        JsonNode typeNode = node.get("type");
-
-        node.remove(documentName);
-        node.remove("type");
-
-        MediaType mediaType = mapper.convertValue(typeNode, MediaType.class);
-
-        Class<?> clazz = documentTypesMap.get(mediaType);
-        if (clazz == null) {
-
-            if(typeNode.asText().endsWith("+json")){
-                clazz = JsonDocument.class;
-                JsonDocument jsonDocument = (JsonDocument) mapper.convertValue(documentNode, clazz);
-                jsonDocument.setMediaType(MediaType.parse(typeNode.asText()));
-                return jsonDocument;
-            }
-
-            return new PlainDocument(documentNode.asText(), MediaType.parse(typeNode.asText()));
-        }
-        return (Document) mapper.convertValue(documentNode, clazz);
     }
 }
