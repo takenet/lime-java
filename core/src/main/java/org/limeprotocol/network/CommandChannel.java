@@ -16,9 +16,15 @@ public interface CommandChannel {
 
     /**
      * Sets the listener for receiving commands.
-     * @param commandChannelListener
+     * @param listener
      */
-    void setCommandChannelListener(CommandChannelListener commandChannelListener);
+    void addCommandListener(CommandChannelListener listener);
+
+    /**
+     * Removes the specified listener.
+     * @param listener
+     */
+    void removeCommandListener(CommandChannelListener listener);
 
     /**
      * Defines a command channel listener.

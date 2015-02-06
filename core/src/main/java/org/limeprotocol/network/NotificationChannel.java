@@ -16,10 +16,16 @@ public interface NotificationChannel {
 
     /**
      * Sets the listener for receiving notifications.
-     * @param notificationChannelListener
+     * @param listener
      */
-    void setNotificationChannelListener(NotificationChannelListener notificationChannelListener);
+    void addNotificationListener(NotificationChannelListener listener);
 
+    /**
+     * Removes the specified listener.
+     * @param listener
+     */
+    void removeNotificationListener(NotificationChannelListener listener);
+    
     /**
      * Defines a notification channel listener.
      */
