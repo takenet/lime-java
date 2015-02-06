@@ -15,32 +15,31 @@ public class Command extends Envelope {
      * The universal identifier
      * of the resource
      */
-    public LimeUri uri;
+    private LimeUri uri;
 
     /**
      *  Server resource that are subject
      *  of the command
      */
-    public Document resource;
+    private Document resource;
 
     /**
      *  Action to be taken to the
      *  resource
      */
-    public CommandMethod method;
+    private CommandMethod method;
 
     /**
      *  Indicates the status of
      *  the action taken to the resource
      */
-    public CommandStatus status;
+    private CommandStatus status;
 
     /**
      *  Indicates a reason for
      *  the status
      */
-    public Reason reason;
-
+    private Reason reason;
 
     public LimeUri getUri() {
         return uri;
