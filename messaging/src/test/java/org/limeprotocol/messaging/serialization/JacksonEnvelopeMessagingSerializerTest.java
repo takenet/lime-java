@@ -232,7 +232,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertEquals(state, textContent.getState());
     }
 
-    //@Test
+    @Test
     public void deserialize_FireAndForgetTextMessage_ReturnsValidInstance()
     {
         Node from = createNode();
@@ -266,7 +266,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertEquals(text, textContent.getText());
     }
 
-    //@Test
+    @Test
     public void deserialize_FireAndForgetChatStateMessage_ReturnsValidInstance()
     {
         Node from = createNode();
