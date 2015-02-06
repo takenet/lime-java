@@ -98,16 +98,18 @@ public class Command extends Envelope {
          * Gets an existing value of the resource.
          */
         GET,
+
         /**
          * Sets or updates a for the resource.
          */
         SET,
+
         /**
          * Deletes a value of the resource
          * or the resource itself.
          */
         DELETE,
-        COMMAND_METHOD,
+
         /**
          * Notify the destination about a change
          * in the resource value of the sender.
