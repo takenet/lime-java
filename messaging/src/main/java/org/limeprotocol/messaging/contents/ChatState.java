@@ -34,7 +34,7 @@ public class ChatState implements Document {
 
     @Override
     public MediaType getMediaType() {
-        return null;
+        return this.mediaType;
     }
 
 
