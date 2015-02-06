@@ -1,5 +1,6 @@
 package org.limeprotocol.serialization;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,12 +22,9 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     private final ObjectMapper mapper;
 
     public JacksonEnvelopeSerializer() {
-        this.mapper = new ObjectMapper();
-        this.mapper.setSerializationInclusion(Include.NON_NULL);
-
-        SimpleModule customSerializersModule = new CustomSerializerModule();
-
-        mapper.registerModule(customSerializersModule);
+        this.mapper = new ObjectMapper()
+                .setSerializationInclusion(Include.NON_NULL)
+                .registerModule(new CustomSerializerModule());
     }
 
     @Override
