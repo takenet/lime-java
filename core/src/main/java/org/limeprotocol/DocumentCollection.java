@@ -11,12 +11,14 @@ public class DocumentCollection implements Document, Iterable {
     public final String ITEM_TYPE_KEY = "itemType";
     public final String ITEMS_KEY = "items";
 
+    private MediaType mediaType;
+
     private int total;
     private MediaType itemType;
     private Document[] items;
 
     public DocumentCollection() {
-        this.itemType = MediaType.parse(MIME_TYPE);
+        this.mediaType = MediaType.parse(MIME_TYPE);
     }
 
     public int getTotal() {
@@ -45,7 +47,7 @@ public class DocumentCollection implements Document, Iterable {
 
     @Override
     public MediaType getMediaType() {
-        return null;
+        return this.mediaType;
     }
 
     @Override

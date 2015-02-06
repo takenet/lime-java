@@ -1,14 +1,13 @@
 package org.limeprotocol.messaging.serialization;
 
+import org.fest.assertions.core.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.limeprotocol.Command;
-import org.limeprotocol.Envelope;
-import org.limeprotocol.Message;
-import org.limeprotocol.Notification;
+import org.limeprotocol.*;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Capability;
+import org.limeprotocol.messaging.resource.Contact;
 import org.limeprotocol.messaging.resource.Receipt;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
@@ -20,6 +19,9 @@ import java.util.UUID;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.limeprotocol.Command.*;
 import static org.limeprotocol.Command.CommandMethod.*;
 import static org.limeprotocol.Notification.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
@@ -88,7 +90,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         Capability resource = createCapability();
         Command command = createCommand(resource);
         command.setPp(createNode());
-        command.setMethod(Command.CommandMethod.Get);
+        command.setMethod(CommandMethod.Get);
 
         String metadataKey1 = "randomString1";
         String metadataValue1 = createRandomString(50);
@@ -302,7 +304,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void deserialize_ReceiptRequestCommand_ReturnsValidInstance() {
         // Arrange
-        Command.CommandMethod method = Set;
+        CommandMethod method = Set;
         UUID id = UUID.randomUUID();
 
         String json = StringUtils.format(
@@ -329,10 +331,99 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
         assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
         Receipt receipt = (Receipt) command.getResource();
-        assertThat(receipt.getEvents()).containsOnly(new Event[] {Event.Dispatched, Event.Received });
+        assertThat(receipt.getEvents()).containsOnly(new Event[]{Event.Dispatched, Event.Received});
 
         assertThat(command.getUri()).isNull();
     }
+
+    @Test
+    public void deserialize_ContactCollectionResponseCommand_ReturnsValidInstance() {
+        // Arrange
+        Identity identity1 = createIdentity();
+        String name1 = createRandomString(50);
+        Identity identity2 = createIdentity();
+        String name2 = createRandomString(50);
+        Identity identity3 = createIdentity();
+        String name3 = createRandomString(50);
+
+        CommandMethod method = CommandMethod.Get;
+
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node  pp = createNode();
+        Node to = createNode();
+
+        String randomKey1 = "randomString1";
+        String randomKey2 = "randomString2";
+        String randomString1 = createRandomString(50);
+        String randomString2 = createRandomString(50);
+
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.collection+json\",\"resource\":{\"itemType\":\"application/vnd.lime.contact+json\",\"total\":3,\"items\":[{\"identity\":\"{0}\",\"name\":\"{1}\",\"isPending\":true,\"shareAccountInfo\":false},{\"identity\":\"{2}\",\"name\":\"{3}\",\"sharePresence\":false},{\"identity\":\"{4}\",\"name\":\"{5}\",\"isPending\":true,\"sharePresence\":false}]},\"method\":\"get\",\"status\":\"success\",\"id\":\"{6}\",\"from\":\"{7}\",\"pp\":\"{8}\",\"to\":\"{9}\",\"metadata\":{\"{10}\":\"{11}\",\"{12}\":\"{13}\"}}",
+                identity1,
+                name1,
+                identity2,
+                name2,
+                identity3,
+                name3,
+                id,
+                from,
+                pp,
+                to,
+                randomKey1,
+                randomString1,
+                randomKey2,
+                randomString2);
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        assertThat(envelope).isInstanceOf(Command.class);
+
+        Command command = (Command)envelope;
+
+        assertThat(command.getId()).isEqualTo(id);
+        assertThat(command.getFrom()).isEqualTo(from);
+        assertThat(command.getTo()).isEqualTo(to);
+        assertThat(command.getPp()).isEqualTo(pp);
+        assertThat(command.getMetadata()).isNotNull();
+        assertThat(command.getMetadata()).containsKey(randomKey1);
+        assertThat(command.getMetadata().get(randomKey1)).isEqualTo(randomString1);
+        assertThat(command.getMetadata()).containsKey(randomKey2);
+        assertThat(command.getMetadata().get(randomKey2)).isEqualTo(randomString2);
+
+        assertThat(command.getMethod()).isEqualTo(method);
+
+        assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
+        assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
+
+        assertThat(envelope).isInstanceOf(DocumentCollection.class);
+
+        DocumentCollection documents = (DocumentCollection)command.getResource();
+
+        assertThat(documents.getItems()).isNotNull().hasSize(3);
+
+        Contact[] contacts = (Contact[]) documents.getItems();
+
+        assertThat(contacts[0].getIdentity()).isEqualTo(identity1);
+        assertThat(contacts[0].getName()).isEqualTo(name1);
+        assertThat(contacts[0].isPending()).isNotNull().isTrue();
+        assertThat(contacts[0].getShareAccountInfo()).isNotNull().isFalse();
+        assertThat(contacts[0].getSharePresence()).isNull();
+
+        assertThat(contacts[1].getIdentity()).isEqualTo(identity2);
+        assertThat(contacts[1].getName()).isEqualTo(name2);
+        assertThat(contacts[1].isPending()).isNull();
+        assertThat(contacts[1].getShareAccountInfo()).isNull();
+        assertThat(contacts[1].getSharePresence()).isNotNull().isFalse();
+
+        assertThat(contacts[2].getIdentity()).isEqualTo(identity3);
+        assertThat(contacts[2].getName()).isEqualTo(name3);
+        assertThat(contacts[2].isPending()).isNotNull().isTrue();
+        assertThat(contacts[2].getShareAccountInfo()).isNull();
+        assertThat(contacts[2].getSharePresence()).isNotNull().isFalse();
+    }
+
 
     //endregion Command
 
