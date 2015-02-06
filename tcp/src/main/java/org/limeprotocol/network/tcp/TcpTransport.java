@@ -1,20 +1,14 @@
 package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
-import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
@@ -26,19 +20,28 @@ public class TcpTransport extends TransportBase implements Transport {
 
     public final static int DEFAULT_BUFFER_SIZE = 8192;
     private final EnvelopeSerializer envelopeSerializer;
-
-    private Socket socket;
-    private SSLSocket sslSocket;
-
+    private final TcpClientFactory tcpClientFactory;
+    private final TraceWriter traceWriter;
+    private final int bufferSize;
+    private TcpClient tcpClient;
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
-    
     private Future<?> inputListenerFuture;
-
     private ExecutorService executorService;
 
-    public TcpTransport(EnvelopeSerializer envelopeSerializer) {
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
+        this(envelopeSerializer, tcpClientFactory, null, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter) {
+        this(envelopeSerializer, tcpClientFactory, traceWriter, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter, int bufferSize) {
         this.envelopeSerializer = envelopeSerializer;
+        this.tcpClientFactory = tcpClientFactory;
+        this.traceWriter = traceWriter;
+        this.bufferSize = bufferSize;
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -49,8 +52,17 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public synchronized void send(Envelope envelope) throws IOException {
+        if (envelope == null) {
+            throw new IllegalArgumentException("envelope");
+        }
         ensureSocketOpen();
         String envelopeString = envelopeSerializer.serialize(envelope);
+        
+        if (traceWriter != null &&
+                traceWriter.isEnabled()) {
+            traceWriter.trace(envelopeString, TraceWriter.DataOperation.SEND);
+        }
+
         try {
             byte[] envelopeBytes = envelopeString.getBytes("UTF-8");
             outputStream.write(envelopeBytes);
@@ -59,7 +71,6 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalArgumentException("Could not convert the serialized envelope to a UTF-8 byte array", e);
         }
     }
-
 
     /**
      * Opens the transport connection with the specified Uri.
@@ -77,32 +88,37 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalArgumentException("Invalid URI scheme. Expected is 'net.tcp'", null);
         }
         
-        if (socket != null) {
+        if (tcpClient != null) {
             throw new IllegalStateException("The client is already open");
         }
         
-        socket = new Socket();
-        socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
-        outputStream = new BufferedOutputStream(socket.getOutputStream());
-        inputStream = new BufferedInputStream(socket.getInputStream());
-        inputListenerFuture = executorService.submit(new JsonStreamReader(DEFAULT_BUFFER_SIZE));
+        tcpClient = tcpClientFactory.create();
+        tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        getStreams();
+        if (getTransportListener() != null) {
+            startInputListener();
+        }
+    }
+
+    @Override
+    public void setTransportListener(TransportListener transportListener) {
+        super.setTransportListener(transportListener);
+        if (transportListener != null && tcpClient != null) {
+            stopInputListener();
+            try {
+                startInputListener();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("An error occurred while starting the listener task", e);
+            }
+        }
     }
 
     @Override
     protected void performClose() throws IOException {
-        ensureSocketOpen();
-        socket.close();
-
-        if (inputListenerFuture != null) {
-            try {
-                inputListenerFuture.cancel(true);
-                inputListenerFuture.wait();
-                inputListenerFuture.get();
-            } catch (InterruptedException e) {
-                throw new IllegalStateException("The connection failed", e);
-            } catch (ExecutionException e) {
-                throw new IllegalStateException("The connection failed", e);
-            }
+        stopInputListener();
+        if (tcpClient != null) {
+            tcpClient.close();
         }
     }
 
@@ -113,7 +129,6 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        
         return new SessionEncryption[] { SessionEncryption.none, SessionEncryption.tls };
     }
 
@@ -126,73 +141,110 @@ public class TcpTransport extends TransportBase implements Transport {
     public void setEncryption(SessionEncryption encryption) throws IOException {
         switch (encryption) {
             case tls:
-                sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
-                        socket,
-                        socket.getInetAddress().getHostAddress(),
-                        socket.getPort(),
-                        true);
-                
+                if (!tcpClient.isTlsStarted()) {
+                    stopInputListener();
+                    tcpClient.startTls();
+                    getStreams();
+                    if (getTransportListener() != null) {
+                        startInputListener();
+                    }
+                }
                 break;
-            
+            case none:
+                if (tcpClient.isTlsStarted()) {
+                    throw new IllegalStateException("Cannot downgrade an encrypted connection");
+                }
+                break;
         }
         
         super.setEncryption(encryption);
+        
     }
 
-
     private void ensureSocketOpen() {
-        if (socket == null) {
+        if (tcpClient == null) {
             throw new IllegalStateException("The client is not open");
         }
     }
 
+    private void getStreams() throws IOException {
+        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
+        inputStream = new BufferedInputStream(tcpClient.getInputStream());
+    }
+
+    private void startInputListener() throws IOException {
+        if (inputListenerFuture != null &&
+                !inputListenerFuture.isDone()) {
+            throw new IllegalStateException("The input listener is already started");
+        }
+        inputListenerFuture = executorService.submit(new JsonStreamReader(bufferSize, inputStream, getTransportListener()));
+    }
+    
+    private void stopInputListener() {
+        if (inputListenerFuture != null &&
+                !inputListenerFuture.isDone()) {
+            if (!inputListenerFuture.cancel(true)) {
+                throw new IllegalStateException("Could not stop the input listener");
+            }
+            inputListenerFuture = null;
+        }
+    }
+
     class JsonStreamReader implements Callable<Void> {
-        
-        private boolean canRead;
-        
+
+        private final InputStream inputStream;
+        private final TransportListener transportListener;
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
         private int jsonCurPos;
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
-        
-        JsonStreamReader(int bufferSize) {
+
+        JsonStreamReader(int bufferSize, InputStream inputStream, TransportListener transportListener) {
+            if (inputStream == null) {
+                throw new IllegalArgumentException("inputStream");
+            }
+            if (transportListener == null) {
+                throw new IllegalArgumentException("transportListener");
+            }
+            this.inputStream = inputStream;
+            this.transportListener = transportListener;
             buffer = new byte[bufferSize];
         }
 
         @Override
         public Void call() throws Exception {
-            if (TcpTransport.this.inputStream == null) {
-                throw new IllegalStateException("The stream was not initialized. Call Open first.");
-            }
+            try {
+                do {
+                    Envelope envelope = null;
+                    while (envelope == null) {
+                        JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
+                        if (jsonBufferReadResult.isSuccess()) {
+                            String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
+                            envelope = TcpTransport.this.envelopeSerializer.deserialize(jsonString);
+                        }
 
-            while (canRead()) {
-                Envelope envelope = null;
-                while (envelope == null) {
-                    JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
-                    if (jsonBufferReadResult.isSuccess()) {
-                        String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
-                        envelope = TcpTransport.this.envelopeSerializer.deserialize(jsonString);
-                    }
-
-                    if (envelope == null) {
-                        bufferCurPos += TcpTransport.this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
-                        if (bufferCurPos >= buffer.length) {
-                            TcpTransport.this.close();
-                            throw new IllegalStateException("Maximum buffer size reached");
+                        if (envelope == null) {
+                            bufferCurPos += inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                            if (bufferCurPos >= buffer.length) {
+                                TcpTransport.this.close();
+                                throw new BufferOverflowException("Maximum buffer size reached");
+                            }
                         }
                     }
-                }
 
-                TcpTransport.this.getListenerBroadcastSender().broadcastOnReceive(envelope);
+                    transportListener.onReceive(envelope);
+                } while (transportListener.isListening());
+            } catch (Exception e) {
+                transportListener.onException(e);
             }
-
+            
+            TcpTransport.this.setTransportListener(null);
             return null;
         }
 
-        private JsonBufferReadResult tryExtractJsonFromBuffer()
-        {
+        private JsonBufferReadResult tryExtractJsonFromBuffer() {
             if (bufferCurPos > buffer.length) {
                 throw new IllegalArgumentException("Buffer current pos or length value is invalid", null);
             }
@@ -235,14 +287,6 @@ public class TcpTransport extends TransportBase implements Transport {
             }
 
             return new JsonBufferReadResult(false, null);
-        }
-
-        public boolean canRead() {
-            return canRead;
-        }
-
-        public void setCanRead(boolean canRead) {
-            this.canRead = canRead;
         }
 
         class JsonBufferReadResult {

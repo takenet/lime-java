@@ -22,14 +22,7 @@ public interface Transport {
      *  Add a listener for receiving envelopes with default priority
      * @param transportListener
      */
-    void addListener(TransportListener transportListener);
-
-    /**
-     *  Add a listener for receiving envelopes with the specify priority
-     * @param transportListener
-     */
-    void addListener(TransportListener transportListener, Integer priority);
-
+    void setTransportListener(TransportListener transportListener);
 
     /**
      * Opens the transport connection with the specified Uri.
@@ -98,5 +91,18 @@ public interface Transport {
          * Occurs after the connection was closed.
          */
         void onClosed();
+
+        /**
+         * Occurs when an exception is thrown
+         * during the receive process.
+         * @param e The thrown exception.
+         */
+        void onException(Exception e);
+
+        /**
+         * Indicates if the listener is active.
+         * @return
+         */
+        boolean isListening();
     }
 }

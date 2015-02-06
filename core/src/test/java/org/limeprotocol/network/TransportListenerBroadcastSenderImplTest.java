@@ -13,6 +13,7 @@ public class TransportListenerBroadcastSenderImplTest {
         int onReceiveCount;
         int onClosingCount;
         int onClosedCount;
+        int onExceptionCount;
 
         @Override
         public void onReceive(Envelope envelope) {
@@ -27,6 +28,27 @@ public class TransportListenerBroadcastSenderImplTest {
         @Override
         public void onClosed() {
             onClosedCount++;
+        }
+
+        /**
+         * Occurs when an exception is thrown
+         * during the receive process.
+         *
+         * @param e The thrown exception.
+         */
+        @Override
+        public void onException(Exception e) {
+            onExceptionCount++;
+        }
+
+        /**
+         * Indicates if the listener is active.
+         *
+         * @return
+         */
+        @Override
+        public boolean isListening() {
+            return true;
         }
     }
 
@@ -68,6 +90,21 @@ public class TransportListenerBroadcastSenderImplTest {
             @Override
             public void onClosed() {
 
+            }
+
+            @Override
+            public void onException(Exception e) {
+
+            }
+
+            /**
+             * Indicates if the listener is active.
+             *
+             * @return
+             */
+            @Override
+            public boolean isListening() {
+                return false;
             }
         };
 
