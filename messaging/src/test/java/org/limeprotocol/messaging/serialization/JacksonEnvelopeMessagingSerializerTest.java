@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.limeprotocol.Command;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Message;
+import org.limeprotocol.Notification;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Capability;
 import org.limeprotocol.messaging.resource.Receipt;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.limeprotocol.Command.CommandMethod.*;
+import static org.limeprotocol.Notification.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
 import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
@@ -326,6 +328,8 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
         assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
+        Receipt receipt = (Receipt) command.getResource();
+        assertThat(receipt.getEvents()).containsOnly(new Event[] {Event.Dispatched, Event.Received });
 
         assertThat(command.getUri()).isNull();
     }
