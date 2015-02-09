@@ -14,7 +14,7 @@ import org.limeprotocol.serialization.jackson.CustomSerializerModule;
 import java.io.IOException;
 
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
-import static org.limeprotocol.serialization.jackson.SerializationUtil.deserializeDocument;
+import static org.limeprotocol.serialization.jackson.SerializationUtil.*;
 
 public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 

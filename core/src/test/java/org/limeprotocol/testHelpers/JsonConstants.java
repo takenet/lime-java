@@ -73,8 +73,6 @@ public class JsonConstants {
     }
 
     public static class DocumentCollection {
-        public static final String TOTAL_KEY = "total";
-        public static final String ITEM_TYPE_KEY = "itemType";
         public static final String ITEMS_KEY = "items";
 
     }
