@@ -105,8 +105,8 @@ public abstract class TransportBase implements Transport {
     protected abstract void performClose() throws IOException;
 
     protected synchronized void raiseOnReceive(Envelope envelope) {
-        for (TransportListener transportListener : transportListeners) {
-            transportListener.onReceive(envelope);
+        for (TransportListener listener : transportListeners) {
+            listener.onReceive(envelope);
         }
         while (!singleReceiveTransportListeners.isEmpty()) {
             TransportListener listener = singleReceiveTransportListeners.remove();
@@ -115,11 +115,11 @@ public abstract class TransportBase implements Transport {
     }
 
     protected synchronized void raiseOnException(Exception e) {
-        for (TransportListener transportListener : transportListeners) {
-            transportListener.onException(e);
+        for (TransportListener listener : transportListeners) {
+            listener.onException(e);
         }
-        for (TransportListener transportListener : singleReceiveTransportListeners) {
-            transportListener.onException(e);
+        for (TransportListener listener : singleReceiveTransportListeners) {
+            listener.onException(e);
         }
     }
 
@@ -128,20 +128,20 @@ public abstract class TransportBase implements Transport {
     }
 
     private synchronized void raiseOnClosing() {
-        for (TransportListener transportListener : transportListeners) {
-            transportListener.onClosing();
+        for (TransportListener listener : transportListeners) {
+            listener.onClosing();
         }
-        for (TransportListener transportListener : singleReceiveTransportListeners) {
-            transportListener.onClosing();
+        for (TransportListener listener : singleReceiveTransportListeners) {
+            listener.onClosing();
         }
     }
 
     private synchronized void raiseOnClosed() {
-        for (TransportListener transportListener : transportListeners) {
-            transportListener.onClosed();
+        for (TransportListener listener : transportListeners) {
+            listener.onClosed();
         }
-        for (TransportListener transportListener : singleReceiveTransportListeners) {
-            transportListener.onClosed();
+        for (TransportListener listener : singleReceiveTransportListeners) {
+            listener.onClosed();
         }
     }
 }

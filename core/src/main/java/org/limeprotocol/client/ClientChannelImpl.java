@@ -1,9 +1,6 @@
 package org.limeprotocol.client;
 
-import org.limeprotocol.Identity;
-import org.limeprotocol.Node;
-import org.limeprotocol.SessionCompression;
-import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.*;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelBase;
 import org.limeprotocol.network.SessionChannel;

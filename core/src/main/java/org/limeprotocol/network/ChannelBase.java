@@ -25,6 +25,7 @@ public class ChannelBase implements Channel {
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
     private final Queue<SessionChannelListener> singleReceiveSessionListeners;
+    private final Queue<ChannelListener> singleExceptionChannelListeners;
     
     protected ChannelBase(Transport transport) {
         if (transport == null) {
@@ -42,6 +43,7 @@ public class ChannelBase implements Channel {
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         singleReceiveSessionListeners = new LinkedBlockingQueue<>();
+        singleExceptionChannelListeners = new LinkedBlockingQueue<>();
     }
 
     /**
@@ -108,11 +110,16 @@ public class ChannelBase implements Channel {
      * @param channelListener
      */
     @Override
-    public void addChannelListener(ChannelListener channelListener) {
+    public void addChannelListener(ChannelListener channelListener, boolean removeOnException) {
         if (channelListener == null) {
             throw new IllegalArgumentException("channelListener");
         }
-        channelListeners.add(channelListener);
+        if (removeOnException) {
+            singleExceptionChannelListeners.add(channelListener);
+        } else {
+            channelListeners.add(channelListener);
+        }
+
     }
 
     /**
@@ -315,9 +322,9 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveCommand(Command command) {
-        for (CommandChannelListener commandChannelListener : commandListeners) {
+        for (CommandChannelListener listener : commandListeners) {
             try {
-                commandChannelListener.onReceiveCommand(command);    
+                listener.onReceiveCommand(command);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -334,9 +341,9 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveNotification(Notification notification) {
-        for (NotificationChannelListener notificationChannelListener : notificationListeners) {
+        for (NotificationChannelListener listener : notificationListeners) {
             try {
-                notificationChannelListener.onReceiveNotification(notification);    
+                listener.onReceiveNotification(notification);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -353,17 +360,17 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveSession(Session session) {
-        for (SessionChannelListener sessionChannelListener : sessionListeners) {
+        for (SessionChannelListener listener : sessionListeners) {
             try {
-                sessionChannelListener.onReceiveSession(session);    
+                listener.onReceiveSession(session);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
         while (!singleReceiveSessionListeners.isEmpty()) {
+            SessionChannelListener listener = singleReceiveSessionListeners.remove();
             try {
-                SessionChannelListener listener = singleReceiveSessionListeners.remove();
                 listener.onReceiveSession(session);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -372,9 +379,9 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnTransportClosing() {
-        for (ChannelListener channelListener : channelListeners) {
+        for (ChannelListener listener : channelListeners) {
             try {
-                channelListener.onTransportClosing();    
+                listener.onTransportClosing();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -382,19 +389,30 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnTransportClosed() {
-        for (ChannelListener channelListener : channelListeners) {
+        for (ChannelListener listener : channelListeners) {
             try {
-                channelListener.onTransportClosed();    
+                listener.onTransportClosed();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        // Remove reference with all listeners
+        channelListeners.clear();
     }
 
     private synchronized void raiseOnTransportException(Exception exception) {
-        for (ChannelListener channelListener : channelListeners) {
+        for (ChannelListener listener : channelListeners) {
             try {
-                channelListener.onTransportException(exception);
+                listener.onTransportException(exception);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        while (!singleExceptionChannelListeners.isEmpty()) {
+            ChannelListener listener = singleExceptionChannelListeners.remove();
+            try {
+                listener.onTransportException(exception);
             } catch (Exception e) {
                 e.printStackTrace();
             }
