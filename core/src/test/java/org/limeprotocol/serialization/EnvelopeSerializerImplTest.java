@@ -1,13 +1,11 @@
 package org.limeprotocol.serialization;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
 import org.limeprotocol.Session.SessionState;
-import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
@@ -36,7 +34,7 @@ public class EnvelopeSerializerImplTest {
     @Test
     public void serialize_AuthenticatingSession_ReturnsValidJsonString() {
         // Arrange
-        Session session = createSession(SessionState.Authenticating);
+        Session session = createSession(SessionState.AUTHENTICATING);
         PlainAuthentication plainAuthentication = createPlainAuthentication();
         session.setAuthentication(plainAuthentication);
 
@@ -69,7 +67,7 @@ public class EnvelopeSerializerImplTest {
     public void serialize_FailedSession_ReturnsValidJsonString() {
         // Arrange
         Session session = createSession();
-        session.setState(SessionState.Failed);
+        session.setState(SessionState.FAILED);
         session.setReason(createReason());
 
         // Act
@@ -112,7 +110,7 @@ public class EnvelopeSerializerImplTest {
         String randomString1 = createRandomString(50);
         String randomString2 = createRandomString(50);
 
-        SessionState state = SessionState.Authenticating;
+        SessionState state = SessionState.AUTHENTICATING;
 
         AuthenticationScheme scheme = AuthenticationScheme.Plain;
 

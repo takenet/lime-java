@@ -48,7 +48,7 @@ public class TestDummy {
     }
 
     public static Session createSession() {
-        return createSession(SessionState.New);
+        return createSession(SessionState.NEW);
     }
 
     public static Session createSession(SessionState state) {
