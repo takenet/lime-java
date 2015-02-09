@@ -7,7 +7,9 @@ import org.limeprotocol.SessionEncryption;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *  Base class for transport implementation.
@@ -17,6 +19,7 @@ public abstract class TransportBase implements Transport {
     private SessionCompression compression;
     private SessionEncryption encryption;
     private Set<TransportListener> transportListeners;
+    private final Queue<TransportListener> singleReceiveTransportListeners;
     private boolean closingInvoked;
     private boolean closedInvoked;
 
@@ -24,14 +27,19 @@ public abstract class TransportBase implements Transport {
         compression = SessionCompression.none;
         encryption = SessionEncryption.none;
         transportListeners = new HashSet<>();
+        singleReceiveTransportListeners = new LinkedBlockingQueue<>();
     }
     
     @Override
-    public void addListener(TransportListener transportListener) {
+    public void addListener(TransportListener transportListener, boolean removeAfterReceive) {
         if (transportListener == null) {
             throw new IllegalArgumentException("transportListener");
         }
-        transportListeners.add(transportListener);
+        if (removeAfterReceive) {
+            singleReceiveTransportListeners.add(transportListener);
+        } else {
+            transportListeners.add(transportListener);
+        }
     }
     
     @Override
@@ -96,49 +104,44 @@ public abstract class TransportBase implements Transport {
      */
     protected abstract void performClose() throws IOException;
 
-    protected void raiseOnReceive(Envelope envelope) {
+    protected synchronized void raiseOnReceive(Envelope envelope) {
         for (TransportListener transportListener : transportListeners) {
             transportListener.onReceive(envelope);
         }
-        removeInactiveListeners();
+        while (!singleReceiveTransportListeners.isEmpty()) {
+            TransportListener listener = singleReceiveTransportListeners.remove();
+            listener.onReceive(envelope);
+        }
     }
 
-    protected void raiseOnException(Exception e) {
+    protected synchronized void raiseOnException(Exception e) {
         for (TransportListener transportListener : transportListeners) {
             transportListener.onException(e);
         }
-        removeInactiveListeners();
+        for (TransportListener transportListener : singleReceiveTransportListeners) {
+            transportListener.onException(e);
+        }
     }
 
     protected boolean hasAnyListener() {
-        return !transportListeners.isEmpty();
+        return !(transportListeners.isEmpty() && singleReceiveTransportListeners.isEmpty());
     }
 
-    private void raiseOnClosing() {
+    private synchronized void raiseOnClosing() {
         for (TransportListener transportListener : transportListeners) {
             transportListener.onClosing();
         }
-        removeInactiveListeners();
+        for (TransportListener transportListener : singleReceiveTransportListeners) {
+            transportListener.onClosing();
+        }
     }
 
-    private void raiseOnClosed() {
+    private synchronized void raiseOnClosed() {
         for (TransportListener transportListener : transportListeners) {
             transportListener.onClosed();
         }
-        removeInactiveListeners();
-    }
-    
-    private void removeInactiveListeners() {
-        Set<TransportListener> inactiveListeners = new HashSet<TransportListener>();
-
-        for (TransportListener transportListener : transportListeners) {
-            if (!transportListener.isActive()) {
-                inactiveListeners.add(transportListener);
-            }
-        }
-
-        for (TransportListener inactiveListener : inactiveListeners) {
-            transportListeners.remove(inactiveListener);
+        for (TransportListener transportListener : singleReceiveTransportListeners) {
+            transportListener.onClosed();
         }
     }
 }

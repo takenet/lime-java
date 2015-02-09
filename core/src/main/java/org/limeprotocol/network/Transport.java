@@ -21,8 +21,9 @@ public interface Transport {
     /**
      *  Register the specified listener for receiving envelopes.
      * @param transportListener
+     * @param removeAfterReceive
      */
-    void addListener(TransportListener transportListener);
+    void addListener(TransportListener transportListener, boolean removeAfterReceive);
 
     /**
      * Unregister the specified listener.
@@ -104,12 +105,5 @@ public interface Transport {
          * @param e The thrown exception.
          */
         void onException(Exception e);
-
-        /**
-         * Indicates if the listener is active.
-         * If not, it can be removed from the registered listeners.
-         * @return
-         */
-        boolean isActive();
     }
 }

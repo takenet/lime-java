@@ -17,9 +17,9 @@ public interface NotificationChannel {
     /**
      * Sets the listener for receiving notifications.
      * @param listener
-     * @param singleReceive
+     * @param removeAfterReceive
      */
-    void addNotificationListener(NotificationChannelListener listener, boolean singleReceive);
+    void addNotificationListener(NotificationChannelListener listener, boolean removeAfterReceive);
 
     /**
      * Removes the specified listener.

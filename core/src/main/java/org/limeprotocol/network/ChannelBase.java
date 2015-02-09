@@ -4,8 +4,10 @@ import org.limeprotocol.*;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ChannelBase implements Channel {
     
@@ -14,24 +16,32 @@ public class ChannelBase implements Channel {
     private Node localNode;
     private UUID sessionId;
     private Session.SessionState state;
-    private final Set<CommandChannelListener> commandChannelListeners;
-    private final Set<MessageChannelListener> messageChannelListeners;
-    private final Set<NotificationChannelListener> notificationChannelListeners;
-    private final Set<SessionChannelListener> sessionChannelListeners;
+    private final Set<CommandChannelListener> commandListeners;
+    private final Set<MessageChannelListener> messageListeners;
+    private final Set<NotificationChannelListener> notificationListeners;
+    private final Set<SessionChannelListener> sessionListeners;
     private final Set<ChannelListener> channelListeners;
-
+    private final Queue<CommandChannelListener> singleReceiveCommandListeners;
+    private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
+    private final Queue<MessageChannelListener> singleReceiveMessageListeners;
+    private final Queue<SessionChannelListener> singleReceiveSessionListeners;
+    
     protected ChannelBase(Transport transport) {
         if (transport == null) {
             throw new IllegalArgumentException("transport");
         }
         
         this.transport = transport;
-        this.state = Session.SessionState.NEW;
+        state = Session.SessionState.NEW;
         channelListeners = new HashSet<>();
-        commandChannelListeners = new HashSet<>();
-        messageChannelListeners = new HashSet<>();
-        notificationChannelListeners = new HashSet<>();
-        sessionChannelListeners = new HashSet<>();
+        commandListeners = new HashSet<>();
+        messageListeners = new HashSet<>();
+        notificationListeners = new HashSet<>();
+        sessionListeners = new HashSet<>();
+        singleReceiveCommandListeners = new LinkedBlockingQueue<>();
+        singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
+        singleReceiveMessageListeners = new LinkedBlockingQueue<>();
+        singleReceiveSessionListeners = new LinkedBlockingQueue<>();
     }
 
     /**
@@ -84,6 +94,14 @@ public class ChannelBase implements Channel {
         return state;
     }
 
+    
+    protected void setState(Session.SessionState state) {
+        this.state = state;
+        if (state == Session.SessionState.ESTABLISHED) {
+            transport.addListener(new ChannelTransportListener(), false);
+        }
+    }
+    
     /**
      * Sets the channel listener.
      *
@@ -117,14 +135,18 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving commands.
      *
      * @param listener
-     * @param singleReceive
+     * @param removeAfterReceive
      */
     @Override
-    public void addCommandListener(CommandChannelListener listener, boolean singleReceive) {
+    public void addCommandListener(CommandChannelListener listener, boolean removeAfterReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        commandChannelListeners.add(listener);
+        if (removeAfterReceive) {
+            singleReceiveCommandListeners.add(listener);
+        } else {
+            commandListeners.add(listener);
+        }
     }
 
     /**
@@ -134,7 +156,7 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeCommandListener(CommandChannelListener listener) {
-        commandChannelListeners.remove(listener);
+        commandListeners.remove(listener);
     }
 
     /**
@@ -157,14 +179,18 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving messages.
      *
      * @param listener
-     * @param singleReceive
+     * @param removeAfterReceive
      */
     @Override
-    public void addMessageListener(MessageChannelListener listener, boolean singleReceive) {
+    public void addMessageListener(MessageChannelListener listener, boolean removeAfterReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        messageChannelListeners.add(listener);
+        if (removeAfterReceive) {
+            singleReceiveMessageListeners.add(listener);
+        } else {
+            messageListeners.add(listener);
+        }
     }
 
     /**
@@ -174,7 +200,7 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeMessageListener(MessageChannelListener listener) {
-        messageChannelListeners.remove(listener);
+        messageListeners.remove(listener);
     }
 
     /**
@@ -197,14 +223,18 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving notifications.
      *
      * @param listener
-     * @param singleReceive
+     * @param removeAfterReceive
      */
     @Override
-    public void addNotificationListener(NotificationChannelListener listener, boolean singleReceive) {
+    public void addNotificationListener(NotificationChannelListener listener, boolean removeAfterReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        notificationChannelListeners.add(listener);
+        if (removeAfterReceive) {
+            singleReceiveNotificationListeners.add(listener);
+        } else {
+            notificationListeners.add(listener);
+        }
     }
 
     /**
@@ -214,7 +244,7 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeNotificationListener(NotificationChannelListener listener) {
-        notificationChannelListeners.remove(listener);
+        notificationListeners.remove(listener);
     }
 
     /**
@@ -237,14 +267,18 @@ public class ChannelBase implements Channel {
      * Sets the listener for receiving sessions.
      *
      * @param listener
-     * @param singleReceive
+     * @param removeAfterReceive
      */
     @Override
-    public void addSessionListener(SessionChannelListener listener, boolean singleReceive) {
+    public void addSessionListener(SessionChannelListener listener, boolean removeAfterReceive) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        sessionChannelListeners.add(listener);
+        if (removeAfterReceive) {
+            singleReceiveSessionListeners.add(listener);
+        } else {
+            sessionListeners.add(listener);
+        }
     }
 
     /**
@@ -254,7 +288,7 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeSessionListener(SessionChannelListener listener) {
-        sessionChannelListeners.remove(listener);
+        sessionListeners.remove(listener);
     }
 
     private void send(Envelope envelope) throws IOException {
@@ -262,9 +296,18 @@ public class ChannelBase implements Channel {
     }
     
     private synchronized void raiseOnReceiveMessage(Message message) {
-        for (MessageChannelListener messageChannelListener : messageChannelListeners) {
+        for (MessageChannelListener listener : messageListeners) {
             try {
-                messageChannelListener.onReceiveMessage(message);    
+                listener.onReceiveMessage(message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        
+        while (!singleReceiveMessageListeners.isEmpty()) {
+            try {
+                MessageChannelListener listener = singleReceiveMessageListeners.remove();
+                listener.onReceiveMessage(message);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -272,9 +315,18 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveCommand(Command command) {
-        for (CommandChannelListener commandChannelListener : commandChannelListeners) {
+        for (CommandChannelListener commandChannelListener : commandListeners) {
             try {
                 commandChannelListener.onReceiveCommand(command);    
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        while (!singleReceiveCommandListeners.isEmpty()) {
+            try {
+                CommandChannelListener listener = singleReceiveCommandListeners.remove();
+                listener.onReceiveCommand(command);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -282,9 +334,18 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveNotification(Notification notification) {
-        for (NotificationChannelListener notificationChannelListener : notificationChannelListeners) {
+        for (NotificationChannelListener notificationChannelListener : notificationListeners) {
             try {
                 notificationChannelListener.onReceiveNotification(notification);    
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        while (!singleReceiveNotificationListeners.isEmpty()) {
+            try {
+                NotificationChannelListener listener = singleReceiveNotificationListeners.remove();
+                listener.onReceiveNotification(notification);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -292,9 +353,18 @@ public class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveSession(Session session) {
-        for (SessionChannelListener sessionChannelListener : sessionChannelListeners) {
+        for (SessionChannelListener sessionChannelListener : sessionListeners) {
             try {
                 sessionChannelListener.onReceiveSession(session);    
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        while (!singleReceiveSessionListeners.isEmpty()) {
+            try {
+                SessionChannelListener listener = singleReceiveSessionListeners.remove();
+                listener.onReceiveSession(session);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -330,8 +400,8 @@ public class ChannelBase implements Channel {
             }
         }
     }
-    
-    private class EstablishedTransportListener implements Transport.TransportListener {
+
+    protected class ChannelTransportListener implements Transport.TransportListener {
         /**
          * Occurs when a envelope is received by the transport.
          *
@@ -375,17 +445,6 @@ public class ChannelBase implements Channel {
         @Override
         public void onException(Exception e) {
             raiseOnTransportException(e);
-        }
-
-        /**
-         * Indicates if the listener is active.
-         * If not, it can be removed from the registered listeners.
-         *
-         * @return
-         */
-        @Override
-        public boolean isActive() {
-            return getState() == Session.SessionState.ESTABLISHED;
         }
     }
 }

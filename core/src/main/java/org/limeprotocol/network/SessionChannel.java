@@ -17,9 +17,9 @@ public interface SessionChannel {
     /**
      * Sets the listener for receiving sessions.
      * @param listener
-     * @param singleReceive
+     * @param removeAfterReceive
      */
-    void addSessionListener(SessionChannelListener listener, boolean singleReceive);
+    void addSessionListener(SessionChannelListener listener, boolean removeAfterReceive);
 
     /**
      * Removes the specified listener.

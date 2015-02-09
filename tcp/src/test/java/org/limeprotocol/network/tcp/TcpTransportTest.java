@@ -62,8 +62,7 @@ public class TcpTransportTest {
         target.open(Dummy.createUri());
         return target;
     }
-    
-
+     
     @Test
     public void open_notConnectedValidUri_callsConnectsAndGetStreams() throws URISyntaxException, IOException {
         // Arrange
@@ -155,7 +154,7 @@ public class TcpTransportTest {
         Envelope envelope = mock(Envelope.class);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener);
+        target.addListener(transportListener, false);
 
         // Act
         target.open(Dummy.createUri());
@@ -178,8 +177,7 @@ public class TcpTransportTest {
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isActive()).thenReturn(true);
-        target.addListener(transportListener);
+        target.addListener(transportListener, false);
 
         // Act
         target.open(Dummy.createUri());
@@ -222,8 +220,7 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isActive()).thenReturn(true);
-        target.addListener(transportListener);
+        target.addListener(transportListener, false);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
@@ -252,6 +249,62 @@ public class TcpTransportTest {
         assertEquals(messageBufferParts.length, inputStream.getReadCount());
         assertTrue(messageJsonQueue.isEmpty());
     }
+
+
+    @Test
+    public void onReceive_multipleReadsWithRemovedListener_readSingleEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
+        // Arrange
+        final int messagesCount = Dummy.createRandomInt(100) + 1;
+        final Queue<String> messageJsonQueue = new LinkedBlockingQueue<>();
+        StringBuilder messagesJsonBuilder = new StringBuilder();
+        for (int i = 0; i < messagesCount; i++) {
+            String messageJson;
+            do {
+                messageJson = Dummy.createMessageJson();
+            } while (messageJsonQueue.contains(messageJson));
+            messageJsonQueue.add(messageJson);
+            messagesJsonBuilder.append(messageJson);
+        }
+        String messagesJson = messagesJsonBuilder.toString();
+        byte[] messageBuffer = messagesJson.getBytes("UTF-8");
+        byte[][] messageBufferParts = splitBuffer(messageBuffer);
+        int bufferSize = messageBuffer.length + Dummy.createRandomInt(1000);
+        TestInputStream inputStream = new TestInputStream(messageBufferParts);
+        TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
+        when(envelopeSerializer.deserialize(anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                if (messageJsonQueue.peek().equals(invocationOnMock.getArguments()[0])) {
+                    messageJsonQueue.remove();
+                    return mock(Envelope.class);
+                }
+                return null;
+            }
+        });
+        Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
+        target.addListener(transportListener, true);
+        final Semaphore semaphore = new Semaphore(1);
+        semaphore.acquire();
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                semaphore.release();
+                return null;
+            }
+        }).when(transportListener).onReceive(any(Envelope.class));
+
+        // Act
+        target.open(Dummy.createUri());
+        synchronized (semaphore) {
+            semaphore.wait(1000);
+        }
+
+        // Assert
+        verify(transportListener, times(1)).onReceive(any(Envelope.class));
+        verify(transportListener, never()).onException(any(Exception.class));
+        assertEquals(messagesCount - 1 , messageJsonQueue.size());
+    }
+    
     
     @Test
     public void onReceive_multipleReadsMultipleEnvelopesWithInvalidCharsBetween_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
@@ -286,8 +339,7 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isActive()).thenReturn(true);
-        target.addListener(transportListener);
+        target.addListener(transportListener, false);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
@@ -328,8 +380,7 @@ public class TcpTransportTest {
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(anyString())).thenReturn(mock(Envelope.class));
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isActive()).thenReturn(true);
-        target.addListener(transportListener);
+        target.addListener(transportListener, false);
 
         // Act
         target.open(Dummy.createUri());
@@ -345,8 +396,7 @@ public class TcpTransportTest {
         // Arrange
         TcpTransport target = getAndOpenTarget();
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        when(transportListener.isActive()).thenReturn(true);
-        target.addListener(transportListener);
+        target.addListener(transportListener, false);
         
         // Act
         target.close();
@@ -439,5 +489,4 @@ public class TcpTransportTest {
             return readCount;
         }
     }
-    
 }
