@@ -263,7 +263,7 @@ public class JacksonEnvelopeSerializerTest {
         AuthenticationScheme scheme = AuthenticationScheme.PLAIN;
 
         String json = StringUtils.format("{\"state\":\"{0}\",\"scheme\":\"{9}\",\"authentication\":{\"password\":\"{1}\"},\"id\":\"{2}\",\"from\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
-                state.toString().toLowerCase(),
+                StringUtils.toCamelCase(state.toString()),
                 password,
                 id,
                 from,
@@ -272,7 +272,7 @@ public class JacksonEnvelopeSerializerTest {
                 randomString1,
                 randomKey2,
                 randomString2,
-                scheme.toString().toLowerCase()
+                StringUtils.toCamelCase(scheme.toString())
         );
         // Act
         Envelope envelope = target.deserialize(json);
@@ -312,7 +312,7 @@ public class JacksonEnvelopeSerializerTest {
 
         String json = StringUtils.format(
                 "{\"state\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"to\":\"{3}\",\"reason\":{\"code\":{4},\"description\":\"{5}\"}},\"encryptionOptions\":null,\"compressionOptions\":null,\"compression\":null,\"encryption\":null}}",
-                state.toString().toLowerCase(),
+                StringUtils.toCamelCase(state.toString()),
                 id,
                 from,
                 to,
@@ -392,8 +392,9 @@ public class JacksonEnvelopeSerializerTest {
 
         LimeUri resourceUri = createAbsoluteLimeUri();
 
-        String json = StringUtils.format("{\"uri\":\"{0}\",\"method\":\"get\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
+        String json = StringUtils.format("{\"uri\":\"{0}\",\"method\":\"{1}\",\"id\":\"{2}\",\"from\":\"{3}\",\"pp\":\"{4}\",\"to\":\"{5}\",\"metadata\":{\"{6}\":\"{7}\",\"{8}\":\"{9}\"}}",
                 resourceUri,
+                StringUtils.toCamelCase(method.toString()),
                 id,
                 from,
                 pp,
@@ -652,7 +653,7 @@ public class JacksonEnvelopeSerializerTest {
 
         String json = StringUtils.format(
                 "{\"event\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
-        event.toString().toLowerCase(),
+            StringUtils.toCamelCase(event.toString()),
             id,
             from,
             pp,
@@ -696,7 +697,7 @@ public class JacksonEnvelopeSerializerTest {
 
         String json = StringUtils.format(
                 "{\"event\":\"{0}\",\"id\":\"{1}\",\"from\":\"{2}\",\"to\":\"{3}\",\"reason\":{\"code\":{4},\"description\":\"{5}\"}}",
-                event.toString().toLowerCase(),
+                StringUtils.toCamelCase(event.toString()),
                 id,
                 from,
                 to,

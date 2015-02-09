@@ -20,20 +20,18 @@ import java.util.UUID;
 import static junit.framework.TestCase.assertNotNull;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.limeprotocol.Command.CommandMethod.*;
-import static org.limeprotocol.Notification.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.*;
+import static org.junit.Assert.*;
+import static org.limeprotocol.Command.CommandMethod.SET;
+import static org.limeprotocol.Notification.Event;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_CONTENT_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_TYPES_KEY;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Contact.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
 import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
+import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.ITEMS_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
-import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Contact.*;
 
 public class JacksonEnvelopeMessagingSerializerTest {
 
@@ -252,7 +250,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{\"state\":\"{0}\"},\"id\":\"{1}\",\"from\":\"{2}\",\"pp\":\"{3}\",\"to\":\"{4}\",\"metadata\":{\"{5}\":\"{6}\",\"{7}\":\"{8}\"}}",
-                state.toString().toLowerCase(),
+                StringUtils.toCamelCase(state.toString()),
                 id,
                 from,
                 pp,
@@ -329,7 +327,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.chatstate+json\",\"content\":{\"state\":\"{0}\"},\"from\":\"{1}\",\"to\":\"{2}\"}",
-                state.toString().toLowerCase(),
+                StringUtils.toCamelCase(state.toString()),
                 from,
                 to
         );
@@ -363,7 +361,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.receipt+json\",\"resource\":{\"events\":[\"dispatched\",\"received\"]},\"method\":\"{0}\",\"id\":\"{1}\"}",
-                method.toString(),
+                StringUtils.toCamelCase(method.toString()),
                 id);
 
         // Act
