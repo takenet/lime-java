@@ -179,6 +179,53 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(REASON_KEY).isAbsent();
     }
 
+    @Test
+    public void serialize_ContactCollectionResponseCommand_ReturnsValidJsonString()
+    {
+        Contact contact1 = createContact();
+        contact1.setShareAccountInfo(true);
+        contact1.setSharePresence(true);
+
+        Contact contact2 = createContact();
+        contact1.setShareAccountInfo(true);
+
+        Contact contact3 = createContact();
+
+        DocumentCollection resource = createDocumentCollection(contact1, contact2, contact3);
+
+        Command command = createCommand(resource);
+        command.setPp(createNode());
+        command.setMethod(Command.CommandMethod.GET);
+        command.setStatus(Command.CommandStatus.SUCCESS);
+
+        String metadataKey1 = "randomString1";
+        String metadataValue1 = createRandomString(50);
+        String metadataKey2 = "randomString2";
+        String metadataValue2 = createRandomString(50);
+
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put(metadataKey1, metadataValue1);
+        metadata.put(metadataKey2, metadataValue2);
+        command.setMetadata(metadata);
+
+        String resultString = target.serialize(command);
+
+        assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY);
+
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod());
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().toString());
+
+        assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
+
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY).isPresent();
+
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]." + IDENTITY_KEY).isEqualTo(contact1.getMediaType());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + TOTAL_KEY + "[1]." + IDENTITY_KEY).isEqualTo(resource.getTotal());
+
+        assertThatJson(resultString).node(STATUS_KEY).isPresent();
+        assertThatJson(resultString).node(REASON_KEY).isAbsent();
+    }
+
     //endregion Command
 
     //endregion serialize method

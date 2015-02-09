@@ -177,4 +177,12 @@ public class TestDummy {
         notification.setEvent(event);
         return notification;
     }
+
+    public static DocumentCollection createDocumentCollection(Document ... documents){
+        DocumentCollection documentCollection = new DocumentCollection();
+        documentCollection.setItemType(documents[0].getMediaType());
+        documentCollection.setTotal(documents.length);
+        documentCollection.setItems(documents);
+        return documentCollection;
+    }
 }
