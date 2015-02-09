@@ -2,18 +2,13 @@ package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
@@ -25,19 +20,28 @@ public class TcpTransport extends TransportBase implements Transport {
 
     public final static int DEFAULT_BUFFER_SIZE = 8192;
     private final EnvelopeSerializer envelopeSerializer;
-
-    private Socket socket;
-    private SSLSocket sslSocket;
-
+    private final TcpClientFactory tcpClientFactory;
+    private final TraceWriter traceWriter;
+    private final int bufferSize;
+    private TcpClient tcpClient;
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
-    
-    private Future<?> inputListenerFuture;
-
+    private Future<?> listenerFuture;
     private ExecutorService executorService;
 
-    public TcpTransport(EnvelopeSerializer envelopeSerializer) {
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
+        this(envelopeSerializer, tcpClientFactory, null, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter) {
+        this(envelopeSerializer, tcpClientFactory, traceWriter, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter, int bufferSize) {
         this.envelopeSerializer = envelopeSerializer;
+        this.tcpClientFactory = tcpClientFactory;
+        this.traceWriter = traceWriter;
+        this.bufferSize = bufferSize;
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
@@ -48,8 +52,17 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public synchronized void send(Envelope envelope) throws IOException {
+        if (envelope == null) {
+            throw new IllegalArgumentException("envelope");
+        }
         ensureSocketOpen();
         String envelopeString = envelopeSerializer.serialize(envelope);
+        
+        if (traceWriter != null &&
+                traceWriter.isEnabled()) {
+            traceWriter.trace(envelopeString, TraceWriter.DataOperation.SEND);
+        }
+
         try {
             byte[] envelopeBytes = envelopeString.getBytes("UTF-8");
             outputStream.write(envelopeBytes);
@@ -58,7 +71,6 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalArgumentException("Could not convert the serialized envelope to a UTF-8 byte array", e);
         }
     }
-
 
     /**
      * Opens the transport connection with the specified Uri.
@@ -76,32 +88,36 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalArgumentException("Invalid URI scheme. Expected is 'net.tcp'", null);
         }
         
-        if (socket != null) {
+        if (tcpClient != null) {
             throw new IllegalStateException("The client is already open");
         }
         
-        socket = new Socket();
-        socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
-        outputStream = new BufferedOutputStream(socket.getOutputStream());
-        inputStream = new BufferedInputStream(socket.getInputStream());
-        inputListenerFuture = executorService.submit(new JsonStreamReader(DEFAULT_BUFFER_SIZE));
+        tcpClient = tcpClientFactory.create();
+        tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        initializeStreams();
+        if (hasAnyListener()) {
+            startListener();
+        }
+    }
+
+    @Override
+    public synchronized void addListener(TransportListener transportListener, boolean removeAfterReceive) {
+        super.addListener(transportListener, removeAfterReceive);
+        if (isSocketOpen() && !isListening()) {
+            try {
+                startListener();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("An error occurred while starting the listener task", e);
+            }
+        }
     }
 
     @Override
     protected void performClose() throws IOException {
-        ensureSocketOpen();
-        socket.close();
-
-        if (inputListenerFuture != null) {
-            try {
-                inputListenerFuture.cancel(true);
-                inputListenerFuture.wait();
-                inputListenerFuture.get();
-            } catch (InterruptedException e) {
-                throw new IllegalStateException("The connection failed", e);
-            } catch (ExecutionException e) {
-                throw new IllegalStateException("The connection failed", e);
-            }
+        stopListener();
+        if (tcpClient != null) {
+            tcpClient.close();
         }
     }
 
@@ -112,8 +128,7 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        
-        return new SessionEncryption[] { SessionEncryption.NONE, SessionEncryption.TLS};
+        return new SessionEncryption[] { SessionEncryption.NONE, SessionEncryption.TLS };
     }
 
     /**
@@ -125,73 +140,109 @@ public class TcpTransport extends TransportBase implements Transport {
     public void setEncryption(SessionEncryption encryption) throws IOException {
         switch (encryption) {
             case TLS:
-                sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(
-                        socket,
-                        socket.getInetAddress().getHostAddress(),
-                        socket.getPort(),
-                        true);
-                
+                if (!tcpClient.isTlsStarted()) {
+                    stopListener();
+                    tcpClient.startTls();
+                    initializeStreams();
+                    if (hasAnyListener()) {
+                        startListener();
+                    }
+                }
                 break;
-            
+            case NONE:
+                if (tcpClient.isTlsStarted()) {
+                    throw new IllegalStateException("Cannot downgrade an encrypted connection");
+                }
+                break;
         }
         
         super.setEncryption(encryption);
+        
     }
 
-
+    private boolean isSocketOpen() {
+        return tcpClient != null;
+    }
+    
     private void ensureSocketOpen() {
-        if (socket == null) {
+        if (tcpClient == null) {
             throw new IllegalStateException("The client is not open");
         }
     }
 
-    class JsonStreamReader implements Callable<Void> {
-        
-        private boolean canRead;
-        
+    private void initializeStreams() throws IOException {
+        outputStream = new BufferedOutputStream(tcpClient.getOutputStream());
+        inputStream = new BufferedInputStream(tcpClient.getInputStream());
+    }
+
+    private boolean isListening() {
+        return listenerFuture != null && !listenerFuture.isDone();
+    }
+    
+    private synchronized void startListener() throws IOException {
+        ensureSocketOpen();
+        if (isListening()) {
+            throw new IllegalStateException("The input listener is already started");
+        }
+        listenerFuture = executorService.submit(new JsonListener());
+    }
+    
+    private synchronized void stopListener() {
+        if (isListening()) {
+            if (!listenerFuture.cancel(true)) {
+                throw new IllegalStateException("Could not stop the input listener");
+            }
+            listenerFuture = null;
+        }
+    }
+
+    class JsonListener implements Callable<Void> {
+
+        // final reference of the inputStream
+        private final InputStream inputStream;
         private byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
         private int jsonCurPos;
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
-        
-        JsonStreamReader(int bufferSize) {
+
+        JsonListener() {
+            this.inputStream = TcpTransport.this.inputStream;
             buffer = new byte[bufferSize];
         }
 
         @Override
         public Void call() throws Exception {
-            if (TcpTransport.this.inputStream == null) {
-                throw new IllegalStateException("The stream was not initialized. Call Open first.");
-            }
+            try {
+                while (hasAnyListener()) {
+                    Envelope envelope = null;
+                    while (envelope == null) {
+                        JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
+                        if (jsonBufferReadResult.isSuccess()) {
+                            String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
+                            envelope = envelopeSerializer.deserialize(jsonString);
+                        }
 
-            while (canRead()) {
-                Envelope envelope = null;
-                while (envelope == null) {
-                    JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
-                    if (jsonBufferReadResult.isSuccess()) {
-                        String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
-                        envelope = TcpTransport.this.envelopeSerializer.deserialize(jsonString);
-                    }
-
-                    if (envelope == null) {
-                        bufferCurPos += TcpTransport.this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
-                        if (bufferCurPos >= buffer.length) {
-                            TcpTransport.this.close();
-                            throw new IllegalStateException("Maximum buffer size reached");
+                        if (envelope == null) {
+                            bufferCurPos += this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                            if (bufferCurPos >= buffer.length) {
+                                TcpTransport.this.close();
+                                throw new BufferOverflowException("Maximum buffer size reached");
+                            }
                         }
                     }
+                    
+                    raiseOnReceive(envelope);
                 }
-
-                TcpTransport.this.getListenerBroadcastSender().broadcastOnReceive(envelope);
+            } catch (Exception e) {
+                raiseOnException(e);
             }
 
             return null;
         }
 
-        private JsonBufferReadResult tryExtractJsonFromBuffer()
-        {
+        private JsonBufferReadResult tryExtractJsonFromBuffer() {
             if (bufferCurPos > buffer.length) {
                 throw new IllegalArgumentException("Buffer current pos or length value is invalid", null);
             }
@@ -236,14 +287,6 @@ public class TcpTransport extends TransportBase implements Transport {
             return new JsonBufferReadResult(false, null);
         }
 
-        public boolean canRead() {
-            return canRead;
-        }
-
-        public void setCanRead(boolean canRead) {
-            this.canRead = canRead;
-        }
-
         class JsonBufferReadResult {
             private final boolean success;
             private final byte[] jsonBytes;
@@ -261,5 +304,5 @@ public class TcpTransport extends TransportBase implements Transport {
                 return jsonBytes;
             }
         }
-    }    
+    }
 }

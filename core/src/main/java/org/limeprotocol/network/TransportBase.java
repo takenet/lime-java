@@ -1,50 +1,55 @@
 package org.limeprotocol.network;
 
+import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *  Base class for transport implementation.
  */
 public abstract class TransportBase implements Transport {
     
-    private TransportListenerBroadcastSender transportListenerBroadcastSender;
+    private SessionCompression compression;
+    private SessionEncryption encryption;
+    private Set<TransportListener> transportListeners;
+    private final Queue<TransportListener> singleReceiveTransportListeners;
     private boolean closingInvoked;
     private boolean closedInvoked;
 
-    private SessionCompression compression;
-    private SessionEncryption encryption;
-    
     protected TransportBase() {
         compression = SessionCompression.NONE;
         encryption = SessionEncryption.NONE;
-        //TODO use dependency injection ?
-        transportListenerBroadcastSender = new TransportListenerBroadcastSenderImpl();
+        transportListeners = new HashSet<>();
+        singleReceiveTransportListeners = new LinkedBlockingQueue<>();
     }
-
-    /**
-     * Closes the transport.
-     */
-    protected abstract void performClose() throws IOException;
-
-
+    
     @Override
-    public void addListener(TransportListener transportListener) {
-        transportListenerBroadcastSender.addListener(transportListener);
+    public void addListener(TransportListener transportListener, boolean removeAfterReceive) {
+        if (transportListener == null) {
+            throw new IllegalArgumentException("transportListener");
+        }
+        if (removeAfterReceive) {
+            singleReceiveTransportListeners.add(transportListener);
+        } else {
+            transportListeners.add(transportListener);
+        }
     }
-
+    
     @Override
-    public void addListener(TransportListener transportListener, Integer priority) {
-        transportListenerBroadcastSender.addListener(transportListener, priority);
+    public void removeListener(TransportListener transportListener) {
+        if (transportListener == null) {
+            throw new IllegalArgumentException("transportListener");
+        }
+        transportListeners.remove(transportListener);
     }
-
-    protected TransportListenerBroadcastSender getListenerBroadcastSender() {
-        return transportListenerBroadcastSender;
-    }
-
+    
     @Override
     public SessionCompression[] getSupportedCompression() {
         return new SessionCompression[] { getCompression() };
@@ -57,7 +62,7 @@ public abstract class TransportBase implements Transport {
 
     @Override
     public void setCompression(SessionCompression compression) throws IOException  {
-        if (Arrays.asList(getSupportedCompression()).contains(compression)) {
+        if (!Arrays.asList(getSupportedCompression()).contains(compression)) {
             throw new IllegalArgumentException("compression");
         }
         this.compression = compression;
@@ -75,22 +80,68 @@ public abstract class TransportBase implements Transport {
 
     @Override
     public void setEncryption(SessionEncryption encryption) throws IOException {
-        if (Arrays.asList(getSupportedEncryption()).contains(encryption)) {
+        if (!Arrays.asList(getSupportedEncryption()).contains(encryption)) {
             throw new IllegalArgumentException("encryption");
         }
         this.encryption = encryption;
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (!closingInvoked) {
-            transportListenerBroadcastSender.broadcastOnClosing();
+            raiseOnClosing();
             closingInvoked = true;
         }
         performClose();
         if (!closedInvoked) {
-            transportListenerBroadcastSender.broadcastOnClosed();
+            raiseOnClosed();
             closedInvoked = true;
+        }
+    }
+    
+    /**
+     * Closes the transport.
+     */
+    protected abstract void performClose() throws IOException;
+
+    protected synchronized void raiseOnReceive(Envelope envelope) {
+        for (TransportListener listener : transportListeners) {
+            listener.onReceive(envelope);
+        }
+        while (!singleReceiveTransportListeners.isEmpty()) {
+            TransportListener listener = singleReceiveTransportListeners.remove();
+            listener.onReceive(envelope);
+        }
+    }
+
+    protected synchronized void raiseOnException(Exception e) {
+        for (TransportListener listener : transportListeners) {
+            listener.onException(e);
+        }
+        for (TransportListener transportListener : singleReceiveTransportListeners) {
+            transportListener.onException(e);
+        }
+    }
+
+    protected boolean hasAnyListener() {
+        return !(transportListeners.isEmpty() && singleReceiveTransportListeners.isEmpty());
+    }
+
+    private synchronized void raiseOnClosing() {
+        for (TransportListener listener : transportListeners) {
+            listener.onClosing();
+        }
+        for (TransportListener listener : singleReceiveTransportListeners) {
+            listener.onClosing();
+        }
+    }
+
+    private synchronized void raiseOnClosed() {
+        for (TransportListener listener : transportListeners) {
+            listener.onClosed();
+        }
+        for (TransportListener listener : singleReceiveTransportListeners) {
+            listener.onClosed();
         }
     }
 }
