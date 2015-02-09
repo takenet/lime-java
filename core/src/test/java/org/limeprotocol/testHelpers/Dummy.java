@@ -1,9 +1,6 @@
 package org.limeprotocol.testHelpers;
 
-import org.limeprotocol.Identity;
-import org.limeprotocol.Node;
-import org.limeprotocol.Reason;
-import org.limeprotocol.Session;
+import org.limeprotocol.*;
 import org.limeprotocol.Session.*;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.util.StringUtils;
@@ -119,4 +116,5 @@ public class Dummy {
     public static Reason createReason() {
         return new Reason(createRandomInt(100), createRandomString(100));
     }
+
 }

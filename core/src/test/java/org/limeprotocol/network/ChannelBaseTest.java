@@ -3,7 +3,7 @@ package org.limeprotocol.network;
 import org.junit.Test;
 import org.limeprotocol.Node;
 import org.limeprotocol.Session;
-import org.limeprotocol.testHelpers.TestDummy;
+import org.limeprotocol.testHelpers.Dummy;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
