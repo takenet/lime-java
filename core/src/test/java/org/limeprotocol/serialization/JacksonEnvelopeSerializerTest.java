@@ -35,7 +35,7 @@ import static org.limeprotocol.testHelpers.JsonConstants.Notification.DESCRIPTIO
 import static org.limeprotocol.testHelpers.JsonConstants.Notification.EVENT_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Session.AUTHENTICATION_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Session.STATE_KEY;
-import static org.limeprotocol.testHelpers.TestDummy.*;
+import static org.limeprotocol.testHelpers.Dummy.*;
 
 
 public class JacksonEnvelopeSerializerTest {

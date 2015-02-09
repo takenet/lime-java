@@ -31,7 +31,7 @@ import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.asser
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
-import static org.limeprotocol.testHelpers.TestDummy.*;
+import static org.limeprotocol.testHelpers.Dummy.*;
 
 public class JacksonEnvelopeMessagingSerializerTest {
 

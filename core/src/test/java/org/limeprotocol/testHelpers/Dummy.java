@@ -7,6 +7,8 @@ import org.limeprotocol.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -19,6 +21,10 @@ public class Dummy {
         return random.nextInt(maxValue);
     }
 
+    public static long createRandomLong() {
+        return random.nextLong();
+    }
+    
     public static String createRandomString(int size) {
         StringBuilder sb = new StringBuilder(size);
         for( int i = 0; i < size; i++ )
@@ -92,6 +98,18 @@ public class Dummy {
         );
     }
 
+    public static Map<String, String> createRandomMetadata(String... keys) {
+        keys = keys == null || keys.length == 0 ?
+                new String[] { "randomString1", "randomString2" } :
+                keys;
+
+        HashMap<String, String> map = new HashMap<>();
+        for (String key : keys) {
+            map.put(key, createRandomString(50));
+        }
+        return map;
+    }
+
     public static Session createSession() {
         return createSession(SessionState.NEW);
     }
@@ -106,6 +124,69 @@ public class Dummy {
         return session;
     }
 
+    public static JsonDocument createJsonDocument()
+    {
+        HashMap<String, Object> documentNodes = new HashMap<>();
+        documentNodes.put(createRandomString(10), createRandomString(50));
+        documentNodes.put(createRandomString(10), createRandomInt(50));
+
+        JsonDocument jsonDocument = new JsonDocument(documentNodes, createJsonMediaType());
+        return jsonDocument;
+    }
+
+    public static PlainDocument createPlainDocument()
+    {
+        return new PlainDocument(
+                createRandomString(50),
+                createPlainMediaType());
+    }
+
+    public static MediaType createPlainMediaType()
+    {
+        return new MediaType(
+                createRandomString(10),
+                createRandomString(10),
+                null
+        );
+
+    }
+
+    public static MediaType createJsonMediaType(){
+
+        return new MediaType(
+                "application",
+                createRandomString(10),
+                "json"
+        );
+    }
+
+
+    public static Message createMessage(Document content)
+    {
+        Message message = new Message(UUID.randomUUID());
+
+        message.setContent(content);
+        message.setFrom(createNode());
+        message.setTo(createNode());
+
+        return message;
+    }
+
+    public static Command createCommand(){
+        return createCommand(null);
+    }
+
+    public static Command createCommand(Document resource) {
+        Command command = new Command(UUID.randomUUID());
+        command.setFrom(Dummy.createNode());
+        command.setTo(Dummy.createNode());
+        command.setMethod(Command.CommandMethod.GET);
+        command.setStatus(Command.CommandStatus.PENDING);
+        command.setResource(resource);
+
+        return command;
+    }
+
     public static PlainAuthentication createPlainAuthentication()
     {
         PlainAuthentication authentication = new PlainAuthentication();
@@ -115,6 +196,31 @@ public class Dummy {
 
     public static Reason createReason() {
         return new Reason(createRandomInt(100), createRandomString(100));
+    }
+
+    public static LimeUri createAbsoluteLimeUri(){
+        return new LimeUri(LimeUri.LIME_URI_SCHEME + "://" + createIdentity() +
+                "/" + createRandomString(10));
+    }
+
+    public static LimeUri createRelativeLimeUri(){
+        return new LimeUri("/" + createRandomString(10));
+    }
+
+    public static Notification createNotification(Notification.Event event) {
+        Notification notification = new Notification();
+        notification.setFrom(createNode());
+        notification.setTo(createNode());
+        notification.setEvent(event);
+        return notification;
+    }
+
+    public static DocumentCollection createDocumentCollection(Document ... documents){
+        DocumentCollection documentCollection = new DocumentCollection();
+        documentCollection.setItemType(documents[0].getMediaType());
+        documentCollection.setTotal(documents.length);
+        documentCollection.setItems(documents);
+        return documentCollection;
     }
 
 }
