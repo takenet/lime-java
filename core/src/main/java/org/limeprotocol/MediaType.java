@@ -31,6 +31,10 @@ public class MediaType {
 
     }
 
+    public MediaType(String type, String subtype) {
+        this(type, subtype, null);
+    }
+
     public MediaType(String type, String subtype, String suffix) {
         if (StringUtils.isNullOrWhiteSpace(type)) {
             throw new IllegalArgumentException("type");
@@ -64,7 +68,7 @@ public class MediaType {
         if (StringUtils.isNullOrWhiteSpace(this.suffix)) {
             return StringUtils.format("{0}/{1}", this.type, this.subtype);
         } else {
-            return String.format("{0}/{1}+{2}", this.type, this.subtype, this.suffix);
+            return StringUtils.format("{0}/{1}+{2}", this.type, this.subtype, this.suffix);
         }
     }
 

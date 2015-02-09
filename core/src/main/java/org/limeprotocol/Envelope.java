@@ -10,9 +10,7 @@ public abstract class Envelope {
     private Node pp;
     private Map<String, String> metadata;
 
-    public Envelope(){
-        this(UUID.randomUUID());
-    }
+    public Envelope(){ }
 
     protected Envelope(UUID id){
         this.id = id;

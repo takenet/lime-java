@@ -45,6 +45,32 @@ public class StringUtils {
     public static String toBase64(String value) {
         return new String(Base64.encodeBase64(value.getBytes()));
     }
+
+    public static String toCamelCase(String s){
+
+        String[] parts = s.split("_");
+
+        //All caps without '_'
+        if(parts.length == 0){
+            return s.toLowerCase();
+        }
+
+        String camelCaseString = "";
+        for (int i = 0; i< parts.length; i++){
+
+            if(i == 0){
+                camelCaseString = parts[i].toLowerCase();
+            } else {
+                camelCaseString = camelCaseString + toProperCase(parts[i]);
+            }
+        }
+        return camelCaseString;
+    }
+
+    public static String toProperCase(String s) {
+        return s.substring(0, 1).toUpperCase() +
+                s.substring(1).toLowerCase();
+    }
 }
 
 

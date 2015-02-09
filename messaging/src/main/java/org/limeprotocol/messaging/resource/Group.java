@@ -1,49 +1,34 @@
 package org.limeprotocol.messaging.resource;
 
-import org.limeprotocol.Document;
-import org.limeprotocol.Identity;
-import org.limeprotocol.LimeUri;
-import org.limeprotocol.MediaType;
+import org.limeprotocol.*;
 
-public class Group implements Document {
+public class Group extends DocumentBase {
 
-    public final String MIME_TYPE = "application/vnd.lime.group+json";
-
-    public final String IDENTITY_KEY = "identity";
-    public final String NAME_KEY = "name";
-    public final String TYPE_KEY = "type";
-    public final String MEMBERS_KEY = "members";
-    private final MediaType mediaType;
-
+    public static final String MIME_TYPE = "application/vnd.lime.group+json";
 
     public Group() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
-     * Identity of the group, in the group-id@groups.domain.com format.
+     * IDENTITY of the group, in the group-id@groups.domain.com format.
      */
-    public Identity identity;
+    private Identity identity;
 
     /**
      * Name of the group.
      */
-    public String name;
+    private String name;
 
     /**
      * Type of the group.
      */
-    public GroupType type;
+    private GroupType type;
 
     /**
      * Members uri of the contact group.
      */
-    public LimeUri membersUri;
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
-    }
+    private LimeUri membersUri;
 
     public GroupType getType() {
         return type;
@@ -84,28 +69,26 @@ public class Group implements Document {
          * application is optimized to send large amounts of messages.
          * The temporary groups are private.
          */
-        Temporary,
+        TEMPORARY,
 
         /**
          * The group is not discoverable and someone
          * can join only if is invited by owner or a moderator.
          */
-        Private,
+        PRIVATE,
 
         /**
          * Any authenticated node in the domain can join the group.
          */
-        Public
+        PUBLIC
     }
 
-    public class GroupMember implements Document {
+    public class GroupMember extends DocumentBase {
 
-        private final MediaType mediaType;
-        public final String MIME_TYPE = "application/vnd.lime.groupmember+json";
-
+        public static final String MIME_TYPE = "application/vnd.lime.groupmember+json";
 
         public GroupMember() {
-            this.mediaType = MediaType.parse(MIME_TYPE);
+            super(MediaType.parse(MIME_TYPE));
         }
 
         /**
@@ -116,13 +99,23 @@ public class Group implements Document {
         /**
          * The role of the identity in the group.
          */
-        public GroupMemberRole role;
+        private GroupMemberRole role;
 
-        @Override
-        public MediaType getMediaType() {
-            return null;
+        public Identity getIdentity() {
+            return identity;
         }
 
+        public void setIdentity(Identity identity) {
+            this.identity = identity;
+        }
+
+        public GroupMemberRole getRole() {
+            return role;
+        }
+
+        public void setRole(GroupMemberRole role) {
+            this.role = role;
+        }
     }
 
 
@@ -132,26 +125,26 @@ public class Group implements Document {
          * messages to the group.
          * It's the default value.
          */
-        Member,
+        MEMBER,
 
         /**
          * The member can only receive messages
          * from the group, and doesn't have permission to send.
          */
-        Listener,
+        LISTENER,
 
         /**
          * The member can send and receive messages to
          * the group and can kick and
          * ban contacts from it.
          */
-        Moderator,
+        MODERATOR,
 
         /**
          * The owner have the permission to manage moderators,
          * change and delete the group.
          */
-        Owner
+        OWNER
     }
 
 }

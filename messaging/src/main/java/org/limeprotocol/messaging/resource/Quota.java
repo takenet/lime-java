@@ -1,18 +1,18 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
 /**
  * Allows the nodes to manage the
  * session envelope quota configuration.
  */
-public class Quota implements Document {
-    public final String MIME_TYPE = "application/vnd.lime.quota+json";
-    private MediaType mediaType;
+public class Quota extends DocumentBase {
+    public static final String MIME_TYPE = "application/vnd.lime.quota+json";
 
     public Quota() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -22,7 +22,7 @@ public class Quota implements Document {
      * not defined, this limit is unbounded.
      * If a session exceeds the limit, it can be finished by the server.
      */
-    public Integer threshold;
+    private Integer threshold;
 
     /**
      * Indicates the cap of envelopes per second that the
@@ -30,7 +30,7 @@ public class Quota implements Document {
      * not defined, this capability is unbounded.
      * If a session exceeds the limit, it can be finished by the server.
      */
-    public Integer throughput;
+    private Integer throughput;
 
     /**
      * The uncompressed size limit of the envelopes that
@@ -39,7 +39,7 @@ public class Quota implements Document {
      * If a envelope sent in the session exceeds the limit, it can be finished
      * by the server.
      */
-    public Integer maxEnvelopeSize;
+    private Integer maxEnvelopeSize;
 
     public Integer getMaxEnvelopeSize() {
         return maxEnvelopeSize;
@@ -63,10 +63,5 @@ public class Quota implements Document {
 
     public void setThroughput(Integer throughput) {
         this.throughput = throughput;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }

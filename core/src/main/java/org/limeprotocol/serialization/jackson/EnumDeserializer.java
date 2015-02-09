@@ -1,12 +1,12 @@
-package org.limeprotocol.serialization;
+package org.limeprotocol.serialization.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
+import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 /**
  * Deserializer class that can deserialize instances of
@@ -27,7 +27,7 @@ public class EnumDeserializer extends StdScalarDeserializer<Enum<?>> {
         Class<?> type = handledType();
         for (Object value: type.getEnumConstants()) {
             Enum<?> enumValue = (Enum<?>)type.cast(value);
-            if (enumValue.toString().toLowerCase().equals(text.toLowerCase())) {
+            if (StringUtils.toCamelCase(enumValue.toString()).equals(text)) {
                 return enumValue;
             }
         }

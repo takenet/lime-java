@@ -2,22 +2,19 @@ package org.limeprotocol;
 
 import org.limeprotocol.util.StringUtils;
 
-public class PlainDocument implements Document {
+public class PlainDocument extends DocumentBase {
 
-    private MediaType mediaType;
     /**
      * The value of the document
      */
-    public String value;
-
+    private String value;
 
     public PlainDocument(MediaType mediaType){
         this(null, mediaType);
     }
 
-    public PlainDocument(String value, MediaType mediaType)
-    {
-        this.mediaType = mediaType;
+    public PlainDocument(String value, MediaType mediaType) {
+        super(mediaType);
 
         if (!StringUtils.isNullOrWhiteSpace(mediaType.getSuffix()))
         {
@@ -25,6 +22,10 @@ public class PlainDocument implements Document {
         }
 
         this.value = value;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override
@@ -35,6 +36,6 @@ public class PlainDocument implements Document {
 
     @Override
     public MediaType getMediaType() {
-        return null;
+        return this.mediaType;
     }
 }

@@ -7,9 +7,9 @@ public enum SessionEncryption {
     /**
      * The session is not encrypted.
      */
-    none,
+    NONE,
     /**
-     * The session is encrypted by TLS (Transport Layer Security).
+     * The session is encrypted by TLS (TRANSPORT Layer Security).
      */
-    tls
+    TLS
 }

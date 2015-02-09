@@ -7,10 +7,10 @@ public enum SessionCompression {
     /**
      * The session is not compressed.
      */
-    none,
+    NONE,
 
     /**
      * The session is using the GZip algorithm for compression.
      */
-    gzip
+    GZIP
 }
