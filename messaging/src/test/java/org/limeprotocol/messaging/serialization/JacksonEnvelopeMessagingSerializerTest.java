@@ -32,7 +32,6 @@ import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
 import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
-import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Contact.*;
 
 public class JacksonEnvelopeMessagingSerializerTest {
@@ -153,26 +152,29 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
 
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
-        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType());
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
 
-        assertThatJson(resultString).node(ITEMS_KEY).isPresent();
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY).isPresent();
 
-        Contact[] contacts = (Contact[]) resource.getItems();
+        Document[] contacts = resource.getItems();
 
-        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ IDENTITY_KEY).isEqualTo(contacts[0].getIdentity());
-        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ NAME_KEY).isEqualTo(contacts[0].getName());
-        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ IS_PENDING_KEY).isEqualTo(contacts[0].isPending());
-        assertThatJson(resultString).node(ITEMS_KEY + "[0]"+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contacts[0].getShareAccountInfo());
+        Contact contact = (Contact)contacts[0];
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ NAME_KEY).isEqualTo(contact.getName());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
-        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ IDENTITY_KEY).isEqualTo(contacts[1].getIdentity());
-        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ NAME_KEY).isEqualTo(contacts[1].getName());
-        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ IS_PENDING_KEY).isEqualTo(contacts[1].isPending());
-        assertThatJson(resultString).node(ITEMS_KEY + "[1]"+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contacts[1].getShareAccountInfo());
+        contact = (Contact)contacts[1];
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ NAME_KEY).isEqualTo(contact.getName());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
-        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ IDENTITY_KEY).isEqualTo(contacts[2].getIdentity());
-        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ NAME_KEY).isEqualTo(contacts[2].getName());
-        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ IS_PENDING_KEY).isEqualTo(contacts[2].isPending());
-        assertThatJson(resultString).node(ITEMS_KEY + "[2]"+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contacts[2].getShareAccountInfo());
+        contact = (Contact)contacts[2];
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ NAME_KEY).isEqualTo(contact.getName());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
         assertThatJson(resultString).node(STATUS_KEY).isPresent();
         assertThatJson(resultString).node(REASON_KEY).isAbsent();
@@ -385,7 +387,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThat(command.getType().toString()).isEqualTo(Receipt.MIME_TYPE);
         assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
         Receipt receipt = (Receipt) command.getResource();
-        assertThat(receipt.getEvents()).containsOnly(new Event[] {Event.DISPATCHED, Event.RECEIVED});
+        assertThat(receipt.getEvents()).containsOnly(Event.DISPATCHED, Event.RECEIVED);
 
         assertThat(command.getUri()).isNull();
     }
@@ -460,19 +462,19 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThat(contacts[0].getIdentity()).isEqualTo(identity1);
         assertThat(contacts[0].getName()).isEqualTo(name1);
-        assertThat(contacts[0].isPending()).isNotNull().isTrue();
+        assertThat(contacts[0].getIsPending()).isNotNull().isTrue();
         assertThat(contacts[0].getShareAccountInfo()).isNotNull().isFalse();
         assertThat(contacts[0].getSharePresence()).isNull();
 
         assertThat(contacts[1].getIdentity()).isEqualTo(identity2);
         assertThat(contacts[1].getName()).isEqualTo(name2);
-        assertThat(contacts[1].isPending()).isNull();
+        assertThat(contacts[1].getIsPending()).isNull();
         assertThat(contacts[1].getShareAccountInfo()).isNull();
         assertThat(contacts[1].getSharePresence()).isNotNull().isFalse();
 
         assertThat(contacts[2].getIdentity()).isEqualTo(identity3);
         assertThat(contacts[2].getName()).isEqualTo(name3);
-        assertThat(contacts[2].isPending()).isNotNull().isTrue();
+        assertThat(contacts[2].getIsPending()).isNotNull().isTrue();
         assertThat(contacts[2].getShareAccountInfo()).isNull();
         assertThat(contacts[2].getSharePresence()).isNotNull().isFalse();
     }

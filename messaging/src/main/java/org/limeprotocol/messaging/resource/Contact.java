@@ -67,7 +67,7 @@ public class Contact extends DocumentBase {
         this.identity = identity;
     }
 
-    public Boolean isPending() {
+    public Boolean getIsPending() {
         return isPending;
     }
 
@@ -104,11 +104,8 @@ public class Contact extends DocumentBase {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
+        return obj != null && this.toString().equalsIgnoreCase(obj.toString());
 
-        return this.toString().equalsIgnoreCase(obj.toString());
     }
 
     /**

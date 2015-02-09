@@ -21,17 +21,16 @@ public class SerializationUtil {
 
         Set<Class<? extends Document>> documentTypes = reflections.getSubTypesOf(Document.class);
 
-        documentTypesMap = new HashMap<MediaType, Class<? extends Document>>(documentTypes.size());
+        documentTypesMap = new HashMap<>(documentTypes.size());
         for (Class<? extends Document> documentType : documentTypes) {
-            Document document = null;
+            Document document;
             try {
-                document = documentType.getConstructor().newInstance(new Object[]{});
+                document = documentType.getConstructor().newInstance();
             } catch (Exception e) {
+                throw new RuntimeException("Invalid document class", e);
             }
 
-            if (document != null) {
-                documentTypesMap.put(document.getMediaType(), documentType);
-            }
+            documentTypesMap.put(document.getMediaType(), documentType);
         }
     }
 
