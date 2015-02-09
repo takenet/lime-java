@@ -1,24 +1,20 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
 /**
  * Represents the capabilities
  * of the nodes of the network
  */
-public class Capability implements Document {
+public class Capability extends DocumentBase {
 
-    public final String MIME_TYPE = "application/vnd.lime.capability+json";
-
-    public final String CONTENT_TYPES_KEY = "contentTypes";
-    public final String RESOURCE_TYPES_KEY = "resourceTypes";
-
-    public MediaType mediaType;
+    public static final String MIME_TYPE = "application/vnd.lime.capability+json";
 
     public Capability()
     {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -47,11 +43,6 @@ public class Capability implements Document {
 
     public void setResourceTypes(MediaType[] resourceTypes) {
         this.resourceTypes = resourceTypes;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }
 

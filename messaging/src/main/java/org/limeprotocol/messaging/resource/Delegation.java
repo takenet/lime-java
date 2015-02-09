@@ -12,18 +12,12 @@ import static org.limeprotocol.Command.*;
  * be revoked through a delete command.
  */
 
-public class Delegation implements Document {
+public class Delegation extends DocumentBase {
 
-    public final String MIME_TYPE = "application/vnd.lime.delegation+json";
-
-    public final String TARGET_KEY = "target";
-    public final String DESTINATIONS_KEY = "destinations";
-    public final String COMMANDS_KEY = "commands";
-    public final String MESSAGES_KEY = "messages";
-    private MediaType mediaType;
+    public static final String MIME_TYPE = "application/vnd.lime.delegation+json";
 
     public Delegation() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     private Node target;
@@ -77,19 +71,13 @@ public class Delegation implements Document {
         this.target = target;
     }
 
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
-    }
-
     public class DelegationCommand {
         public final String TYPE_KEY = "type";
         public final String METHODS_KEY = "methods";
 
+        private MediaType type;
 
-        public MediaType type;
-
-        public CommandMethod methods;
+        private CommandMethod methods;
 
         public MediaType getType() {
             return type;

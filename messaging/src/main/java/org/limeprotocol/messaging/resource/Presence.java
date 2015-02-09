@@ -1,6 +1,7 @@
 package org.limeprotocol.messaging.resource;
 
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
 import java.util.Date;
@@ -13,19 +14,11 @@ import java.util.Date;
  * is enforced by the existing session).
  * In a new session, the node starts with an unavailable status.
  */
-public class Presence implements Document {
-    public final String MIME_TYPE = "application/vnd.lime.presence+json";
-
-    public final String STATUS_KEY = "status";
-    public final String MESSAGE_KEY = "message";
-    public final String ROUTING_RULE_KEY = "routingRule";
-    public final String LAST_SEEN_KEY = "lastSeen";
-    public final String PRIORITY_KEY = "priority";
-    public final String INSTANCES_KEY = "instances";
-    private MediaType mediaType;
+public class Presence extends DocumentBase {
+    public static final String MIME_TYPE = "application/vnd.lime.presence+json";
 
     public Presence() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -108,25 +101,19 @@ public class Presence implements Document {
         this.instances = instances;
     }
 
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
-    }
-
-
     public enum RoutingRule {
         /**
          * Only deliver envelopes addressed
          * to the current session instance (name@domain/instance).
          */
-        Instance,
+        INSTANCE,
 
         /**
          * Deliver envelopes addressed to the current session instance
          * (name@domain/instance) and envelopes addressed to the
          * identity (name@domain)
          */
-        Identity,
+        IDENTITY,
 
         /**
          * Deliver envelopes addressed to the current session
@@ -135,7 +122,7 @@ public class Presence implements Document {
          * origitator is the smallest among the available
          * nodes of the identity with this setting.
          */
-        IdentityByDistance,
+        IDENTITY_BY_DISTANCE,
 
         /**
          * Deliver envelopes addressed to the current session
@@ -144,13 +131,13 @@ public class Presence implements Document {
          * priority property is the largest among the available
          * nodes of the identity with this setting.
          */
-        IdentityByPriority,
+        IDENTITY_BY_PRIORITY,
 
         /**
          * Deliver any envelopes addressed to the identity name@domain,
          * including the envelopes addressed to any specific instance.
          */
-        Promiscuous,
+        PROMISCUOUS,
 
         /**
          * This rule is intended to be used only for external domain authorities
@@ -158,7 +145,7 @@ public class Presence implements Document {
          * deliver envelopes addressed to their domain using the smallest distance
          * from the origitator among the available connected nodes for these authorities.
          */
-        DomainByDistance
+        DOMAIN_BY_DISTANCE
     }
 
     /**
@@ -171,7 +158,7 @@ public class Presence implements Document {
          * SHOULD not receive any envelope by any node,
          * except by the connected server.
          */
-        Unavailable,
+        UNAVAILABLE,
 
         /**
          * The node is available for messaging
@@ -179,7 +166,7 @@ public class Presence implements Document {
          * according to the defined routing rule.
          */
 
-        Available,
+        AVAILABLE,
 
         /**
          * The node is available but the senders should notice
@@ -187,14 +174,14 @@ public class Presence implements Document {
          * or it is on heavy load and don't want to receive
          * any envelope.
          */
-        Busy,
+        BUSY,
 
         /**
          * The node is available but the senders should notice
          * that it may not be reading or processing
          * the received envelopes.
          */
-        Away
+        AWAY
     }
 
 }

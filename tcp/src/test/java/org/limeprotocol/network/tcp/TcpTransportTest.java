@@ -418,8 +418,8 @@ public class TcpTransportTest {
         
         // Assert
         assertEquals(2, actual.length);
-        assertTrue(Arrays.asList(actual).contains(SessionEncryption.none));
-        assertTrue(Arrays.asList(actual).contains(SessionEncryption.tls));
+        assertTrue(Arrays.asList(actual).contains(SessionEncryption.NONE));
+        assertTrue(Arrays.asList(actual).contains(SessionEncryption.TLS));
     }
     
     @Test
@@ -428,7 +428,7 @@ public class TcpTransportTest {
         TcpTransport target = getAndOpenTarget();
     
         // Act
-        target.setEncryption(SessionEncryption.tls);
+        target.setEncryption(SessionEncryption.TLS);
         
         // Assert
         verify(tcpClient, times(1)).startTls();

@@ -24,8 +24,8 @@ public abstract class TransportBase implements Transport {
     private boolean closedInvoked;
 
     protected TransportBase() {
-        compression = SessionCompression.none;
-        encryption = SessionEncryption.none;
+        compression = SessionCompression.NONE;
+        encryption = SessionEncryption.NONE;
         transportListeners = new HashSet<>();
         singleReceiveTransportListeners = new LinkedBlockingQueue<>();
     }
@@ -118,8 +118,8 @@ public abstract class TransportBase implements Transport {
         for (TransportListener listener : transportListeners) {
             listener.onException(e);
         }
-        for (TransportListener listener : singleReceiveTransportListeners) {
-            listener.onException(e);
+        for (TransportListener transportListener : singleReceiveTransportListeners) {
+            transportListener.onException(e);
         }
     }
 

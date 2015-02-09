@@ -1,23 +1,16 @@
 package org.limeprotocol.messaging.resource;
 
-import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.util.StringUtils;
 
-public class Contact implements Document {
+public class Contact extends DocumentBase {
 
-    public final String MIME_TYPE = "application/vnd.lime.contact+json";
-
-    public final String IDENTITY_KEY = "identity";
-    public final String NAME_KEY = "name";
-    public final String IS_PENDING_KEY = "isPending";
-    public final String SHARE_PRESENCE_KEY = "sharePresence";
-    public final String SHARE_ACCOUNT_INFO_KEY = "shareAccountInfo";
-    private MediaType mediaType;
+    public static final String MIME_TYPE = "application/vnd.lime.contact+json";
 
     public Contact() {
-        this.mediaType = MediaType.parse(MIME_TYPE);
+        super(MediaType.parse(MIME_TYPE));
     }
 
     /**
@@ -74,7 +67,7 @@ public class Contact implements Document {
         this.identity = identity;
     }
 
-    public Boolean isPending() {
+    public Boolean getIsPending() {
         return isPending;
     }
 
@@ -111,11 +104,8 @@ public class Contact implements Document {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
+        return obj != null && this.toString().equalsIgnoreCase(obj.toString());
 
-        return this.toString().equalsIgnoreCase(obj.toString());
     }
 
     /**
@@ -124,10 +114,5 @@ public class Contact implements Document {
     @Override
     public int hashCode() {
         return this.identity != null ? this.identity.hashCode() : 0;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }

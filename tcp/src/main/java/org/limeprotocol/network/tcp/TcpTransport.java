@@ -128,7 +128,7 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        return new SessionEncryption[] { SessionEncryption.none, SessionEncryption.tls };
+        return new SessionEncryption[] { SessionEncryption.NONE, SessionEncryption.TLS };
     }
 
     /**
@@ -139,7 +139,7 @@ public class TcpTransport extends TransportBase implements Transport {
     @Override
     public void setEncryption(SessionEncryption encryption) throws IOException {
         switch (encryption) {
-            case tls:
+            case TLS:
                 if (!tcpClient.isTlsStarted()) {
                     stopListener();
                     tcpClient.startTls();
@@ -149,7 +149,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     }
                 }
                 break;
-            case none:
+            case NONE:
                 if (tcpClient.isTlsStarted()) {
                     throw new IllegalStateException("Cannot downgrade an encrypted connection");
                 }

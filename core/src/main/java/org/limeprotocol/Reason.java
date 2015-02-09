@@ -6,6 +6,9 @@ public class Reason {
     private int code;
     private String description;
 
+    @SuppressWarnings("unused")
+    public Reason(){}
+
     public Reason(int code, String description) {
         this.code = code;
         this.description = description;

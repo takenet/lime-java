@@ -7,27 +7,24 @@ package org.limeprotocol.messaging.resource;
  * current session.
  */
 import org.limeprotocol.Document;
+import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.Notification.Event;
 
-public class Receipt implements Document {
-    public final String MIME_TYPE = "application/vnd.lime.receipt+json";
-
-    public final String EVENTS_KEY = "events";
-
-    private MediaType mediaType;
-
-    public Receipt()
-    {
-        this.mediaType = MediaType.parse(MIME_TYPE);
-    }
+public class Receipt extends DocumentBase {
+    public static final String MIME_TYPE = "application/vnd.lime.receipt+json";
 
     /**
      * Indicates which message events
      * that the node is receiving
      * in the current session.
      */
-    public Event[] events;
+    private Event[] events;
+
+    public Receipt()
+    {
+        super(MediaType.parse(MIME_TYPE));
+    }
 
     public Event[] getEvents() {
         return events;
@@ -35,10 +32,5 @@ public class Receipt implements Document {
 
     public void setEvents(Event[] events) {
         this.events = events;
-    }
-
-    @Override
-    public MediaType getMediaType() {
-        return this.mediaType;
     }
 }
