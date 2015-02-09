@@ -23,14 +23,15 @@ public class SerializationUtil {
 
         documentTypesMap = new HashMap<>(documentTypes.size());
         for (Class<? extends Document> documentType : documentTypes) {
-            Document document;
+            Document document = null;
             try {
                 document = documentType.getConstructor().newInstance();
             } catch (Exception e) {
-                throw new RuntimeException("Invalid document class", e);
+                System.out.println("Invalid document class:" + documentType);
             }
-
-            documentTypesMap.put(document.getMediaType(), documentType);
+            if (document != null) {
+                documentTypesMap.put(document.getMediaType(), documentType);
+            }
         }
     }
 

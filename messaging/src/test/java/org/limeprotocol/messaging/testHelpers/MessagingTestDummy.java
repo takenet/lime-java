@@ -29,6 +29,13 @@ public class MessagingTestDummy {
         return capability;
     }
 
+    public static Contact createContact(){
+        Contact contact1 = new Contact();
+        contact1.setIdentity(createIdentity());
+        contact1.setName(createRandomString(50));
+        return contact1;
+    }
+
     public static DocumentCollection createRoster(){
         DocumentCollection dc = new DocumentCollection();
 
