@@ -18,17 +18,15 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * Sends a new session envelope to the server and listen for the response.
      *
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
+    public void startNewSession(SessionChannelListener sessionListener) throws IOException {
 
         if(super.getState() != Session.SessionState.NEW){
             throw new UnsupportedOperationException(StringUtils.format("Cannot start a session in the '{0}' state", super.getState()));
         }
 
         super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
 
         Session session = new Session();
         session.setState(Session.SessionState.NEW);
@@ -43,10 +41,9 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param sessionCompression
      * @param sessionEncryption
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
+    public void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) throws IOException {
 
         if (super.getState() != Session.SessionState.NEGOTIATING)
         {
@@ -60,7 +57,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         session.setEncryption(sessionEncryption);
 
         super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
 
         sendSession(session);
     }
@@ -69,10 +65,9 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * Listens for a authenticating session envelope from the server, after a session negotiation.
      *
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void receiveAuthenticationSession(SessionChannelListener sessionListener, ChannelListener channelListener) {
+    public void receiveAuthenticationSession(SessionChannelListener sessionListener) {
 
         if (super.getState() != Session.SessionState.NEGOTIATING)
         {
@@ -80,7 +75,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         }
 
         super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
     }
 
     /**
@@ -91,10 +85,9 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param authentication
      * @param instance
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
+    public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) throws IOException {
 
         if (super.getState() != Session.SessionState.AUTHENTICATING)
         {
@@ -112,7 +105,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         }
 
         super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
 
         Session session = new Session();
         session.setId(super.getSessionId());
@@ -146,10 +138,9 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * Listens for a finished session envelope from the server.
      *
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void receiveFinishedSession(SessionChannelListener sessionListener, ChannelListener channelListener) {
+    public void receiveFinishedSession(SessionChannelListener sessionListener) {
 
     }
 }
