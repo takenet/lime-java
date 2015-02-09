@@ -213,15 +213,15 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY);
 
-        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod());
-        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().toString());
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
 
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
 
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY).isPresent();
 
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]." + IDENTITY_KEY).isEqualTo(contact1.getMediaType());
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + TOTAL_KEY + "[1]." + IDENTITY_KEY).isEqualTo(resource.getTotal());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEM_TYPE_KEY).isEqualTo(contact1.getMediaType().toString());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + TOTAL_KEY).isEqualTo(resource.getTotal());
 
         assertThatJson(resultString).node(STATUS_KEY).isPresent();
         assertThatJson(resultString).node(REASON_KEY).isAbsent();
