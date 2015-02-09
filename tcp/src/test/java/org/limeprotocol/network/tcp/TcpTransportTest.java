@@ -2,10 +2,16 @@ package org.limeprotocol.network.tcp;
 
 import org.junit.Test;
 import org.limeprotocol.Envelope;
+import org.limeprotocol.Session;
 import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.client.ClientChannel;
+import org.limeprotocol.client.ClientChannelImpl;
+import org.limeprotocol.network.Channel;
+import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.serialization.EnvelopeSerializer;
+import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -17,6 +23,7 @@ import java.util.Arrays;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -144,6 +151,69 @@ public class TcpTransportTest {
         // Act
         target.send(envelope);
     }
+    
+    @Test
+    public void send_realTcpClient_receivesEnvelope() throws URISyntaxException, IOException, InterruptedException {
+        TcpTransport transport = new TcpTransport(
+                new JacksonEnvelopeSerializer(),
+                new SocketTcpClientFactory(),
+                new TraceWriter() {
+                    @Override
+                    public void trace(String data, DataOperation operation) {
+                        System.out.printf("%s: %s", operation.toString(), data);
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        return true;
+                    }
+                });
+
+        transport.open(new URI("net.tcp://takenet-iris.cloudapp.net:55321"));
+        
+        ClientChannel clientChannel = new ClientChannelImpl(transport, true);
+        final Semaphore semaphore = new Semaphore(1);
+        synchronized (semaphore) {
+            semaphore.acquire();
+        }
+        final Session[] receivedSession = {null};
+        clientChannel.addSessionListener(new SessionChannel.SessionChannelListener() {
+            @Override
+            public void onReceiveSession(Session session) {
+                receivedSession[0] = session;
+                synchronized (semaphore) {
+                    semaphore.release();
+                }
+            }
+        }, true);
+
+        clientChannel.addChannelListener(new Channel.ChannelListener() {
+            @Override
+            public void onTransportException(Exception exception) {
+                exception.printStackTrace();
+            }
+
+            @Override
+            public void onTransportClosing() {
+
+            }
+
+            @Override
+            public void onTransportClosed() {
+
+            }
+        }, false);
+        
+        Session session = new Session();
+        session.setState(Session.SessionState.NEW);
+        
+        clientChannel.sendSession(session);
+        synchronized (semaphore) {
+            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
+        }
+        
+        assertNotNull(receivedSession[0]);
+    }
 
     @Test
     public void onReceive_oneRead_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
@@ -240,7 +310,7 @@ public class TcpTransportTest {
         // Act
         target.open(Dummy.createUri());
         synchronized (semaphore) {
-            semaphore.wait(1000);
+            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
         }
         
         // Assert
@@ -296,7 +366,7 @@ public class TcpTransportTest {
         // Act
         target.open(Dummy.createUri());
         synchronized (semaphore) {
-            semaphore.wait(1000);
+            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
         }
 
         // Assert
@@ -359,7 +429,7 @@ public class TcpTransportTest {
         // Act
         target.open(Dummy.createUri());
         synchronized (semaphore) {
-            semaphore.wait(1000);
+            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
         }
         
         // Assert

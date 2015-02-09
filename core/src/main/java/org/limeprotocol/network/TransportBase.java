@@ -118,8 +118,8 @@ public abstract class TransportBase implements Transport {
         for (TransportListener listener : transportListeners) {
             listener.onException(e);
         }
-        for (TransportListener transportListener : singleReceiveTransportListeners) {
-            transportListener.onException(e);
+        for (TransportListener listener : singleReceiveTransportListeners) {
+            listener.onClosing();
         }
     }
 
@@ -143,5 +143,6 @@ public abstract class TransportBase implements Transport {
         for (TransportListener listener : singleReceiveTransportListeners) {
             listener.onClosed();
         }
+        singleReceiveTransportListeners.clear();
     }
 }

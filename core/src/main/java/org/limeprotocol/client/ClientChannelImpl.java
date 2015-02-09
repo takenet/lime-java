@@ -10,7 +10,7 @@ import org.limeprotocol.security.Authentication;
 import java.util.UUID;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
-    protected ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
         super(transport, fillEnvelopeRecipients);
     }
 

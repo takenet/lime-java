@@ -49,7 +49,6 @@ public abstract class ChannelBase implements Channel {
         singleExceptionChannelListeners = new LinkedBlockingQueue<>();
     }
 
-
     /**
      * Gets the current session transport
      *
@@ -114,6 +113,10 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void setState(Session.SessionState state) {
+        if (state == null) {
+            throw new IllegalArgumentException("state");
+        }
+        
         this.state = state;
         if (state == Session.SessionState.ESTABLISHED) {
             transport.addListener(new ChannelTransportListener(), false);
@@ -320,6 +323,13 @@ public abstract class ChannelBase implements Channel {
         } else {
             sessionListeners.add(listener);
         }
+        
+        if (getState() == Session.SessionState.NEW ||
+            getState() == Session.SessionState.NEGOTIATING ||
+            getState() == Session.SessionState.AUTHENTICATING) {
+            Transport.TransportListener transportListener = new ChannelTransportListener();
+            transport.addListener(transportListener, true);
+        }
     }
 
     /**
@@ -496,6 +506,9 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onReceive(Envelope envelope) {
+            if (fillEnvelopeRecipients) {
+                fillEnvelope(envelope, false);
+            }
             if (envelope instanceof Notification) {
                 raiseOnReceiveNotification((Notification)envelope);
             } else if (envelope instanceof Message) {
