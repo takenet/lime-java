@@ -1,6 +1,7 @@
 package org.limeprotocol.network;
 
 import org.limeprotocol.*;
+import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -9,9 +10,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class ChannelBase implements Channel {
+public abstract class ChannelBase implements Channel {
     
     private final Transport transport;
+    private final boolean fillEnvelopeRecipients;
     private Node remoteNode;
     private Node localNode;
     private UUID sessionId;
@@ -27,7 +29,8 @@ public class ChannelBase implements Channel {
     private final Queue<SessionChannelListener> singleReceiveSessionListeners;
     private final Queue<ChannelListener> singleExceptionChannelListeners;
     
-    protected ChannelBase(Transport transport) {
+    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients) {
+        this.fillEnvelopeRecipients = fillEnvelopeRecipients;
         if (transport == null) {
             throw new IllegalArgumentException("transport");
         }
@@ -45,6 +48,7 @@ public class ChannelBase implements Channel {
         singleReceiveSessionListeners = new LinkedBlockingQueue<>();
         singleExceptionChannelListeners = new LinkedBlockingQueue<>();
     }
+
 
     /**
      * Gets the current session transport
@@ -66,6 +70,11 @@ public class ChannelBase implements Channel {
         return remoteNode;
     }
 
+
+    protected void setRemoteNode(Node remoteNode) {
+        this.remoteNode = remoteNode;
+    }
+    
     /**
      * Gets the local node identifier.
      *
@@ -74,6 +83,10 @@ public class ChannelBase implements Channel {
     @Override
     public Node getLocalNode() {
         return localNode;
+    }
+
+    public void setLocalNode(Node localNode) {
+        this.localNode = localNode;
     }
 
     /**
@@ -86,6 +99,10 @@ public class ChannelBase implements Channel {
         return sessionId;
     }
 
+    public void setSessionId(UUID sessionId) {
+        this.sessionId = sessionId;
+    }
+
     /**
      * Gets the current session state.
      *
@@ -96,8 +113,7 @@ public class ChannelBase implements Channel {
         return state;
     }
 
-    
-    protected void setState(Session.SessionState state) {
+    protected synchronized void setState(Session.SessionState state) {
         this.state = state;
         if (state == Session.SessionState.ESTABLISHED) {
             transport.addListener(new ChannelTransportListener(), false);
@@ -319,9 +335,13 @@ public class ChannelBase implements Channel {
     }
 
     private void send(Envelope envelope) throws IOException {
+        if (fillEnvelopeRecipients) {
+            fillEnvelope(envelope, true);
+        }
+        
         transport.send(envelope);
     }
-    
+
     private synchronized void raiseOnReceiveMessage(Message message) {
         for (MessageChannelListener listener : messageListeners) {
             try {
@@ -434,6 +454,36 @@ public class ChannelBase implements Channel {
                 listener.onTransportException(exception);
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Fills the envelope recipients using the session information.
+     * @param envelope
+     * @param isSending
+     */
+    protected void fillEnvelope(Envelope envelope, boolean isSending) {
+        if (!isSending) {
+            Node from = getRemoteNode();
+            Node to = getLocalNode();
+
+            if (from != null) {
+                if (envelope.getFrom() == null) {
+                    envelope.setFrom(from.copy());
+                }
+                else if (StringUtils.isNullOrEmpty(envelope.getFrom().getDomain())) {
+                    envelope.getFrom().setDomain(from.getDomain());
+                }
+            }
+
+            if (to != null) {
+                if (envelope.getTo() == null) {
+                    envelope.setTo(to.copy());
+                }
+                else if (StringUtils.isNullOrEmpty(envelope.getTo().getDomain())) {
+                    envelope.getTo().setDomain(to.getDomain());
+                }
             }
         }
     }
