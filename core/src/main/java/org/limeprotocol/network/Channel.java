@@ -40,10 +40,16 @@ public interface Channel extends MessageChannel, CommandChannel, NotificationCha
     Session.SessionState getState();
 
     /**
-     * Sets the channel listener.
+     * Register a channel listener.
      * @param channelListener
      */
     void addChannelListener(ChannelListener channelListener, boolean removeOnException);
+
+    /**
+     * Removes a registered channel listener.
+     * * @param channelListener
+     */
+    void removeChannelListener(ChannelListener channelListener);
     
     /**
      * Defines a listener for channel events. 

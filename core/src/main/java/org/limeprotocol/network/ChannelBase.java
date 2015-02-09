@@ -119,7 +119,19 @@ public class ChannelBase implements Channel {
         } else {
             channelListeners.add(channelListener);
         }
+    }
 
+    /**
+     * Removes a registered channel listener.
+     * * @param channelListener
+     *
+     * @param channelListener
+     */
+    @Override
+    public void removeChannelListener(ChannelListener channelListener) {
+        if (!channelListeners.remove(channelListener)) {
+            singleExceptionChannelListeners.remove(channelListener);
+        }
     }
 
     /**
@@ -163,7 +175,9 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeCommandListener(CommandChannelListener listener) {
-        commandListeners.remove(listener);
+        if (!commandListeners.remove(listener)) {
+            singleReceiveCommandListeners.remove(listener);
+        }
     }
 
     /**
@@ -207,7 +221,9 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeMessageListener(MessageChannelListener listener) {
-        messageListeners.remove(listener);
+        if (!messageListeners.remove(listener)) {
+            singleReceiveMessageListeners.remove(listener);
+        }
     }
 
     /**
@@ -251,7 +267,9 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeNotificationListener(NotificationChannelListener listener) {
-        notificationListeners.remove(listener);
+        if (!notificationListeners.remove(listener)) {
+            singleReceiveNotificationListeners.remove(listener);
+        }
     }
 
     /**
@@ -295,7 +313,9 @@ public class ChannelBase implements Channel {
      */
     @Override
     public void removeSessionListener(SessionChannelListener listener) {
-        sessionListeners.remove(listener);
+        if (!sessionListeners.remove(listener)) {
+            singleReceiveSessionListeners.remove(listener);
+        }
     }
 
     private void send(Envelope envelope) throws IOException {
@@ -310,7 +330,6 @@ public class ChannelBase implements Channel {
                 e.printStackTrace();
             }
         }
-        
         while (!singleReceiveMessageListeners.isEmpty()) {
             try {
                 MessageChannelListener listener = singleReceiveMessageListeners.remove();
