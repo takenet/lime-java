@@ -16,7 +16,7 @@ import java.util.UUID;
 import static org.limeprotocol.security.Authentication.*;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.limeprotocol.testHelpers.TestDummy.*;
+import static org.limeprotocol.testHelpers.Dummy.*;
 
 public class EnvelopeSerializerImplTest {
 
