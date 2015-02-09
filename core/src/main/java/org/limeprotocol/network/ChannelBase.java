@@ -320,6 +320,13 @@ public abstract class ChannelBase implements Channel {
         } else {
             sessionListeners.add(listener);
         }
+
+        if (getState() == Session.SessionState.NEW ||
+                getState() == Session.SessionState.NEGOTIATING ||
+                getState() == Session.SessionState.AUTHENTICATING) {
+            Transport.TransportListener transportListener = new ChannelTransportListener();
+            transport.addListener(transportListener, true);
+        }
     }
 
     /**
