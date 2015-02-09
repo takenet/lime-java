@@ -30,6 +30,7 @@ import static org.limeprotocol.messaging.testHelpers.MessagingTestDummy.*;
 import static org.limeprotocol.serialization.JacksonEnvelopeSerializerTest.assertJsonEnvelopeProperties;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.ITEMS_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.TOTAL_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
 import static org.limeprotocol.testHelpers.TestDummy.*;
 
@@ -170,7 +171,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
         contact = (Contact)contacts[2];
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]." + IDENTITY_KEY).isEqualTo(contact.getIdentity());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ NAME_KEY).isEqualTo(contact.getName());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
