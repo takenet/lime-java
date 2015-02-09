@@ -1,12 +1,12 @@
 package org.limeprotocol.client;
 
 import org.limeprotocol.*;
-import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelBase;
-import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.security.Authentication;
+import org.limeprotocol.util.StringUtils;
 
+import java.io.IOException;
 import java.util.UUID;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
@@ -21,8 +21,19 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param channelListener
      */
     @Override
-    public void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener) {
+    public void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
 
+        if(super.getState() != Session.SessionState.NEW){
+            throw new UnsupportedOperationException(StringUtils.format("Cannot start a session in the '{0}' state", super.getState()));
+        }
+
+        super.addSessionListener(sessionListener, true);
+        super.addChannelListener(channelListener, true);
+
+        Session session = new Session();
+        session.setState(Session.SessionState.NEW);
+
+        sendSession(session);
     }
 
     /**

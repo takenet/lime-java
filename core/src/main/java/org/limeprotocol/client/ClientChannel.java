@@ -8,6 +8,7 @@ import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.security.Authentication;
 
+import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -20,7 +21,7 @@ public interface ClientChannel extends Channel {
      * @param sessionListener
      * @param channelListener
      */
-    void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener);
+    void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException;
 
     /**
      * Sends a negotiate session envelope to accepts the session negotiation options 
