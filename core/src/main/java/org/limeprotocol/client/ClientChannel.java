@@ -32,12 +32,6 @@ public interface ClientChannel extends Channel {
     void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) throws IOException;
 
     /**
-     *  Listens for a authenticating session envelope from the server, after a session negotiation.
-     * @param sessionListener
-     */
-    void receiveAuthenticationSession(SessionChannelListener sessionListener);
-
-    /**
      * Sends a authenticate session envelope to the server to establish an authenticated session 
      * and listen for the established session envelope.
      * @param identity
@@ -52,7 +46,7 @@ public interface ClientChannel extends Channel {
      * @param messageId
      * @param to
      */
-    void sendReceivedNotification(UUID messageId, Node to) throws IOException;
+    void sendReceivedNotification(UUID messageId, Node to);
 
     /**
      * Sends a finishing session envelope to the server.

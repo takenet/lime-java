@@ -41,9 +41,8 @@ public interface Channel extends MessageChannel, CommandChannel, NotificationCha
 
     /**
      * Register a channel listener.
-     * @param channelListener
      */
-    void addChannelListener(ChannelListener channelListener, boolean removeOnException);
+    void addChannelListener(ChannelListener channelListener);
 
     /**
      * Removes a registered channel listener.
