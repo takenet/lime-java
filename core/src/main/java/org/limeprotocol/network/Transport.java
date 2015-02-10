@@ -2,6 +2,8 @@ package org.limeprotocol.network;
 
 import org.limeprotocol.Envelope;
 import org.limeprotocol.Session;
+import org.limeprotocol.SessionCompression;
+import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,37 +47,37 @@ public interface Transport {
      * Enumerates the supported compression options for the transport.
      * @return
      */
-    Session.SessionCompression[] getSupportedCompression();
+    SessionCompression[] getSupportedCompression();
 
     /**
      * Gets the current transport compression option.
      * @return
      */
-    Session.SessionCompression getCompression();
+    SessionCompression getCompression();
 
     /**
      * Defines the compression mode for the transport.
      * @param compression
      */
-    void setCompression(Session.SessionCompression compression) throws IOException;
+    void setCompression(SessionCompression compression) throws IOException;
     
     /**
      * Enumerates the supported encryption options for the transport.
      * @return
      */
-    Session.SessionEncryption[] getSupportedEncryption();
+    SessionEncryption[] getSupportedEncryption();
 
     /**
      * Gets the current transport encryption option.
      * @return
      */
-    Session.SessionEncryption getEncryption();
+    SessionEncryption getEncryption();
 
     /**
      * Defines the encryption mode for the transport.
      * @param encryption
      */
-    void setEncryption(Session.SessionEncryption encryption) throws IOException;
+    void setEncryption(SessionEncryption encryption) throws IOException;
 
     /**
      * Defines a envelope transport listener. 
