@@ -56,21 +56,21 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void startNewSession_InvalidState_ThrowsUnsupportedOperationException() throws Exception {
+    public void startNewSession_InvalidState_ThrowsIllegalStateException() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.ESTABLISHED);
 
         // Act
         try {
             target.startNewSession(listener);
-        } catch (UnsupportedOperationException e) {
+        } catch (IllegalStateException e) {
             // Assert
             assertThat(transport.getSentEnvelopes()).isEmpty();
             verify(listener, never()).onReceiveSession(any(Session.class));
             return;
         }
 
-        fail("An UnsupportedOperationException should be threw");
+        fail("An IllegalStateException should be threw");
     }
 
     //endregion startNewSession
@@ -107,7 +107,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void negotiateSession_InvalidState_ThrowsUnsupportedOperationException() throws Exception {
+    public void negotiateSession_InvalidState_ThrowsIllegalStateExceptionException() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.NEW);
 
@@ -117,7 +117,7 @@ public class ClientChannelImplTest {
         // Act
         try {
             target.negotiateSession(compression, encryption, listener);
-        } catch (UnsupportedOperationException e) {
+        } catch (IllegalStateException e) {
             // Assert
             assertThat(transport.getSentEnvelopes()).isEmpty();
             verify(listener, never()).onReceiveSession(any(Session.class));

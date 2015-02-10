@@ -89,8 +89,18 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param to
      */
     @Override
-    public void sendReceivedNotification(UUID messageId, Node to) {
+    public void sendReceivedNotification(final UUID messageId, final Node to) throws IOException {
+        if (to == null) {
+            throw new IllegalArgumentException("to");
+        }
 
+        Notification notification = new Notification() {{
+            setId(messageId);
+            setTo(to);
+            setEvent(Event.RECEIVED);
+        }};
+
+        sendNotification(notification);
     }
 
     /**
