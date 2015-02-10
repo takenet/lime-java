@@ -1,7 +1,6 @@
 package org.limeprotocol.testHelpers;
 
 import com.google.common.collect.Iterators;
-import org.apache.commons.collections.IteratorUtils;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.network.TransportBase;
 
