@@ -541,7 +541,7 @@ public class ChannelBaseTest {
                     semaphore.release();
                 }
             }
-        }, true);
+        });
         Session session = createSession(Session.SessionState.ESTABLISHED);
 
         // Act
@@ -570,7 +570,7 @@ public class ChannelBaseTest {
                     semaphore.release();
                 }
             }
-        }, true);
+        });
         Session session = createSession(Session.SessionState.ESTABLISHED);
 
         // Act
@@ -586,38 +586,6 @@ public class ChannelBaseTest {
         assertEquals(session, actual.get(0));
     }
 
-    @Test
-    public void onReceiveSession_registeredListenerMultipleReceives_callsListenerMultipleTimes() throws InterruptedException {
-        // Arrange
-        final int sessionCount = createRandomInt(100) + 1;
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Session> actual = new ArrayList<>();
-        target.addSessionListener(new SessionChannel.SessionChannelListener() {
-            @Override
-            public void onReceiveSession(Session session) {
-                actual.add(session);
-                if (actual.size() == sessionCount) {
-                    synchronized (semaphore) {
-                        semaphore.release();
-                    }
-                }
-            }
-        }, false);
-
-        // Act
-        for (int i = 0; i < sessionCount; i++) {
-            transport.raiseOnReceive(createSession(Session.SessionState.ESTABLISHED));
-        }
-
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-
-        // Assert
-        assertEquals(sessionCount, actual.size());
-    }
 
     @Test
     public void getTransport_anyInstance_returnsInstance() {
@@ -720,7 +688,7 @@ public class ChannelBaseTest {
     }
 
     @Test
-    public void setState_negotiation_setsValue() {
+    public void setState_negotiation_setsValueAndStartsRemovableListener() {
         // Arrange
         Session.SessionState state = Session.SessionState.NEGOTIATING;
         ChannelBase target = getTarget(Session.SessionState.NEW);
@@ -730,11 +698,14 @@ public class ChannelBaseTest {
 
         // Assert
         assertEquals(state, target.getState());
-        assertEquals(0, transport.addedListeners.size());
+        assertEquals(1, transport.addedListeners.size());
+        TransportListenerRemoveAfterReceive listener = transport.addedListeners.remove();
+        assertNotNull(listener.transportListener);
+        assertEquals(true, listener.removeAfterReceive);
     }
 
     @Test
-    public void setState_established_startsListenerAndSetsValue() {
+    public void setState_established_setsValueAndStartsListener() {
         // Arrange
         Session.SessionState state = Session.SessionState.ESTABLISHED;
         ChannelBase target = getTarget(Session.SessionState.NEW);
@@ -818,6 +789,24 @@ public class ChannelBaseTest {
         public void addListener(TransportListener transportListener, boolean removeAfterReceive) {
             super.addListener(transportListener, removeAfterReceive);
             addedListeners.add(new TransportListenerRemoveAfterReceive(transportListener, removeAfterReceive));
+        }
+
+        @Override
+        public void removeListener(TransportListener transportListener) {
+            super.removeListener(transportListener);
+
+            TransportListenerRemoveAfterReceive transportListenerRemoveAfterReceive = null;
+            
+            for (TransportListenerRemoveAfterReceive addedListener : addedListeners) {
+                if (addedListener.transportListener == transportListener) {
+                    transportListenerRemoveAfterReceive = addedListener;
+                    break;
+                }
+            }
+            
+            if (transportListenerRemoveAfterReceive != null) {
+                addedListeners.remove(transportListenerRemoveAfterReceive);
+            }
         }
 
         public void raiseOnReceive(Envelope envelope) {

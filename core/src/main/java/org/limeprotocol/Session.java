@@ -138,7 +138,14 @@ public class Session extends Envelope {
 
         return null;
     }
+    public SessionCompression[] getCompressionOptions() {
+        return compressionOptions;
+    }
 
+    public void setCompressionOptions(SessionCompression[] compressionOptions) {
+        this.compressionOptions = compressionOptions;
+    }
+    
     /**
      * Defines the supported session states
      */

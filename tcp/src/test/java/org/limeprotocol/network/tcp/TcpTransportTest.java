@@ -173,19 +173,16 @@ public class TcpTransportTest {
         
         ClientChannel clientChannel = new ClientChannelImpl(transport, true);
         final Semaphore semaphore = new Semaphore(1);
-        synchronized (semaphore) {
-            semaphore.acquire();
-        }
+        semaphore.acquire();
+
         final Session[] receivedSession = {null};
         clientChannel.addSessionListener(new SessionChannel.SessionChannelListener() {
             @Override
             public void onReceiveSession(Session session) {
                 receivedSession[0] = session;
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
+                semaphore.release();
             }
-        }, true);
+        });
 
         clientChannel.addChannelListener(new Channel.ChannelListener() {
             @Override
@@ -202,16 +199,31 @@ public class TcpTransportTest {
             public void onTransportClosed() {
 
             }
-        }, false);
+        });
         
         Session session = new Session();
         session.setState(Session.SessionState.NEW);
-        
         clientChannel.sendSession(session);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
         
+        if (semaphore.tryAcquire(1, 5000, TimeUnit.MILLISECONDS)) {
+            session = new Session();
+            session.setId(receivedSession[0].getId());
+            if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
+                session.setCompression(receivedSession[0].getCompressionOptions()[0]);
+                session.setEncryption(receivedSession[0].getEncryptionOptions()[0]);
+                receivedSession[0] = null;
+                clientChannel.addSessionListener(new SessionChannel.SessionChannelListener() {
+                    @Override
+                    public void onReceiveSession(Session session) {
+                        receivedSession[0] = session;
+                        semaphore.release();
+                    }
+                });
+                clientChannel.sendSession(session);
+                semaphore.tryAcquire(1, 5000, TimeUnit.MILLISECONDS);
+            }
+        }
+
         assertNotNull(receivedSession[0]);
     }
 

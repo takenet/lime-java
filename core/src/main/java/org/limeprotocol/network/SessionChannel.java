@@ -15,11 +15,11 @@ public interface SessionChannel {
     void sendSession(Session session) throws IOException;
 
     /**
-     * Sets the listener for receiving sessions.
+     * Sets the listener for receiving session.
+     * The listener is removed after receiving a session envelope.
      * @param listener
-     * @param removeAfterReceive
      */
-    void addSessionListener(SessionChannelListener listener, boolean removeAfterReceive);
+    void addSessionListener(SessionChannelListener listener);
 
     /**
      * Removes the specified listener.

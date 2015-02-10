@@ -4,10 +4,7 @@ import org.limeprotocol.*;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class ChannelBase implements Channel {
@@ -21,13 +18,12 @@ public abstract class ChannelBase implements Channel {
     private final Set<CommandChannelListener> commandListeners;
     private final Set<MessageChannelListener> messageListeners;
     private final Set<NotificationChannelListener> notificationListeners;
-    private final Set<SessionChannelListener> sessionListeners;
     private final Set<ChannelListener> channelListeners;
     private final Queue<CommandChannelListener> singleReceiveCommandListeners;
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
     private final Queue<SessionChannelListener> singleReceiveSessionListeners;
-    private final Queue<ChannelListener> singleExceptionChannelListeners;
+    private final Transport.TransportListener transportListener;
     
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients) {
         this.fillEnvelopeRecipients = fillEnvelopeRecipients;
@@ -36,17 +32,16 @@ public abstract class ChannelBase implements Channel {
         }
         
         this.transport = transport;
-        state = Session.SessionState.NEW;
         channelListeners = new HashSet<>();
         commandListeners = new HashSet<>();
         messageListeners = new HashSet<>();
         notificationListeners = new HashSet<>();
-        sessionListeners = new HashSet<>();
         singleReceiveCommandListeners = new LinkedBlockingQueue<>();
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         singleReceiveSessionListeners = new LinkedBlockingQueue<>();
-        singleExceptionChannelListeners = new LinkedBlockingQueue<>();
+        transportListener = new ChannelTransportListener();
+        setState(Session.SessionState.NEW);
     }
 
     /**
@@ -117,9 +112,9 @@ public abstract class ChannelBase implements Channel {
             throw new IllegalArgumentException("state");
         }
         
-        this.state = state;
-        if (state == Session.SessionState.ESTABLISHED) {
-            transport.addListener(new ChannelTransportListener(), false);
+        if (this.state != state) {
+            this.state = state;
+            setupTransportListener();
         }
     }
     
@@ -129,13 +124,12 @@ public abstract class ChannelBase implements Channel {
      * @param channelListener
      */
     @Override
-    public void addChannelListener(ChannelListener channelListener, boolean removeOnException) {
+    public void addChannelListener(ChannelListener channelListener) {
         if (channelListener == null) {
             throw new IllegalArgumentException("channelListener");
         }
-        if (removeOnException) {
-            singleExceptionChannelListeners.add(channelListener);
-        } else {
+
+        if (!channelListeners.contains(channelListener)) {
             channelListeners.add(channelListener);
         }
     }
@@ -148,9 +142,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void removeChannelListener(ChannelListener channelListener) {
-        if (!channelListeners.remove(channelListener)) {
-            singleExceptionChannelListeners.remove(channelListener);
-        }
+        channelListeners.remove(channelListener);
     }
 
     /**
@@ -180,6 +172,7 @@ public abstract class ChannelBase implements Channel {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
+
         if (removeAfterReceive) {
             singleReceiveCommandListeners.add(listener);
         } else {
@@ -226,6 +219,7 @@ public abstract class ChannelBase implements Channel {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
+
         if (removeAfterReceive) {
             singleReceiveMessageListeners.add(listener);
         } else {
@@ -272,6 +266,7 @@ public abstract class ChannelBase implements Channel {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
+        
         if (removeAfterReceive) {
             singleReceiveNotificationListeners.add(listener);
         } else {
@@ -311,25 +306,14 @@ public abstract class ChannelBase implements Channel {
      * Sets the listener for receiving sessions.
      *
      * @param listener
-     * @param removeAfterReceive
      */
     @Override
-    public void addSessionListener(SessionChannelListener listener, boolean removeAfterReceive) {
+    public synchronized void addSessionListener(SessionChannelListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        if (removeAfterReceive) {
-            singleReceiveSessionListeners.add(listener);
-        } else {
-            sessionListeners.add(listener);
-        }
-        
-        if (getState() == Session.SessionState.NEW ||
-            getState() == Session.SessionState.NEGOTIATING ||
-            getState() == Session.SessionState.AUTHENTICATING) {
-            Transport.TransportListener transportListener = new ChannelTransportListener();
-            transport.addListener(transportListener, true);
-        }
+
+        singleReceiveSessionListeners.add(listener);
     }
 
     /**
@@ -339,11 +323,9 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void removeSessionListener(SessionChannelListener listener) {
-        if (!sessionListeners.remove(listener)) {
-            singleReceiveSessionListeners.remove(listener);
-        }
+        singleReceiveSessionListeners.remove(listener);
     }
-
+    
     private void send(Envelope envelope) throws IOException {
         if (fillEnvelopeRecipients) {
             fillEnvelope(envelope, true);
@@ -353,16 +335,12 @@ public abstract class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveMessage(Message message) {
-        for (MessageChannelListener listener : messageListeners) {
-            try {
-                listener.onReceiveMessage(message);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot receive messages in the '%s' session state", state));
         }
-        while (!singleReceiveMessageListeners.isEmpty()) {
+        
+        for (MessageChannelListener listener : snapshot(singleReceiveMessageListeners, messageListeners)) {
             try {
-                MessageChannelListener listener = singleReceiveMessageListeners.remove();
                 listener.onReceiveMessage(message);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -371,17 +349,12 @@ public abstract class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveCommand(Command command) {
-        for (CommandChannelListener listener : commandListeners) {
-            try {
-                listener.onReceiveCommand(command);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot receive commands in the '%s' session state", state));
         }
-
-        while (!singleReceiveCommandListeners.isEmpty()) {
+        
+        for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
             try {
-                CommandChannelListener listener = singleReceiveCommandListeners.remove();
                 listener.onReceiveCommand(command);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -390,17 +363,12 @@ public abstract class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnReceiveNotification(Notification notification) {
-        for (NotificationChannelListener listener : notificationListeners) {
-            try {
-                listener.onReceiveNotification(notification);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot receive notifications in the '%s' session state", state));
         }
-
-        while (!singleReceiveNotificationListeners.isEmpty()) {
+        
+        for (NotificationChannelListener listener : snapshot(singleReceiveNotificationListeners, notificationListeners)) {
             try {
-                NotificationChannelListener listener = singleReceiveNotificationListeners.remove();
                 listener.onReceiveNotification(notification);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -408,27 +376,38 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized void raiseOnReceiveSession(Session session) {
-        for (SessionChannelListener listener : sessionListeners) {
+    protected synchronized void raiseOnReceiveSession(Session session) {
+        for (SessionChannelListener listener : snapshot(singleReceiveSessionListeners, null)) {
             try {
                 listener.onReceiveSession(session);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
 
-        while (!singleReceiveSessionListeners.isEmpty()) {
-            SessionChannelListener listener = singleReceiveSessionListeners.remove();
-            try {
-                listener.onReceiveSession(session);
-            } catch (Exception e) {
-                e.printStackTrace();
+    /**
+     * Merges a queue and a collection, removing all items from the queue.
+     * @param queue
+     * @param collection
+     * @param <T>
+     * @return
+     */
+    private static <T> List<T> snapshot(Queue<T> queue, Collection<T> collection) {
+        List<T> result = new ArrayList<>();
+        if (collection != null) {
+            result.addAll(collection);
+        }
+        if (queue != null) {
+            while (!queue.isEmpty()) {
+                result.add(queue.remove());
             }
         }
+        return result;
     }
 
     private synchronized void raiseOnTransportClosing() {
-        for (ChannelListener listener : channelListeners) {
+        for (ChannelListener listener : snapshot(null, channelListeners)) {
             try {
                 listener.onTransportClosing();
             } catch (Exception e) {
@@ -438,7 +417,7 @@ public abstract class ChannelBase implements Channel {
     }
 
     private synchronized void raiseOnTransportClosed() {
-        for (ChannelListener listener : channelListeners) {
+        for (ChannelListener listener : snapshot(null, channelListeners)) {
             try {
                 listener.onTransportClosed();
             } catch (Exception e) {
@@ -450,16 +429,8 @@ public abstract class ChannelBase implements Channel {
         channelListeners.clear();
     }
 
-    private synchronized void raiseOnTransportException(Exception exception) {
-        for (ChannelListener listener : channelListeners) {
-            try {
-                listener.onTransportException(exception);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        while (!singleExceptionChannelListeners.isEmpty()) {
-            ChannelListener listener = singleExceptionChannelListeners.remove();
+    protected synchronized void raiseOnTransportException(Exception exception) {
+        for (ChannelListener listener : snapshot(null, channelListeners)) {
             try {
                 listener.onTransportException(exception);
             } catch (Exception e) {
@@ -468,6 +439,15 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
+    protected synchronized void setupTransportListener() {
+        boolean removeOnReceive = true;
+        if (getState() == Session.SessionState.ESTABLISHED) {
+            removeOnReceive = false;
+        }
+        transport.removeListener(transportListener);
+        transport.addListener(transportListener, removeOnReceive);
+    }
+    
     /**
      * Fills the envelope recipients using the session information.
      * @param envelope
@@ -498,7 +478,7 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    protected class ChannelTransportListener implements Transport.TransportListener {
+    private class ChannelTransportListener implements Transport.TransportListener {
         /**
          * Occurs when a envelope is received by the transport.
          *
