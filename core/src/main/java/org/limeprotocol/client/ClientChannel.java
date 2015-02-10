@@ -52,7 +52,7 @@ public interface ClientChannel extends Channel {
      * @param messageId
      * @param to
      */
-    void sendReceivedNotification(UUID messageId, Node to);
+    void sendReceivedNotification(UUID messageId, Node to) throws IOException;
 
     /**
      * Sends a finishing session envelope to the server.

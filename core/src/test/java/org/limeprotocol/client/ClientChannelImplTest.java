@@ -90,8 +90,6 @@ public class ClientChannelImplTest {
 
         transport.addNextEnvelopeToReturn(negotiatingSession);
 
-        ArgumentCaptor<Session> sessionArgument = ArgumentCaptor.forClass(Session.class);
-
         // Act
         target.negotiateSession(compression, encryption, listener);
 
@@ -133,7 +131,7 @@ public class ClientChannelImplTest {
     //region authenticateSession
 
     @Test
-    public void authenticateSessionAsync_AuthenticatingState_CallsTransportAndReadsFromTransport() throws Exception {
+    public void authenticateSessionAuthenticatingState_CallsTransportAndReadsFromTransport() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.AUTHENTICATING);
 
@@ -145,8 +143,6 @@ public class ClientChannelImplTest {
         establishedSession.setId(target.getSessionId());
 
         transport.addNextEnvelopeToReturn(establishedSession);
-
-        ArgumentCaptor<Session> sessionArgument = ArgumentCaptor.forClass(Session.class);
 
         // Act
         target.authenticateSession(localIdentity, plainAuthentication, localInstance, listener);
@@ -166,7 +162,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void authenticateSessionAsync_InvalidState_ThrowsUnsupportedOperationException() throws Exception {
+    public void authenticateSessionInvalidState_ThrowsUnsupportedOperationException() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.ESTABLISHED);
 
@@ -188,7 +184,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void authenticateSessionAsync_NullIdentity_ThrowsIllegalArgumentException() throws Exception {
+    public void authenticateSessionNullIdentity_ThrowsIllegalArgumentException() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.AUTHENTICATING);
 
@@ -206,11 +202,11 @@ public class ClientChannelImplTest {
             return;
         }
 
-        fail("An UnsupportedOperationException should be threw");
+        fail("An IllegalArgumentException should be threw");
     }
 
     @Test
-    public void authenticateSessionAsync_NullAuthentication_ThrowsIllegalArgumentException() throws Exception {
+    public void authenticateSessionNullAuthentication_ThrowsIllegalArgumentException() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.AUTHENTICATING);
 
@@ -228,10 +224,52 @@ public class ClientChannelImplTest {
             return;
         }
 
-        fail("An UnsupportedOperationException should be threw");
+        fail("An IllegalArgumentException should be threw");
     }
 
     //endregion authenticateSession
+
+    //region sendReceivedNotification
+
+    @Test
+    public void sendReceivedNotification_EstablishedState_CallsTransport() throws Exception {
+        // Arrange
+        PlainDocument content = createTextContent();
+        Message message = createMessage(content);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED);
+
+        // Act
+        target.sendReceivedNotification(message.getId(), message.getFrom());
+
+        // Assert
+        assertThat(transport.getSentEnvelopes()).hasSize(1);
+        assertThat(transport.getSentEnvelopes()[0]).isInstanceOf(Notification.class);
+        Notification sentNotification = (Notification)transport.getSentEnvelopes()[0];
+        assertThat(sentNotification.getId()).isEqualTo(message.getId());
+        assertThat(sentNotification.getTo()).isEqualTo(message.getFrom());
+        assertThat(sentNotification.getEvent()).isEqualTo(Notification.Event.RECEIVED);
+    }
+
+    @Test
+    public void sendReceivedNotificationAsync_NullTo_ThrowsIllegalArgumentException() throws Exception {
+        // Arrange
+        Message message = createMessage(null);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED);
+        // Act
+        try {
+            target.sendReceivedNotification(message.getId(), null);
+        } catch (IllegalArgumentException e) {
+            // Assert
+            assertThat(transport.getSentEnvelopes()).isEmpty();
+            return;
+        }
+
+        fail("An IllegalArgumentException should be threw");
+    }
+
+    //endregion sendReceivedNotification
 
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
