@@ -7,7 +7,7 @@ public class Identity {
     private String name;
     private String domain;
 
-    public  Identity(String name, String domain){
+    public Identity(String name, String domain){
         setName(name);
         setDomain(domain);
     }

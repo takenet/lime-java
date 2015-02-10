@@ -6,7 +6,6 @@ package org.limeprotocol.security;
  * authentication schemes
  */
 
-
 public abstract class Authentication {
     private AuthenticationScheme authenticationScheme;
 
@@ -30,16 +29,16 @@ public abstract class Authentication {
          * other nodes may want to block messages originated
          * by guest identities.
          */
-        Guest,
+        GUEST,
         /**
          *Username and password authentication.
          */
-        Plain,
+        PLAIN,
 
         /**
          *Transport layer authentication.
          */
-        Transport
+        TRANSPORT
     }
 }
 

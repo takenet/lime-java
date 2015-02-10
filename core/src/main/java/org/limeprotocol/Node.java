@@ -24,10 +24,10 @@ public class Node extends Identity {
         super(identity.getName(), identity.getDomain());
     }
 
-    /// <summary>
-    /// The name of the instance used
-    /// by the node to connect to the network
-    /// </summary>
+    /**
+     * The name of the instance used
+     * by the node to connect to the network
+     */
     public String getInstance() {
         return instance;
     }
@@ -59,25 +59,19 @@ public class Node extends Identity {
                 ((this.getInstance() == null && node.getInstance() == null) || (this.getInstance() != null && this.getInstance().equalsIgnoreCase(node.getInstance())));
     }
 
-    /// <summary>
-    /// Returns a hash code for this instance.
-    /// </summary>
-    /// <returns>
-    /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
-    /// </returns>
+    /**
+     * Returns a hash code for this instance.
+     * @return A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+     */
     @Override
     public int hashCode()
     {
         return super.hashCode();
     }
 
-    /// <summary>
-    /// Parses the String to a valid Node.
-    /// </summary>
-    /// <param name="s">The s.</param>
-    /// <returns></returns>
-    /// <exception cref="System.ArgumentNullException">s</exception>
-    /// <exception cref="System.FormatException">Invalid Peer format</exception>
+    /**
+     * Parses the String to a valid Node.
+     */
     public static Node parse(String s)
     {
         if (StringUtils.isNullOrWhiteSpace(s)) {
@@ -95,42 +89,17 @@ public class Node extends Identity {
         return new Node(name, domain, instance);
     }
 
-    /// <summary>
-    /// Tries to parse the String to a valid Node
-    /// </summary>
-    /// <param name="s">The s.</param>
-    /// <param name="value">The value.</param>
-    /// <returns></returns>
-    /// WARNING: Remember that Java hasn't out-operator!
-    ///TODO: Check if all call to this method execute parser again
-    public static boolean TryParse(String s, Node value)
-    {
-        try
-        {
-            parse(s);
-            return true;
-        }
-        catch (Exception e)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Creates an Identity instance
-    /// based on the Node identity
-    /// </summary>
-    /// <returns></returns>
+    /**
+     * Creates an Identity instance based on the Node identity
+     */
     public Identity toIdentity()
     {
         return new Identity(getName(), getDomain());
     }
 
-    /// <summary>
-    /// Indicates if the node is
-    /// a complete representation, with
-    /// name, domain and instance.
-    /// </summary>
+    /**
+     * Indicates if the node is a complete representation, with name, domain and instance.
+     */
     public boolean isComplete(){
 
         return
@@ -140,13 +109,10 @@ public class Node extends Identity {
 
     }
 
-    /// <summary>
-    /// Creates a new object that
-    /// is a copy of the current instance.
-    /// </summary>
-    /// <returns>
-    /// A new object that is a copy of this instance.
-    /// </returns>
+    /**
+     * Creates a new object that is a copy of the current instance.
+     * @return A new object that is a copy of this instance.
+     */
     public Node copy(){
         return new Node(getName(), getDomain(), getInstance());
     }
