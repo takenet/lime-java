@@ -1,6 +1,7 @@
 package org.limeprotocol.network;
 
 import org.limeprotocol.Envelope;
+import org.limeprotocol.Session;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 

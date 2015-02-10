@@ -9,6 +9,7 @@ import org.limeprotocol.MediaType;
 import org.limeprotocol.PlainDocument;
 import org.reflections.Reflections;
 
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -23,14 +24,16 @@ public class SerializationUtil {
 
         documentTypesMap = new HashMap<>(documentTypes.size());
         for (Class<? extends Document> documentType : documentTypes) {
-            Document document = null;
-            try {
-                document = documentType.getConstructor().newInstance();
-            } catch (Exception e) {
-                System.out.println("Invalid document class:" + documentType);
-            }
-            if (document != null) {
-                documentTypesMap.put(document.getMediaType(), documentType);
+            if (!Modifier.isAbstract(documentType.getModifiers())) {
+                Document document = null;
+                try {
+                    document = documentType.getConstructor().newInstance();
+                } catch (Exception e) {
+                    System.out.println("Document does not have an empty constructor:" + documentType);
+                }
+                if (document != null) {
+                    documentTypesMap.put(document.getMediaType(), documentType);
+                }
             }
         }
     }

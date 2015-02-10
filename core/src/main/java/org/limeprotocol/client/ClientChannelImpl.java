@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
-    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
+    protected ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
         super(transport, fillEnvelopeRecipients);
     }
 
@@ -38,12 +38,24 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param sessionCompression
      * @param sessionEncryption
      * @param sessionListener
+     * @param channelListener
      */
     @Override
     public void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) {
         if (getState() != Session.SessionState.NEGOTIATING) {
             throw new IllegalStateException(String.format("Cannot negotiate a session in the '%s' state.", getState()));
         }
+    }
+
+    /**
+     * Listens for a authenticating session envelope from the server, after a session negotiation.
+     *
+     * @param sessionListener
+     * @param channelListener
+     */
+    @Override
+    public void receiveAuthenticationSession(SessionChannelListener sessionListener, ChannelListener channelListener) {
+
     }
 
     /**
@@ -56,8 +68,28 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param sessionListener
      */
     @Override
-    public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) {
+    public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) throws IOException {
 
+        if (super.getState() != Session.SessionState.AUTHENTICATING) {
+            throw new UnsupportedOperationException(String.format("Cannot authenticate a session in the '%s' state", getState()));
+        }
+
+        if (identity == null) {
+            throw new IllegalArgumentException("identity");
+        }
+        
+        if (authentication == null) {
+            throw new IllegalArgumentException("authentication");
+        }
+
+        addSessionListener(sessionListener);
+
+        Session session = new Session();
+        session.setId(getSessionId());
+        session.setFrom(new Node(identity.getName(), identity.getDomain(), instance));
+        session.setState(Session.SessionState.AUTHENTICATING);
+        session.setAuthentication(authentication);
+        sendSession(session);
     }
 
     /**
