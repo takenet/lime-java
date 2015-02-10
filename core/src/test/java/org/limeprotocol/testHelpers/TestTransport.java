@@ -1,19 +1,21 @@
 package org.limeprotocol.testHelpers;
 
+import com.google.common.collect.Iterators;
+import org.apache.commons.collections.IteratorUtils;
 import org.limeprotocol.Envelope;
-import org.limeprotocol.Session;
 import org.limeprotocol.network.TransportBase;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 public class TestTransport extends TransportBase {
-        private Queue<Envelope> envelopeQueue;
+        private List<Envelope> sentEnvelopes;
+        private Queue<Envelope> outgoingEnvelopes;
 
         public TestTransport() {
-                envelopeQueue = new LinkedList<>();
+                outgoingEnvelopes = new LinkedList<>();
+                sentEnvelopes = new ArrayList<>();
         }
 
         @Override
@@ -23,7 +25,8 @@ public class TestTransport extends TransportBase {
 
         @Override
         public void send(Envelope envelope) throws IOException {
-                raiseOnReceive(envelopeQueue.poll());
+                sentEnvelopes.add(envelope);
+                raiseOnReceive(outgoingEnvelopes.poll());
         }
 
         @Override
@@ -32,6 +35,10 @@ public class TestTransport extends TransportBase {
         }
 
         public void addNextEnvelopeToReturn(Envelope envelope) {
-                envelopeQueue.add(envelope);
+                outgoingEnvelopes.add(envelope);
+        }
+
+        public Envelope[] getSentEnvelopes() {
+                return Iterators.toArray(sentEnvelopes.iterator(), Envelope.class);
         }
 }

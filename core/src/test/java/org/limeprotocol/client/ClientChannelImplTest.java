@@ -23,7 +23,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void StartNewSessionAsync_NewState_CallsTransportAndReadsFromBuffer() throws Exception {
+    public void startNewSessionAsync_NewState_CallsTransportAndReadsFromBuffer() throws Exception {
         // Arrange
         Session authenticationSession = createSession(Session.SessionState.AUTHENTICATING);
         transport.addNextEnvelopeToReturn(authenticationSession);
@@ -35,6 +35,11 @@ public class ClientChannelImplTest {
         target.startNewSession(listener);
 
         // Assert
+        assertThat(transport.getSentEnvelopes()).isNotEmpty();
+        assertThat(transport.getSentEnvelopes()[0]).isInstanceOf(Session.class);
+        Session sentSession = (Session)transport.getSentEnvelopes()[0];
+        assertThat(sentSession.getState()).isEqualTo(Session.SessionState.NEW);
+
         verify(listener).onReceiveSession(sessionArgument.capture());
         Session sessionReturned = sessionArgument.getValue();
         assertThat(sessionReturned).isNotNull().isEqualTo(authenticationSession);
