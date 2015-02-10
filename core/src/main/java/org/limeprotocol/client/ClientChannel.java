@@ -29,7 +29,7 @@ public interface ClientChannel extends Channel {
      * @param sessionEncryption
      * @param sessionListener
      */
-    void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener);
+    void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) throws IOException;
 
     /**
      * Sends a authenticate session envelope to the server to establish an authenticated session 
@@ -39,7 +39,7 @@ public interface ClientChannel extends Channel {
      * @param instance
      * @param sessionListener
      */
-    void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener);
+    void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) throws IOException;
 
     /**
      *  Notify to the server that the specified message was received by the peer.
