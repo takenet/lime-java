@@ -10,6 +10,8 @@ import org.limeprotocol.security.Authentication;
 import java.io.IOException;
 import java.util.UUID;
 
+import static org.limeprotocol.Session.SessionState.*;
+
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
     public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
         super(transport, fillEnvelopeRecipients);
@@ -22,12 +24,12 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      */
     @Override
     public void startNewSession(SessionChannelListener sessionListener) throws IOException {
-        if (getState() != Session.SessionState.NEW) {
+        if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot start a session in the '%s' state.", getState()));
         }
         addSessionListener(sessionListener);
         Session session = new Session();
-        session.setState(Session.SessionState.NEW);
+        session.setState(NEW);
         sendSession(session);
     }
 
@@ -41,13 +43,13 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      */
     @Override
     public void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) throws IOException {
-        if (getState() != Session.SessionState.NEGOTIATING) {
+        if (getState() != NEGOTIATING) {
             throw new IllegalStateException(String.format("Cannot negotiate a session in the '%s' state.", getState()));
         }
         addSessionListener(sessionListener);
         Session session = new Session();
         session.setId(super.getSessionId());
-        session.setState(Session.SessionState.NEGOTIATING);
+        session.setState(NEGOTIATING);
         session.setCompression(sessionCompression);
         session.setEncryption(sessionEncryption);
         sendSession(session);
@@ -64,8 +66,8 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      */
     @Override
     public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) throws IOException {
-        if (super.getState() != Session.SessionState.AUTHENTICATING) {
-            throw new UnsupportedOperationException(String.format("Cannot authenticate a session in the '%s' state", getState()));
+        if (getState() != AUTHENTICATING) {
+            throw new IllegalStateException(String.format("Cannot authenticate a session in the '%s' state", getState()));
         }
         if (identity == null) {
             throw new IllegalArgumentException("identity");
@@ -77,7 +79,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         Session session = new Session();
         session.setId(getSessionId());
         session.setFrom(new Node(identity.getName(), identity.getDomain(), instance));
-        session.setState(Session.SessionState.AUTHENTICATING);
+        session.setState(AUTHENTICATING);
         session.setAuthentication(authentication);
         sendSession(session);
     }
@@ -107,8 +109,17 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * Sends a finishing session envelope to the server.
      */
     @Override
-    public void sendFinishingSession() {
+    public void sendFinishingSession() throws IOException {
+        if (getState() != ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot finish a session in the '%s' state", getState()));
+        }
 
+        Session session = new Session() {{
+            setId(getSessionId());
+            setState(FINISHING);
+        }};
+
+        sendSession(session);
     }
 
     /**
@@ -128,11 +139,11 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         setSessionId(session.getId());
         setState(session.getState());
         
-        if (session.getState() == Session.SessionState.ESTABLISHED) {
+        if (session.getState() == ESTABLISHED) {
             setLocalNode(session.getTo());
             setRemoteNode(session.getFrom());
-        } else if (session.getState() == Session.SessionState.FINISHED || 
-                session.getState() == Session.SessionState.FAILED) {
+        } else if (session.getState() == FINISHED ||
+                session.getState() == FAILED) {
             try {
                 getTransport().close();
             } catch (Exception e) {

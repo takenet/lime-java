@@ -162,7 +162,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void authenticateSessionInvalidState_ThrowsUnsupportedOperationException() throws Exception {
+    public void authenticateSessionInvalidState_ThrowsIllegalStateException() throws Exception {
         // Arrange
         TestClientChannel target = getTarget(SessionState.ESTABLISHED);
 
@@ -173,14 +173,14 @@ public class ClientChannelImplTest {
         // Act
         try {
             target.authenticateSession(localIdentity, plainAuthentication, localInstance, listener);
-        } catch (UnsupportedOperationException e) {
+        } catch (IllegalStateException e) {
             // Assert
             assertThat(transport.getSentEnvelopes()).isEmpty();
             verify(listener, never()).onReceiveSession(any(Session.class));
             return;
         }
 
-        fail("An UnsupportedOperationException should be threw");
+        fail("An IllegalStateException should be threw");
     }
 
     @Test
@@ -252,7 +252,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void sendReceivedNotificationAsync_NullTo_ThrowsIllegalArgumentException() throws Exception {
+    public void sendReceivedNotification_NullTo_ThrowsIllegalArgumentException() throws Exception {
         // Arrange
         Message message = createMessage(null);
 
@@ -271,6 +271,44 @@ public class ClientChannelImplTest {
 
     //endregion sendReceivedNotification
 
+    //region sendFinishingSession
+
+    @Test
+    public void sendFinishingSessionEstablishedState_CallsTransport() throws Exception {
+        // Arrange
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED);
+
+        // Act
+        target.sendFinishingSession();
+
+        // Assert
+        assertThat(transport.getSentEnvelopes()).hasSize(1);
+        assertThat(transport.getSentEnvelopes()[0]).isInstanceOf(Session.class);
+        Session sentSession = (Session)transport.getSentEnvelopes()[0];
+        assertThat(sentSession.getId()).isEqualTo(target.getSessionId());
+        assertThat(sentSession.getState()).isEqualTo(SessionState.FINISHING);
+    }
+
+    @Test
+    public void sendFinishingSessionNewState_ThrowsIllegalStateException() throws Exception {
+        // Arrange
+        TestClientChannel target = getTarget(SessionState.NEW);
+
+        // Act
+        try {
+            target.sendFinishingSession();
+        } catch (IllegalStateException e) {
+            // Assert
+            assertThat(transport.getSentEnvelopes()).isEmpty();
+            verify(listener, never()).onReceiveSession(any(Session.class));
+            return;
+        }
+
+        fail("An IllegalStateException should be threw");
+    }
+
+    //endregion sendFinishingSession
+    
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
     }
