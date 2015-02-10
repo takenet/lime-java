@@ -1,6 +1,6 @@
 package org.limeprotocol;
 
-public class DocumentBase implements Document {
+public abstract class DocumentBase implements Document {
     MediaType mediaType;
 
     public DocumentBase(MediaType mediaType) {

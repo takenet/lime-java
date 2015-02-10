@@ -189,6 +189,11 @@ public class TcpTransportTest {
         assertEquals(messageBufferParts.length, inputStream.getReadCount());
     }
 
+    public void open_notConnectedValidUri_connectsClientAndCallsGetStream() {
+        
+        
+    }
+    
     @Test
     public void onReceive_multipleReadsMultipleEnvelopes_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
