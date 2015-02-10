@@ -1,9 +1,7 @@
 package org.limeprotocol.client;
 
 import org.limeprotocol.*;
-import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelBase;
-import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.security.Authentication;
 
@@ -25,7 +23,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (getState() != Session.SessionState.NEW) {
             throw new IllegalStateException(String.format("Cannot start a session in the '%s' state.", getState()));
         }
-        addSessionListener(sessionListener);
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setState(Session.SessionState.NEW);
         sendSession(session);
@@ -44,7 +42,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (getState() != Session.SessionState.NEGOTIATING) {
             throw new IllegalStateException(String.format("Cannot negotiate a session in the '%s' state.", getState()));
         }
-        addSessionListener(sessionListener);
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setId(super.getSessionId());
         session.setState(Session.SessionState.NEGOTIATING);
@@ -73,7 +71,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (authentication == null) {
             throw new IllegalArgumentException("authentication");
         }
-        addSessionListener(sessionListener);
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setId(getSessionId());
         session.setFrom(new Node(identity.getName(), identity.getDomain(), instance));

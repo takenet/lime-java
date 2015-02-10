@@ -176,7 +176,7 @@ public class TcpTransportTest {
         semaphore.acquire();
 
         final Session[] receivedSession = {null};
-        clientChannel.addSessionListener(new SessionChannel.SessionChannelListener() {
+        clientChannel.setSessionListener(new SessionChannel.SessionChannelListener() {
             @Override
             public void onReceiveSession(Session session) {
                 receivedSession[0] = session;
@@ -212,7 +212,7 @@ public class TcpTransportTest {
                 session.setCompression(receivedSession[0].getCompressionOptions()[0]);
                 session.setEncryption(receivedSession[0].getEncryptionOptions()[0]);
                 receivedSession[0] = null;
-                clientChannel.addSessionListener(new SessionChannel.SessionChannelListener() {
+                clientChannel.setSessionListener(new SessionChannel.SessionChannelListener() {
                     @Override
                     public void onReceiveSession(Session session) {
                         receivedSession[0] = session;

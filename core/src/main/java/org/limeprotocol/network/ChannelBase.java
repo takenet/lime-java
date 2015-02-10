@@ -22,7 +22,7 @@ public abstract class ChannelBase implements Channel {
     private final Queue<CommandChannelListener> singleReceiveCommandListeners;
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
-    private final Queue<SessionChannelListener> singleReceiveSessionListeners;
+    private SessionChannelListener sessionChannelListener;
     private final Transport.TransportListener transportListener;
     
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients) {
@@ -39,7 +39,6 @@ public abstract class ChannelBase implements Channel {
         singleReceiveCommandListeners = new LinkedBlockingQueue<>();
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
-        singleReceiveSessionListeners = new LinkedBlockingQueue<>();
         transportListener = new ChannelTransportListener();
         setState(Session.SessionState.NEW);
     }
@@ -79,7 +78,7 @@ public abstract class ChannelBase implements Channel {
         return localNode;
     }
 
-    public void setLocalNode(Node localNode) {
+    protected void setLocalNode(Node localNode) {
         this.localNode = localNode;
     }
 
@@ -93,7 +92,7 @@ public abstract class ChannelBase implements Channel {
         return sessionId;
     }
 
-    public void setSessionId(UUID sessionId) {
+    protected void setSessionId(UUID sessionId) {
         this.sessionId = sessionId;
     }
 
@@ -111,11 +110,7 @@ public abstract class ChannelBase implements Channel {
         if (state == null) {
             throw new IllegalArgumentException("state");
         }
-        
-        if (this.state != state) {
-            this.state = state;
-            setupTransportListener();
-        }
+        this.state = state;
     }
     
     /**
@@ -308,33 +303,15 @@ public abstract class ChannelBase implements Channel {
      * @param listener
      */
     @Override
-    public synchronized void addSessionListener(SessionChannelListener listener) {
+    public synchronized void setSessionListener(SessionChannelListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-
-        singleReceiveSessionListeners.add(listener);
+        sessionChannelListener = listener;
+        setupTransportListener();
     }
 
-    /**
-     * Removes the specified listener.
-     *
-     * @param listener
-     */
-    @Override
-    public void removeSessionListener(SessionChannelListener listener) {
-        singleReceiveSessionListeners.remove(listener);
-    }
-    
-    private void send(Envelope envelope) throws IOException {
-        if (fillEnvelopeRecipients) {
-            fillEnvelope(envelope, true);
-        }
-        
-        transport.send(envelope);
-    }
-
-    private synchronized void raiseOnReceiveMessage(Message message) {
+    protected synchronized void raiseOnReceiveMessage(Message message) {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot receive messages in the '%s' session state", state));
         }
@@ -348,7 +325,7 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized void raiseOnReceiveCommand(Command command) {
+    protected synchronized void raiseOnReceiveCommand(Command command) {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot receive commands in the '%s' session state", state));
         }
@@ -362,7 +339,7 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized void raiseOnReceiveNotification(Notification notification) {
+    protected synchronized void raiseOnReceiveNotification(Notification notification) {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot receive notifications in the '%s' session state", state));
         }
@@ -377,36 +354,13 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
-        for (SessionChannelListener listener : snapshot(singleReceiveSessionListeners, null)) {
-            try {
-                listener.onReceiveSession(session);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (sessionChannelListener != null) {
+            sessionChannelListener.onReceiveSession(session);
+            sessionChannelListener = null;
         }
     }
 
-    /**
-     * Merges a queue and a collection, removing all items from the queue.
-     * @param queue
-     * @param collection
-     * @param <T>
-     * @return
-     */
-    private static <T> List<T> snapshot(Queue<T> queue, Collection<T> collection) {
-        List<T> result = new ArrayList<>();
-        if (collection != null) {
-            result.addAll(collection);
-        }
-        if (queue != null) {
-            while (!queue.isEmpty()) {
-                result.add(queue.remove());
-            }
-        }
-        return result;
-    }
-
-    private synchronized void raiseOnTransportClosing() {
+    protected synchronized void raiseOnTransportClosing() {
         for (ChannelListener listener : snapshot(null, channelListeners)) {
             try {
                 listener.onTransportClosing();
@@ -416,7 +370,7 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized void raiseOnTransportClosed() {
+    protected synchronized void raiseOnTransportClosed() {
         for (ChannelListener listener : snapshot(null, channelListeners)) {
             try {
                 listener.onTransportClosed();
@@ -478,6 +432,34 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
+    private void send(Envelope envelope) throws IOException {
+        if (fillEnvelopeRecipients) {
+            fillEnvelope(envelope, true);
+        }
+
+        transport.send(envelope);
+    }
+    
+    /**
+     * Merges a queue and a collection, removing all items from the queue.
+     * @param queue
+     * @param collection
+     * @param <T>
+     * @return
+     */
+    private static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
+        List<T> result = new ArrayList<>();
+        if (collection != null) {
+            result.addAll(collection);
+        }
+        if (queue != null) {
+            while (!queue.isEmpty()) {
+                result.add(queue.remove());
+            }
+        }
+        return result;
+    }
+    
     private class ChannelTransportListener implements Transport.TransportListener {
         /**
          * Occurs when a envelope is received by the transport.

@@ -19,13 +19,7 @@ public interface SessionChannel {
      * The listener is removed after receiving a session envelope.
      * @param listener
      */
-    void addSessionListener(SessionChannelListener listener);
-
-    /**
-     * Removes the specified listener.
-     * @param listener
-     */
-    void removeSessionListener(SessionChannelListener listener);
+    void setSessionListener(SessionChannelListener listener);
 
     /**
      * Defines a session channel listener.

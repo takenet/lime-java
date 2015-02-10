@@ -5,10 +5,7 @@ import org.limeprotocol.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.limeprotocol.testHelpers.Dummy.*;
+import static org.mockito.Mockito.*;
 
 public class ChannelBaseTest {
 
@@ -532,7 +530,7 @@ public class ChannelBaseTest {
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         final List<Session> actual = new ArrayList<>();
-        target.addSessionListener(new SessionChannel.SessionChannelListener() {
+        target.setSessionListener(new SessionChannel.SessionChannelListener() {
 
             @Override
             public void onReceiveSession(Session session) {
@@ -562,7 +560,7 @@ public class ChannelBaseTest {
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         final List<Session> actual = new ArrayList<>();
-        target.addSessionListener(new SessionChannel.SessionChannelListener() {
+        target.setSessionListener(new SessionChannel.SessionChannelListener() {
             @Override
             public void onReceiveSession(Session session) {
                 actual.add(session);
@@ -585,8 +583,7 @@ public class ChannelBaseTest {
         assertEquals(1, actual.size());
         assertEquals(session, actual.get(0));
     }
-
-
+    
     @Test
     public void getTransport_anyInstance_returnsInstance() {
         // Arrange
@@ -730,7 +727,268 @@ public class ChannelBaseTest {
         // Act
         ((TestChannel)target).setState(state);
     }
+
+    @Test
+    public void raiseOnReceiveMessage_registeredRemovableListener_callsListenerOnceAndRemove() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, true);
+        
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+
+        // Assert
+        verify(listener, times(1)).onReceiveMessage(message);
+    }
+
+    @Test
+    public void raiseOnReceiveMessage_registeredListener_callsListenerTwice() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+
+        // Assert
+        verify(listener, times(2)).onReceiveMessage(message);
+    }
+
+    @Test
+    public void raiseOnReceiveMessage_twoRegisteredListeners_callsFirstOnceAndRemoveAndSecondTwice() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener1 = mock(MessageChannel.MessageChannelListener.class);
+        MessageChannel.MessageChannelListener listener2 = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener1, true);
+        target.addMessageListener(listener2, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+
+        // Assert
+        verify(listener1, times(1)).onReceiveMessage(message);
+        verify(listener2, times(2)).onReceiveMessage(message);
+    }
     
+    @Test(expected = IllegalStateException.class)
+    public void raiseOnReceiveMessage_finishedSessionSate_throwsIllegalOperationException() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.FINISHED);
+        target.addMessageListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+    }
+
+    @Test
+    public void raiseOnReceiveCommand_registeredRemovableListener_callsListenerOnceAndRemove() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+
+        // Assert
+        verify(listener, times(1)).onReceiveCommand(command);
+    }
+
+    @Test
+    public void raiseOnReceiveCommand_registeredListener_callsListenerTwice() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+
+        // Assert
+        verify(listener, times(2)).onReceiveCommand(command);
+    }
+
+    @Test
+    public void raiseOnReceiveCommand_twoRegisteredListeners_callsFirstOnceAndRemoveAndSecondTwice() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener1 = mock(CommandChannel.CommandChannelListener.class);
+        CommandChannel.CommandChannelListener listener2 = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener1, true);
+        target.addCommandListener(listener2, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+
+        // Assert
+        verify(listener1, times(1)).onReceiveCommand(command);
+        verify(listener2, times(2)).onReceiveCommand(command);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void raiseOnReceiveCommand_finishedSessionSate_throwsIllegalOperationException() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.FINISHED);
+        target.addCommandListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+    }
+
+    @Test
+    public void raiseOnReceiveNotification_registeredRemovableListener_callsListenerOnceAndRemove() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+
+        // Assert
+        verify(listener, times(1)).onReceiveNotification(notification);
+    }
+
+    @Test
+    public void raiseOnReceiveNotification_registeredListener_callsListenerTwice() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+
+        // Assert
+        verify(listener, times(2)).onReceiveNotification(notification);
+    }
+
+    @Test
+    public void raiseOnReceiveNotification_twoRegisteredListeners_callsFirstOnceAndRemoveAndSecondTwice() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener1 = mock(NotificationChannel.NotificationChannelListener.class);
+        NotificationChannel.NotificationChannelListener listener2 = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener1, true);
+        target.addNotificationListener(listener2, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+
+        // Assert
+        verify(listener1, times(1)).onReceiveNotification(notification);
+        verify(listener2, times(2)).onReceiveNotification(notification);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void raiseOnReceiveNotification_finishedSessionSate_throwsIllegalOperationException() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.FINISHED);
+        target.addNotificationListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+    }
+    
+    @Test
+    public void addChannelListener_newInstance_registerInstance() {
+        // Arrange
+        Channel.ChannelListener listener = mock(Channel.ChannelListener.class);
+        Exception exception = new Exception();
+        ChannelBase target = getTarget(Session.SessionState.NEW);
+
+        // Act
+        target.addChannelListener(listener);
+        
+        // Assert
+        ((TestChannel)target).raiseOnTransportException(exception);
+        verify(listener, times(1)).onTransportException(exception);
+    }
+    
+    @Test
+    public void addChannelListener_callsTwice_registerSingleTime() {
+        // Arrange
+        Channel.ChannelListener listener = mock(Channel.ChannelListener.class);
+        Exception exception = new Exception();
+        ChannelBase target = getTarget(Session.SessionState.NEW);
+
+        // Act
+        target.addChannelListener(listener);
+        target.addChannelListener(listener);
+
+        // Assert
+        ((TestChannel)target).raiseOnTransportException(exception);
+        verify(listener, times(1)).onTransportException(exception);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void addChannelListener_nullInstance_throwsIllegalArgumentException() {
+        // Arrange
+        Channel.ChannelListener listener = null;
+        ChannelBase target = getTarget(Session.SessionState.NEW);
+
+        // Act
+        target.addChannelListener(listener);
+    }
+    
+    @Test
+    public void removeChannelListener_registeredInstance_unregisterInstance() {
+        // Arrange
+        Channel.ChannelListener listener = mock(Channel.ChannelListener.class);
+        Exception exception = new Exception();
+        ChannelBase target = getTarget(Session.SessionState.NEW);
+        target.addChannelListener(listener);
+
+        // Act
+        target.removeChannelListener(listener);
+
+        // Assert
+        ((TestChannel)target).raiseOnTransportException(exception);
+        verify(listener, never()).onTransportException(exception);
+    }
+
+    @Test
+    public void addCommandListener_removableListener_registerInstance() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand();
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        
+        // Act
+        target.addCommandListener(listener, true);
+        
+        // Assert
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        verify(listener, times(1)).onReceiveCommand(command);
+    }
+
     private class TestChannel extends ChannelBase {
         protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
             super(transport, fillEnvelopeRecipients);
@@ -739,14 +997,18 @@ public class ChannelBaseTest {
             setState(state);
             setSessionId(sessionId);
         }
-        
-        public void setState(Session.SessionState state) {
+
+        @Override
+        protected synchronized void setState(Session.SessionState state) {
             super.setState(state);
+            
+            if (state == Session.SessionState.ESTABLISHED) {
+                setupTransportListener();
+            }
         }
     }
 
     private class TestTransport extends TransportBase implements Transport {
-
         public URI openUri;
         public Queue<Envelope> sentEnvelopes;
         public Queue<TransportListenerRemoveAfterReceive> addedListeners;
@@ -807,14 +1069,6 @@ public class ChannelBaseTest {
             if (transportListenerRemoveAfterReceive != null) {
                 addedListeners.remove(transportListenerRemoveAfterReceive);
             }
-        }
-
-        public void raiseOnReceive(Envelope envelope) {
-            super.raiseOnReceive(envelope);
-        }
-
-        public void raiseOnException(Exception e) {
-            super.raiseOnException(e);
         }
     }
 
