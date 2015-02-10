@@ -620,7 +620,8 @@ public class JacksonEnvelopeSerializerTest {
         assertNotNull(message.getType());
         assertEquals(message.getType(), type);
 
-        assertTrue(message.getContent() instanceof JsonDocument);
+        assertTrue("Assertion failed message is not a instance of JsonDocument. Message content class: " + message.getContent().getClass().getSimpleName(),
+                message.getContent() instanceof JsonDocument);
 
         JsonDocument content = (JsonDocument)message.getContent();
 
