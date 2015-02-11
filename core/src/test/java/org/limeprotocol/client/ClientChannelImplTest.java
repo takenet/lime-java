@@ -6,15 +6,18 @@ import org.limeprotocol.*;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.testHelpers.TestClientChannel;
 import org.limeprotocol.testHelpers.TestTransport;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.UUID;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
-import static org.limeprotocol.Session.*;
-import static org.limeprotocol.network.SessionChannel.*;
+import static org.limeprotocol.Session.SessionState;
+import static org.limeprotocol.network.SessionChannel.SessionChannelListener;
 import static org.limeprotocol.testHelpers.Dummy.*;
 import static org.mockito.Mockito.*;
 
@@ -308,16 +311,147 @@ public class ClientChannelImplTest {
     }
 
     //endregion sendFinishingSession
-    
+
+    //region sendMessage
+
+    @Test
+    public void sendMessage_DelegateMessage_FillsFromTheSession()
+    {
+        PlainDocument content = createTextContent();
+        Message message = createMessage(content);
+
+        Node remoteNode = createNode();
+        Node localNode = createNode();
+
+        Node senderNode = createNode();
+        Node destinationNode = createNode();
+
+        message.setFrom(senderNode.copy());
+        message.setTo(destinationNode.copy());
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true, remoteNode, localNode, UUID.randomUUID(), false);
+
+        try {
+            target.sendMessage(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assertThat(transport.getSentEnvelopes()).hasSize(1);
+        assertThat(transport.getSentEnvelopes()[0]).isInstanceOf(Message.class);
+        Message sentMessage = (Message)transport.getSentEnvelopes()[0];
+        assertThat(sentMessage.getId()).isEqualTo(message.getId());
+        assertThat(sentMessage.getFrom()).isEqualTo(senderNode);
+        assertThat(sentMessage.getTo()).isEqualTo(destinationNode);
+        assertThat(sentMessage.getPp()).isNotNull();
+        assertThat(sentMessage.getPp()).isEqualTo(localNode);
+        assertThat(sentMessage.getContent()).isEqualTo(message.getContent());
+
+    }
+
+    @Test
+    public void sendMessage_DelegateMessageWithPpAndEmptyDomain_FillsFromTheSession()
+    {
+        PlainDocument content = createTextContent();
+        Message message = createMessage(content);
+
+        Node remoteNode = createNode();
+        Node localNode = createNode();
+
+        Node senderNode = createNode();
+        Node destinationNode = createNode();
+
+        message.setFrom(senderNode.copy());
+        message.setTo(destinationNode.copy());
+        message.setPp(localNode.copy());
+        message.getPp().setDomain(null);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true, remoteNode, localNode);
+
+        try {
+            target.sendMessage(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assertThat(transport.getSentEnvelopes()).hasSize(1);
+        assertThat(transport.getSentEnvelopes()[0]).isInstanceOf(Message.class);
+        Message sentMessage = (Message)transport.getSentEnvelopes()[0];
+        assertThat(sentMessage.getId()).isEqualTo(message.getId());
+        assertThat(sentMessage.getFrom()).isEqualTo(senderNode);
+        assertThat(sentMessage.getTo()).isEqualTo(destinationNode);
+        assertThat(sentMessage.getPp()).isNotNull();
+        assertThat(sentMessage.getPp()).isEqualTo(localNode);
+        assertThat(sentMessage.getContent()).isEqualTo(message.getContent());
+
+    }
+
+    //endregion sendMessage
+
+    //region receiveMessageAsync
+
+    @Test
+    public void receiveMessage_MessageReceivedAndAutoNotifyReceiptTrue_SendsNotificationToTransport()
+    {
+        PlainDocument content = createTextContent();
+        Message message = createMessage(content);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true);
+        target.raiseOnReceiveMessage(message);
+
+        assertThat(transport.getSentEnvelopes()).hasSize(1);
+        Notification notification = (Notification) transport.getSentEnvelopes()[0];
+        assertThat(notification != null);
+        assertThat(notification.getId()).isEqualTo(message.getId());
+        assertThat(notification.getTo()).isEqualTo(message.getFrom());
+        assertThat(notification.getEvent()).isEqualTo(Notification.Event.RECEIVED);
+
+    }
+
+    @Test
+    public void receiveMessageAsync_MessageReceivedAndAutoNotifyReceiptFalse_DoNotSendsNotificationToTransport()
+    {
+        PlainDocument content = createTextContent();
+        Message message = createMessage(content);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, false);
+        target.raiseOnReceiveMessage(message);
+
+        assertThat(transport.getSentEnvelopes()).isEmpty();
+    }
+
+    @Test
+    public void receiveMessageAsync_FireAndForgetMessageReceivedAndAutoNotifyReceiptTrue_DoNotSendsNotificationToTransport()
+    {
+        PlainDocument content = createTextContent();
+        Message message = createMessage(content);
+        message.setId(null);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true);
+        target.raiseOnReceiveMessage(message);
+
+        assertThat(transport.getSentEnvelopes()).isEmpty();
+    }
+
+    // endregion receiveMessageAsync
+
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
     }
 
     private TestClientChannel getTarget(Session.SessionState state) {
-        return getTarget(state, false, null, null, UUID.randomUUID());
+        return getTarget(state, false, null, null, UUID.randomUUID(), false);
     }
 
-    private TestClientChannel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
-        return new TestClientChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId);
+    private TestClientChannel getTarget(Session.SessionState state, boolean autoNotifyReceipt) {
+        return getTarget(state, false, null, null, UUID.randomUUID(), autoNotifyReceipt);
+    }
+
+    private TestClientChannel getTarget(SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode) {
+        return getTarget(state, fillEnvelopeRecipients, remoteNode, localNode, null, false);
+    }
+
+    private TestClientChannel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId, boolean autoNotifyReceipt) {
+        return new TestClientChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId, autoNotifyReceipt);
     }
 }
