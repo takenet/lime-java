@@ -15,18 +15,23 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     private boolean autoNotifyReceipt;
 
-    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoNotifyReceipt) {
-        super(transport, fillEnvelopeRecipients);
 
-        this.autoNotifyReceipt = autoNotifyReceipt;
-
+    public ClientChannelImpl(Transport transport) {
+        this(transport, false);
+    }
+    
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
+        this(transport, fillEnvelopeRecipients, false);
+    }
+    
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
+        this(transport, fillEnvelopeRecipients, autoReplyPings, false);
     }
 
-    boolean getAutoNotifyReceipt(){
-        return this.autoNotifyReceipt;
-    }
-
-    public void setAutoNotifyReceipt(boolean autoNotifyReceipt) {
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, 
+                             boolean autoNotifyReceipt) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings);
+        
         this.autoNotifyReceipt = autoNotifyReceipt;
     }
 
@@ -40,7 +45,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot start a session in the '%s' state.", getState()));
         }
-        addSessionListener(sessionListener);
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setState(NEW);
         sendSession(session);
@@ -59,7 +64,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (getState() != NEGOTIATING) {
             throw new IllegalStateException(String.format("Cannot negotiate a session in the '%s' state.", getState()));
         }
-        addSessionListener(sessionListener);
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setId(super.getSessionId());
         session.setState(NEGOTIATING);
@@ -88,7 +93,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (authentication == null) {
             throw new IllegalArgumentException("authentication");
         }
-        addSessionListener(sessionListener);
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setId(getSessionId());
         session.setFrom(new Node(identity.getName(), identity.getDomain(), instance));
@@ -175,7 +180,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             try {
                 getTransport().close();
             } catch (Exception e) {
-                raiseOnTransportException(e);
+                transportListenerException = e;
             }
         }
     }
@@ -196,7 +201,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             try {
                 sendNotification(notification);
             } catch (IOException e) {
-                raiseOnTransportException(e);
+                transportListenerException = e;
             }
         }
     }

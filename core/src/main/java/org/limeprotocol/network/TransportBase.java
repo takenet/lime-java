@@ -28,29 +28,30 @@ public abstract class TransportBase implements Transport {
     }
     
     @Override
-    public synchronized void addListener(TransportListener transportListener, boolean removeAfterReceive) {
-        if (transportListener == null) {
-            throw new IllegalArgumentException("transportListener");
+    public synchronized void addListener(TransportListener listener, boolean removeAfterReceive) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener");
         }
 
-        if (!singleReceiveTransportListeners.contains(transportListener) &&
-                !transportListeners.contains(transportListener)) {
+        if (!singleReceiveTransportListeners.contains(listener) &&
+                !transportListeners.contains(listener)) {
             if (removeAfterReceive) {
-                singleReceiveTransportListeners.add(transportListener);
+                singleReceiveTransportListeners.add(listener);
             } else {
-                transportListeners.add(transportListener);
+                transportListeners.add(listener);
             }
         }
     }
+
     
     @Override
-    public synchronized void removeListener(TransportListener transportListener) {
-        if (transportListener == null) {
-            throw new IllegalArgumentException("transportListener");
+    public synchronized void removeListener(TransportListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener");
         }
 
-        if (!transportListeners.remove(transportListener)) {
-            singleReceiveTransportListeners.remove(transportListener);
+        if (!transportListeners.remove(listener)) {
+            singleReceiveTransportListeners.remove(listener);
         }
     }
     
@@ -124,13 +125,13 @@ public abstract class TransportBase implements Transport {
         return !(transportListeners.isEmpty() && singleReceiveTransportListeners.isEmpty());
     }
 
-    private void raiseOnClosing() {
+    protected void raiseOnClosing() {
         for (TransportListener listener : getInvocationListeners()) {
             listener.onClosing();
         }
     }
 
-    private void raiseOnClosed() {
+    protected void raiseOnClosed() {
         for (TransportListener listener : getInvocationListeners()) {
             listener.onClosed();
         }

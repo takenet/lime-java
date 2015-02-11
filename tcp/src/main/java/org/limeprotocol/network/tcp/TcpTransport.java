@@ -101,8 +101,8 @@ public class TcpTransport extends TransportBase implements Transport {
     }
 
     @Override
-    public synchronized void addListener(TransportListener transportListener, boolean removeAfterReceive) {
-        super.addListener(transportListener, removeAfterReceive);
+    public synchronized void addListener(TransportListener listener, boolean removeAfterReceive) {
+        super.addListener(listener, removeAfterReceive);
         if (isSocketOpen() && !isListening()) {
             try {
                 startListener();
