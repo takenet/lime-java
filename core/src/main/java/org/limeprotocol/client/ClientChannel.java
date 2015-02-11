@@ -1,14 +1,11 @@
 package org.limeprotocol.client;
 
-import com.sun.istack.internal.NotNull;
 import org.limeprotocol.*;
 import org.limeprotocol.network.Channel;
-import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.security.Authentication;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Defines the communication channel between a client node and a server.
