@@ -1,8 +1,9 @@
 package org.limeprotocol.testHelpers;
 
-import org.limeprotocol.Node;
+import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannelImpl;
 import org.limeprotocol.network.Transport;
+import org.limeprotocol.security.Authentication;
 
 import java.util.UUID;
 
@@ -22,5 +23,4 @@ public class TestClientChannel extends ClientChannelImpl {
     public void setState(SessionState state) {
         super.setState(state);
     }
-
 }

@@ -1,15 +1,14 @@
 package org.limeprotocol.client;
 
-import org.limeprotocol.Identity;
-import org.limeprotocol.Node;
-import org.limeprotocol.SessionCompression;
-import org.limeprotocol.SessionEncryption;
+import com.sun.istack.internal.NotNull;
+import org.limeprotocol.*;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.security.Authentication;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Defines the communication channel between a client node and a server.
@@ -52,4 +51,16 @@ public interface ClientChannel extends Channel {
      * Sends a finishing session envelope to the server.
      */
     void sendFinishingSession() throws IOException;
+
+    /**
+     * Performs the session negotiation and authentication
+     * @param compression Chosen compression, or null for the first one supported by the server
+     * @param encryption Chosen encryption, or null for the first one supported by the server
+     * @param identity
+     * @param authentication
+     * @return
+     */
+    Session establishSession(SessionCompression compression, SessionEncryption encryption,
+                                  Identity identity, Authentication authentication, String instance)
+            throws IOException, InterruptedException, TimeoutException;
 }

@@ -2,12 +2,16 @@ package org.limeprotocol.client;
 
 import org.limeprotocol.*;
 import org.limeprotocol.network.ChannelBase;
+import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.limeprotocol.Session.SessionState.*;
 
@@ -140,6 +144,64 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         sendSession(session);
     }
 
+    @Override
+    public Session establishSession(SessionCompression compression, SessionEncryption encryption,
+                                    Identity identity, Authentication authentication, String instance)
+            throws IOException, InterruptedException, TimeoutException {
+
+        if (getState() != NEW) {
+            throw new IllegalStateException(String.format("Cannot establish a session in the '%s' state", getState()));
+        }
+
+        if (identity == null) {
+            throw new IllegalArgumentException("identity");
+        }
+        if (authentication == null) {
+            throw new IllegalArgumentException("authentication");
+        }
+
+        Session receivedSession = null;
+        SessionReceiver receiver = new SessionReceiver();
+
+        this.startNewSession(receiver);
+        receivedSession = receiver.waitForResponse();
+
+        if (receivedSession.getState() == NEGOTIATING) {
+            SessionCompression desiredCompression = compression;
+            if (desiredCompression == null) {
+                desiredCompression = receivedSession.getCompressionOptions()[0];
+            }
+
+            SessionEncryption desiredEncryption = encryption;
+            if (desiredEncryption == null) {
+                desiredEncryption = receivedSession.getEncryptionOptions()[0];
+            }
+
+            this.negotiateSession(desiredCompression, desiredEncryption, receiver);
+            receivedSession = receiver.waitForResponse();
+
+            if (receivedSession.getState() == NEGOTIATING) {
+                // Configure transport
+                if (receivedSession.getCompression() != this.getTransport().getCompression()) {
+                    this.getTransport().setCompression(receivedSession.getCompression());
+                }
+                if (receivedSession.getEncryption() != this.getTransport().getEncryption()) {
+                    this.getTransport().setEncryption(receivedSession.getEncryption());
+                }
+                this.setSessionListener(receiver);
+                receivedSession = receiver.waitForResponse();
+            }
+
+            if (receivedSession.getState() == AUTHENTICATING) {
+                do {
+                    this.authenticateSession(identity, authentication, instance, receiver);
+                    receivedSession = receiver.waitForResponse();
+                } while (receivedSession.getState() == AUTHENTICATING);
+            }
+        }
+
+        return receivedSession;
+    }
     /**
      *  Fills the envelope recipients
      *  using the session information
@@ -202,6 +264,36 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                 sendNotification(notification);
             } catch (IOException e) {
                 transportListenerException = e;
+            }
+        }
+    }
+
+    private class SessionReceiver implements SessionChannelListener {
+        private final int RECEIVE_TIMEOUT_IN_SECS = 2;
+
+        private final Semaphore semaphore = new Semaphore(1);
+        private final Session[] receivedSession = { null };
+
+        public SessionReceiver() {
+            try {
+                semaphore.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onReceiveSession(Session session) {
+            receivedSession[0] = session;
+            semaphore.release();
+        }
+
+        public Session waitForResponse() throws InterruptedException, TimeoutException {
+            if (semaphore.tryAcquire(1, RECEIVE_TIMEOUT_IN_SECS, TimeUnit.SECONDS) &&
+                    receivedSession[0] != null) {
+                return receivedSession[0];
+            } else {
+                throw new TimeoutException();
             }
         }
     }

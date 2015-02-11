@@ -1,6 +1,8 @@
 package org.limeprotocol.network.tcp;
 
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.client.ClientChannelImpl;
@@ -25,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -223,6 +226,36 @@ public class TcpTransportTest {
     }
 
     @Test
+    @Ignore
+    public void establishSession_WithTls_ReceivesEstablishedSession() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+        TcpTransport transport = new TcpTransport(
+                new JacksonEnvelopeSerializer(),
+                new SocketTcpClientFactory(),
+                new TraceWriter() {
+                    @Override
+                    public void trace(String data, DataOperation operation) {
+                        System.out.printf("%s: %s", operation.toString(), data);
+                        System.out.println();
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        return true;
+                    }
+                });
+
+        transport.open(new URI("net.tcp://takenet-iris.cloudapp.net:55321"));
+
+        ClientChannel clientChannel = new ClientChannelImpl(transport, true);
+
+        Session result = clientChannel.establishSession(SessionCompression.NONE, SessionEncryption.TLS,
+                new Identity(UUID.randomUUID().toString(), "take.io"), new GuestAuthentication(), "default");
+
+        assertNotNull(result);
+        assertEquals(Session.SessionState.ESTABLISHED, result.getState());
+    }
+
+        @Test
     public void onReceive_oneRead_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
         String messageJson = Dummy.createMessageJson();
