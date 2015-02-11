@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.security.Authentication;
+import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.TestClientChannel;
 import org.limeprotocol.testHelpers.TestTransport;
 import org.mockito.ArgumentCaptor;
@@ -434,6 +435,32 @@ public class ClientChannelImplTest {
     }
 
     // endregion receiveMessageAsync
+
+    @Test
+    public void authenticateSessionAsync_AuthenticatingStateEstablishedSessionReceived_SetsStateAndNodeProperties()
+    {
+
+        PlainAuthentication authentication = createPlainAuthentication();
+        Identity identity = createIdentity();
+
+        TestClientChannel target = getTarget(SessionState.AUTHENTICATING, true);
+
+        Session establishedSession = createSession(SessionState.ESTABLISHED);
+        establishedSession.setId(target.getSessionId());
+
+        transport.addNextEnvelopeToReturn(establishedSession);
+
+        try {
+            target.authenticateSession(identity, authentication, null, listener);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assertThat(target.getState()).isEqualTo(establishedSession.getState());
+        assertThat(target.getLocalNode()).isEqualTo(establishedSession.getTo());
+        assertThat(target.getRemoteNode()).isEqualTo(establishedSession.getFrom());
+
+    }
 
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
