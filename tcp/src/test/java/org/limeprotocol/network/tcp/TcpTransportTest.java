@@ -184,23 +184,28 @@ public class TcpTransportTest {
             }
         });
 
-        clientChannel.addChannelListener(new Channel.ChannelListener() {
+        clientChannel.getTransport().addListener(new Transport.TransportListener() {
             @Override
-            public void onTransportException(Exception exception) {
-                exception.printStackTrace();
-            }
-
-            @Override
-            public void onTransportClosing() {
+            public void onReceive(Envelope envelope) {
 
             }
 
             @Override
-            public void onTransportClosed() {
+            public void onClosing() {
 
             }
-        });
-        
+
+            @Override
+            public void onClosed() {
+
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+            }
+        }, false);
+
         Session session = new Session();
         session.setState(Session.SessionState.NEW);
         clientChannel.sendSession(session);

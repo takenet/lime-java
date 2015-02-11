@@ -124,7 +124,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             try {
                 getTransport().close();
             } catch (Exception e) {
-                raiseOnTransportException(e);
+                transportListenerException = e;
             }
         }
     }
