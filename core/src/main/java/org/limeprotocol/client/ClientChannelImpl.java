@@ -1,11 +1,10 @@
 package org.limeprotocol.client;
 
 import org.limeprotocol.*;
-import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelBase;
-import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.security.Authentication;
+import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -120,6 +119,33 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         }};
 
         sendSession(session);
+    }
+
+    /**
+     *  Fills the envelope recipients
+     *  using the session information
+     */
+    @Override
+    protected void fillEnvelope(Envelope envelope, boolean isSending)
+    {
+        super.fillEnvelope(envelope, isSending);
+
+        if (isSending &&
+                this.getLocalNode() != null)
+        {
+            if (envelope.getPp() == null)
+            {
+                if (envelope.getFrom() != null &&
+                        !envelope.getFrom().equals(this.getLocalNode()))
+                {
+                    envelope.setPp(this.getLocalNode().copy());
+                }
+            }
+            else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain()))
+            {
+                envelope.getPp().setDomain(this.getLocalNode().getDomain());
+            }
+        }
     }
 
     @Override
