@@ -12,8 +12,22 @@ import java.util.UUID;
 import static org.limeprotocol.Session.SessionState.*;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
-    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
+
+    private boolean autoNotifyReceipt;
+
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoNotifyReceipt) {
         super(transport, fillEnvelopeRecipients);
+
+        this.autoNotifyReceipt = autoNotifyReceipt;
+
+    }
+
+    boolean getAutoNotifyReceipt(){
+        return this.autoNotifyReceipt;
+    }
+
+    public void setAutoNotifyReceipt(boolean autoNotifyReceipt) {
+        this.autoNotifyReceipt = autoNotifyReceipt;
     }
 
     /**
@@ -140,8 +154,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                 {
                     envelope.setPp(this.getLocalNode().copy());
                 }
-            }
-            else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain()))
+            } else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain()))
             {
                 envelope.getPp().setDomain(this.getLocalNode().getDomain());
             }
@@ -162,6 +175,27 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             try {
                 getTransport().close();
             } catch (Exception e) {
+                raiseOnTransportException(e);
+            }
+        }
+    }
+
+    @Override
+    protected synchronized void raiseOnReceiveMessage(Message message) {
+        super.raiseOnReceiveMessage(message);
+
+        if(autoNotifyReceipt &&
+                message.getId() != null &&
+                message.getFrom() != null){
+
+            Notification notification = new Notification();
+            notification.setId(message.getId());
+            notification.setTo(message.getFrom());
+            notification.setEvent(Notification.Event.RECEIVED);
+
+            try {
+                sendNotification(notification);
+            } catch (IOException e) {
                 raiseOnTransportException(e);
             }
         }

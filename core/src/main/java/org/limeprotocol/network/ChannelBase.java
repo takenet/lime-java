@@ -334,7 +334,7 @@ public abstract class ChannelBase implements Channel {
         transport.send(envelope);
     }
 
-    private synchronized void raiseOnReceiveMessage(Message message) {
+    protected synchronized void raiseOnReceiveMessage(Message message) {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot receive messages in the '%s' session state", state));
         }
