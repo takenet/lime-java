@@ -5,10 +5,7 @@ import org.limeprotocol.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -16,10 +13,12 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.limeprotocol.testHelpers.Dummy.*;
+import static org.mockito.Mockito.*;
 
 public class ChannelBaseTest {
 
     private TestTransport transport;
+    private SessionChannel.SessionChannelListener sessionChannelListener;
 
     private ChannelBase getTarget(Session.SessionState state) {
         return getTarget(state, false);
@@ -35,9 +34,133 @@ public class ChannelBaseTest {
 
     private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
         transport = new TestTransport();
-        return new TestChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId);
+        sessionChannelListener = mock(SessionChannel.SessionChannelListener.class);
+        ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId);
+        channelBase.setSessionListener(sessionChannelListener);
+        return channelBase;
     }
 
+
+    @Test
+    public void sendCommand_establishedState_callsTransport() throws IOException {
+        // Arrange
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+
+        // Act
+        target.sendCommand(command);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(command, transport.sentEnvelopes.remove());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void sendCommand_nullCommand_throwsIllegalArgumentException() throws IOException {
+        // Arrange
+        Command command = null;
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+
+        // Act
+        target.sendCommand(command);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void sendCommand_newCommand_throwsIllegalStateException() throws IOException {
+        // Arrange
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.NEW);
+
+        // Act
+        target.sendCommand(command);
+    }
+
+    @Test
+    public void addCommandListener_callsTwiceForSameInstance_registerOnce() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+
+        // Act
+        target.addCommandListener(listener, true);
+        target.addCommandListener(listener, true);
+        transport.raiseOnReceive(command);
+
+        // Assert
+        verify(listener, times(1)).onReceiveCommand(command);
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void addCommandListener_transportClosed_throwsIllegalStateException() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnClosed();
+        
+        // Act
+        target.addCommandListener(listener, true);
+        
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void addCommandListener_transportThrewException_throwsIllegalStateException() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnException(new Exception());
+
+        // Act
+        target.addCommandListener(listener, true);
+    }
+
+    @Test
+    public void onReceiveCommand_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, true);
+
+        // Act
+        transport.raiseOnReceive(command);
+        transport.raiseOnReceive(command);
+
+        // Assert
+        verify(listener, times(1)).onReceiveCommand(command);
+    }
+
+    @Test
+    public void onReceiveCommand_registeredListenersMultipleReceives_callsListenersMultipleTimes() throws InterruptedException {
+        // Arrange
+        int commandCount = createRandomInt(100) + 1;
+        int listenersCount = createRandomInt(10) + 1;
+        
+        // Arrange
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+
+        List<CommandChannel.CommandChannelListener> listeners = new ArrayList<>();
+        for (int i = 0; i < listenersCount; i++) {
+            CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+            target.addCommandListener(listener, false);
+            listeners.add(listener);
+        }
+        
+        // Act
+        for (int i = 0; i < commandCount; i++) {
+            transport.raiseOnReceive(command);
+        }
+
+        // Assert
+        for (int i = 0; i < listenersCount; i++) {
+            verify(listeners.get(i), times(commandCount)).onReceiveCommand(command);
+        }
+    }
+    
     @Test
     public void sendMessage_establishedState_callsTransport() throws IOException {
         // Arrange
@@ -73,33 +196,71 @@ public class ChannelBaseTest {
     }
 
     @Test
-    public void onReceiveMessage_registeredListener_callsListener() throws InterruptedException {
+    public void onReceiveMessage_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Message> actual = new ArrayList<>();
-        target.addMessageListener(new MessageChannel.MessageChannelListener() {
-            
-            @Override
-            public void onReceiveMessage(Message message) {
-                actual.add(message);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        }, true);
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
         Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, true);
 
         // Act
         transport.raiseOnReceive(message);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-        
+        transport.raiseOnReceive(message);
+
         // Assert
-        assertEquals(1, actual.size());
-        assertEquals(message, actual.get(0));
+        verify(listener, times(1)).onReceiveMessage(message);
+    }
+
+    @Test
+    public void onReceiveMessage_registeredListenersMultipleReceives_callsListenersMultipleTimes() throws InterruptedException {
+        // Arrange
+        int messageCount = createRandomInt(100) + 1;
+        int listenersCount = createRandomInt(10) + 1;
+
+        // Arrange
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+
+        List<MessageChannel.MessageChannelListener> listeners = new ArrayList<>();
+        for (int i = 0; i < listenersCount; i++) {
+            MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+            target.addMessageListener(listener, false);
+            listeners.add(listener);
+        }
+
+        // Act
+        for (int i = 0; i < messageCount; i++) {
+            transport.raiseOnReceive(message);
+        }
+
+        // Assert
+        for (int i = 0; i < listenersCount; i++) {
+            verify(listeners.get(i), times(messageCount)).onReceiveMessage(message);
+        }
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void addMessageListener_transportClosed_throwsIllegalStateException() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnClosed();
+
+        // Act
+        target.addMessageListener(listener, true);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void addMessageListener_transportThrewException_throwsIllegalStateException() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnException(new Exception());
+
+        // Act
+        target.addMessageListener(listener, true);
     }
 
     @Test
@@ -151,13 +312,13 @@ public class ChannelBaseTest {
         message.getTo().setDomain(null);
         message.getFrom().setInstance(null);
         message.getTo().setInstance(null);
-        
+
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, true, remoteNode, localNode);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         final List<Message> actual = new ArrayList<>();
         target.addMessageListener(new MessageChannel.MessageChannelListener() {
-            
+
             @Override
             public void onReceiveMessage(Message message) {
                 actual.add(message);
@@ -180,199 +341,7 @@ public class ChannelBaseTest {
         assertEquals(remoteNode.toIdentity(), actual.get(0).getFrom().toIdentity());
         assertNull(actual.get(0).getPp());
     }
-
-    @Test
-    public void onReceiveMessage_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
-        // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Message> actual = new ArrayList<>();
-        target.addMessageListener(new MessageChannel.MessageChannelListener() {
-            @Override
-            public void onReceiveMessage(Message message) {
-                actual.add(message);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        }, true);
-        Message message = createMessage(createPlainDocument());
-
-        // Act
-        transport.raiseOnReceive(message);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-        transport.raiseOnReceive(message);
-        Thread.sleep(100);
-
-        // Assert
-        assertEquals(1, actual.size());
-        assertEquals(message, actual.get(0));
-    }
-
-    @Test
-    public void onReceiveMessage_registeredListenerMultipleReceives_callsListenerMultipleTimes() throws InterruptedException {
-        // Arrange
-        final int messageCount = createRandomInt(100) + 1;
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Message> actual = new ArrayList<>();
-        target.addMessageListener(new MessageChannel.MessageChannelListener() {
-            @Override
-            public void onReceiveMessage(Message message) {
-                actual.add(message);
-                if (actual.size() == messageCount) {
-                    synchronized (semaphore) {
-                        semaphore.release();
-                    }
-                }
-            }
-        }, false);
-
-        // Act
-        for (int i = 0; i < messageCount; i++) {
-            transport.raiseOnReceive(createMessage(createPlainDocument()));
-        }
-
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-
-        // Assert
-        assertEquals(messageCount, actual.size());
-    }
-
-    @Test
-    public void sendCommand_establishedState_callsTransport() throws IOException {
-        // Arrange
-        Command command = createCommand(createPlainDocument());
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-
-        // Act
-        target.sendCommand(command);
-
-        // Assert
-        assertEquals(1, transport.sentEnvelopes.size());
-        assertEquals(command, transport.sentEnvelopes.remove());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void sendCommand_nullCommand_throwsIllegalArgumentException() throws IOException {
-        // Arrange
-        Command command = null;
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-
-        // Act
-        target.sendCommand(command);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void sendCommand_newCommand_throwsIllegalStateException() throws IOException {
-        // Arrange
-        Command command = createCommand(createPlainDocument());
-        ChannelBase target = getTarget(Session.SessionState.NEW);
-
-        // Act
-        target.sendCommand(command);
-    }
-
-    @Test
-    public void onReceiveCommand_registeredListener_callsListener() throws InterruptedException {
-        // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Command> actual = new ArrayList<>();
-        target.addCommandListener(new CommandChannel.CommandChannelListener() {
-
-            @Override
-            public void onReceiveCommand(Command command) {
-                actual.add(command);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        }, true);
-        Command command = createCommand(createPlainDocument());
-
-        // Act
-        transport.raiseOnReceive(command);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-
-        // Assert
-        assertEquals(1, actual.size());
-        assertEquals(command, actual.get(0));
-    }
-
-    @Test
-    public void onReceiveCommand_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
-        // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Command> actual = new ArrayList<>();
-        target.addCommandListener(new CommandChannel.CommandChannelListener() {
-            @Override
-            public void onReceiveCommand(Command command) {
-                actual.add(command);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        }, true);
-        Command command = createCommand(createPlainDocument());
-
-        // Act
-        transport.raiseOnReceive(command);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-        transport.raiseOnReceive(command);
-        Thread.sleep(100);
-
-        // Assert
-        assertEquals(1, actual.size());
-        assertEquals(command, actual.get(0));
-    }
-
-    @Test
-    public void onReceiveCommand_registeredListenerMultipleReceives_callsListenerMultipleTimes() throws InterruptedException {
-        // Arrange
-        final int commandCount = createRandomInt(100) + 1;
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Command> actual = new ArrayList<>();
-        target.addCommandListener(new CommandChannel.CommandChannelListener() {
-            @Override
-            public void onReceiveCommand(Command command) {
-                actual.add(command);
-                if (actual.size() == commandCount) {
-                    synchronized (semaphore) {
-                        semaphore.release();
-                    }
-                }
-            }
-        }, false);
-
-        // Act
-        for (int i = 0; i < commandCount; i++) {
-            transport.raiseOnReceive(createCommand(createPlainDocument()));
-        }
-
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-
-        // Assert
-        assertEquals(commandCount, actual.size());
-    }
-
+    
     @Test
     public void sendNotification_establishedState_callsTransport() throws IOException {
         // Arrange
@@ -407,100 +376,74 @@ public class ChannelBaseTest {
         target.sendNotification(notification);
     }
 
-    @Test
-    public void onReceiveNotification_registeredListener_callsListener() throws InterruptedException {
+    @Test(expected = IllegalStateException.class)
+    public void addNotificationListener_transportClosed_throwsIllegalStateException() {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Notification> actual = new ArrayList<>();
-        target.addNotificationListener(new NotificationChannel.NotificationChannelListener() {
-
-            @Override
-            public void onReceiveNotification(Notification notification) {
-                actual.add(notification);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        }, true);
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
         Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnClosed();
 
         // Act
-        transport.raiseOnReceive(notification);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-
-        // Assert
-        assertEquals(1, actual.size());
-        assertEquals(notification, actual.get(0));
+        target.addNotificationListener(listener, true);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void addNotificationListener_transportThrewException_throwsIllegalStateException() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnException(new Exception());
+
+        // Act
+        target.addNotificationListener(listener, true);
+    }
+    
     @Test
     public void onReceiveNotification_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Notification> actual = new ArrayList<>();
-        target.addNotificationListener(new NotificationChannel.NotificationChannelListener() {
-            @Override
-            public void onReceiveNotification(Notification notification) {
-                actual.add(notification);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        }, true);
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
         Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, true);
 
         // Act
         transport.raiseOnReceive(notification);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
         transport.raiseOnReceive(notification);
-        Thread.sleep(100);
 
         // Assert
-        assertEquals(1, actual.size());
-        assertEquals(notification, actual.get(0));
+        verify(listener, times(1)).onReceiveNotification(notification);
     }
 
     @Test
-    public void onReceiveNotification_registeredListenerMultipleReceives_callsListenerMultipleTimes() throws InterruptedException {
+    public void onReceiveNotification_registeredListenersMultipleReceives_callsListenersMultipleTimes() throws InterruptedException {
         // Arrange
-        final int notificationCount = createRandomInt(100) + 1;
+        int notificationCount = createRandomInt(100) + 1;
+        int listenersCount = createRandomInt(10) + 1;
+
+        // Arrange
+        Notification notification = createNotification(Notification.Event.RECEIVED);
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Notification> actual = new ArrayList<>();
-        target.addNotificationListener(new NotificationChannel.NotificationChannelListener() {
-            @Override
-            public void onReceiveNotification(Notification notification) {
-                actual.add(notification);
-                if (actual.size() == notificationCount) {
-                    synchronized (semaphore) {
-                        semaphore.release();
-                    }
-                }
-            }
-        }, false);
+
+        List<NotificationChannel.NotificationChannelListener> listeners = new ArrayList<>();
+        for (int i = 0; i < listenersCount; i++) {
+            NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+            target.addNotificationListener(listener, false);
+            listeners.add(listener);
+        }
 
         // Act
         for (int i = 0; i < notificationCount; i++) {
-            transport.raiseOnReceive(createNotification(Notification.Event.RECEIVED));
-        }
-
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
+            transport.raiseOnReceive(notification);
         }
 
         // Assert
-        assertEquals(notificationCount, actual.size());
+        for (int i = 0; i < listenersCount; i++) {
+            verify(listeners.get(i), times(notificationCount)).onReceiveNotification(notification);
+        }
     }
-
+    
     @Test
     public void sendSession_establishedState_callsTransport() throws IOException {
         // Arrange
@@ -525,68 +468,46 @@ public class ChannelBaseTest {
         target.sendSession(session);
     }
 
-    @Test
-    public void onReceiveSession_registeredListener_callsListener() throws InterruptedException {
+    @Test(expected = IllegalStateException.class)
+    public void addSessionListener_transportClosed_throwsIllegalStateException() {
         // Arrange
+        SessionChannel.SessionChannelListener listener = mock(SessionChannel.SessionChannelListener.class);
+        Session session = createSession(Session.SessionState.FINISHED);
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Session> actual = new ArrayList<>();
-        target.addSessionListener(new SessionChannel.SessionChannelListener() {
-
-            @Override
-            public void onReceiveSession(Session session) {
-                actual.add(session);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        });
-        Session session = createSession(Session.SessionState.ESTABLISHED);
+        transport.raiseOnClosed();
 
         // Act
-        transport.raiseOnReceive(session);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
-
-        // Assert
-        assertEquals(1, actual.size());
-        assertEquals(session, actual.get(0));
+        target.setSessionListener(listener);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void addSessionListener_transportThrewException_throwsIllegalStateException() {
+        // Arrange
+        SessionChannel.SessionChannelListener listener = mock(SessionChannel.SessionChannelListener.class);
+        Session session = createSession(Session.SessionState.FINISHED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        transport.raiseOnException(new Exception());
+
+        // Act
+        target.setSessionListener(listener);
+    }
+    
     @Test
     public void onReceiveSession_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        final Semaphore semaphore = new Semaphore(1);
-        semaphore.acquire();
-        final List<Session> actual = new ArrayList<>();
-        target.addSessionListener(new SessionChannel.SessionChannelListener() {
-            @Override
-            public void onReceiveSession(Session session) {
-                actual.add(session);
-                synchronized (semaphore) {
-                    semaphore.release();
-                }
-            }
-        });
+        SessionChannel.SessionChannelListener listener = mock(SessionChannel.SessionChannelListener.class);
         Session session = createSession(Session.SessionState.ESTABLISHED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.setSessionListener(listener);
 
         // Act
         transport.raiseOnReceive(session);
-        synchronized (semaphore) {
-            semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
-        }
         transport.raiseOnReceive(session);
-        Thread.sleep(100);
 
         // Assert
-        assertEquals(1, actual.size());
-        assertEquals(session, actual.get(0));
+        verify(listener, times(1)).onReceiveSession(session);
     }
-
-
+    
     @Test
     public void getTransport_anyInstance_returnsInstance() {
         // Arrange
@@ -704,23 +625,6 @@ public class ChannelBaseTest {
         assertEquals(true, listener.removeAfterReceive);
     }
 
-    @Test
-    public void setState_established_setsValueAndStartsListener() {
-        // Arrange
-        Session.SessionState state = Session.SessionState.ESTABLISHED;
-        ChannelBase target = getTarget(Session.SessionState.NEW);
-
-        // Act
-        ((TestChannel)target).setState(state);
-
-        // Assert
-        assertEquals(state, target.getState());
-        assertEquals(1, transport.addedListeners.size());
-        TransportListenerRemoveAfterReceive listener = transport.addedListeners.remove();
-        assertNotNull(listener.transportListener);
-        assertEquals(false, listener.removeAfterReceive);
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void setState_null_throwsIllegalArgumentException() {
         // Arrange
@@ -730,7 +634,196 @@ public class ChannelBaseTest {
         // Act
         ((TestChannel)target).setState(state);
     }
+
+    @Test
+    public void raiseOnReceiveMessage_registeredRemovableListener_callsListenerOnceAndRemove() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, true);
+        
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+
+        // Assert
+        verify(listener, times(1)).onReceiveMessage(message);
+    }
+
+    @Test
+    public void raiseOnReceiveMessage_registeredListener_callsListenerTwice() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+
+        // Assert
+        verify(listener, times(2)).onReceiveMessage(message);
+    }
+
+    @Test
+    public void raiseOnReceiveMessage_twoRegisteredListeners_callsFirstOnceAndRemoveAndSecondTwice() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener1 = mock(MessageChannel.MessageChannelListener.class);
+        MessageChannel.MessageChannelListener listener2 = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener1, true);
+        target.addMessageListener(listener2, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+
+        // Assert
+        verify(listener1, times(1)).onReceiveMessage(message);
+        verify(listener2, times(2)).onReceiveMessage(message);
+    }
     
+    @Test(expected = IllegalStateException.class)
+    public void raiseOnReceiveMessage_finishedSessionSate_throwsIllegalOperationException() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.FINISHED);
+        target.addMessageListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveMessage(message);
+    }
+
+    @Test
+    public void raiseOnReceiveCommand_registeredRemovableListener_callsListenerOnceAndRemove() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+
+        // Assert
+        verify(listener, times(1)).onReceiveCommand(command);
+    }
+
+    @Test
+    public void raiseOnReceiveCommand_registeredListener_callsListenerTwice() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+
+        // Assert
+        verify(listener, times(2)).onReceiveCommand(command);
+    }
+
+    @Test
+    public void raiseOnReceiveCommand_twoRegisteredListeners_callsFirstOnceAndRemoveAndSecondTwice() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener1 = mock(CommandChannel.CommandChannelListener.class);
+        CommandChannel.CommandChannelListener listener2 = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener1, true);
+        target.addCommandListener(listener2, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+
+        // Assert
+        verify(listener1, times(1)).onReceiveCommand(command);
+        verify(listener2, times(2)).onReceiveCommand(command);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void raiseOnReceiveCommand_finishedSessionSate_throwsIllegalOperationException() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.FINISHED);
+        target.addCommandListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveCommand(command);
+    }
+
+    @Test
+    public void raiseOnReceiveNotification_registeredRemovableListener_callsListenerOnceAndRemove() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+
+        // Assert
+        verify(listener, times(1)).onReceiveNotification(notification);
+    }
+
+    @Test
+    public void raiseOnReceiveNotification_registeredListener_callsListenerTwice() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+
+        // Assert
+        verify(listener, times(2)).onReceiveNotification(notification);
+    }
+
+    @Test
+    public void raiseOnReceiveNotification_twoRegisteredListeners_callsFirstOnceAndRemoveAndSecondTwice() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener1 = mock(NotificationChannel.NotificationChannelListener.class);
+        NotificationChannel.NotificationChannelListener listener2 = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener1, true);
+        target.addNotificationListener(listener2, false);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+
+        // Assert
+        verify(listener1, times(1)).onReceiveNotification(notification);
+        verify(listener2, times(2)).onReceiveNotification(notification);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void raiseOnReceiveNotification_finishedSessionSate_throwsIllegalOperationException() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.FINISHED);
+        target.addNotificationListener(listener, true);
+
+        // Act
+        ((TestChannel)target).raiseOnReceiveNotification(notification);
+    }
+
     private class TestChannel extends ChannelBase {
         protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
             super(transport, fillEnvelopeRecipients);
@@ -739,14 +832,14 @@ public class ChannelBaseTest {
             setState(state);
             setSessionId(sessionId);
         }
-        
-        public void setState(Session.SessionState state) {
+
+        @Override
+        protected synchronized void setState(Session.SessionState state) {
             super.setState(state);
         }
     }
 
     private class TestTransport extends TransportBase implements Transport {
-
         public URI openUri;
         public Queue<Envelope> sentEnvelopes;
         public Queue<TransportListenerRemoveAfterReceive> addedListeners;
@@ -786,19 +879,19 @@ public class ChannelBaseTest {
         }
 
         @Override
-        public void addListener(TransportListener transportListener, boolean removeAfterReceive) {
-            super.addListener(transportListener, removeAfterReceive);
-            addedListeners.add(new TransportListenerRemoveAfterReceive(transportListener, removeAfterReceive));
+        public void addListener(TransportListener listener, boolean removeAfterReceive) {
+            super.addListener(listener, removeAfterReceive);
+            addedListeners.add(new TransportListenerRemoveAfterReceive(listener, removeAfterReceive));
         }
 
         @Override
-        public void removeListener(TransportListener transportListener) {
-            super.removeListener(transportListener);
+        public void removeListener(TransportListener listener) {
+            super.removeListener(listener);
 
             TransportListenerRemoveAfterReceive transportListenerRemoveAfterReceive = null;
             
             for (TransportListenerRemoveAfterReceive addedListener : addedListeners) {
-                if (addedListener.transportListener == transportListener) {
+                if (addedListener.transportListener == listener) {
                     transportListenerRemoveAfterReceive = addedListener;
                     break;
                 }
@@ -807,14 +900,6 @@ public class ChannelBaseTest {
             if (transportListenerRemoveAfterReceive != null) {
                 addedListeners.remove(transportListenerRemoveAfterReceive);
             }
-        }
-
-        public void raiseOnReceive(Envelope envelope) {
-            super.raiseOnReceive(envelope);
-        }
-
-        public void raiseOnException(Exception e) {
-            super.raiseOnException(e);
         }
     }
 

@@ -15,16 +15,17 @@ public abstract class ChannelBase implements Channel {
     private Node localNode;
     private UUID sessionId;
     private Session.SessionState state;
+    private boolean isTransportListenerClosed;
+    protected Exception transportListenerException;
     private final Set<CommandChannelListener> commandListeners;
     private final Set<MessageChannelListener> messageListeners;
     private final Set<NotificationChannelListener> notificationListeners;
-    private final Set<ChannelListener> channelListeners;
     private final Queue<CommandChannelListener> singleReceiveCommandListeners;
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
-    private final Queue<SessionChannelListener> singleReceiveSessionListeners;
+    private SessionChannelListener sessionChannelListener;
     private final Transport.TransportListener transportListener;
-    
+
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients) {
         this.fillEnvelopeRecipients = fillEnvelopeRecipients;
         if (transport == null) {
@@ -32,14 +33,12 @@ public abstract class ChannelBase implements Channel {
         }
         
         this.transport = transport;
-        channelListeners = new HashSet<>();
         commandListeners = new HashSet<>();
         messageListeners = new HashSet<>();
         notificationListeners = new HashSet<>();
         singleReceiveCommandListeners = new LinkedBlockingQueue<>();
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
-        singleReceiveSessionListeners = new LinkedBlockingQueue<>();
         transportListener = new ChannelTransportListener();
         setState(Session.SessionState.NEW);
     }
@@ -79,7 +78,7 @@ public abstract class ChannelBase implements Channel {
         return localNode;
     }
 
-    public void setLocalNode(Node localNode) {
+    protected void setLocalNode(Node localNode) {
         this.localNode = localNode;
     }
 
@@ -93,7 +92,7 @@ public abstract class ChannelBase implements Channel {
         return sessionId;
     }
 
-    public void setSessionId(UUID sessionId) {
+    protected void setSessionId(UUID sessionId) {
         this.sessionId = sessionId;
     }
 
@@ -111,38 +110,7 @@ public abstract class ChannelBase implements Channel {
         if (state == null) {
             throw new IllegalArgumentException("state");
         }
-        
-        if (this.state != state) {
-            this.state = state;
-            setupTransportListener();
-        }
-    }
-    
-    /**
-     * Sets the channel listener.
-     *
-     * @param channelListener
-     */
-    @Override
-    public void addChannelListener(ChannelListener channelListener) {
-        if (channelListener == null) {
-            throw new IllegalArgumentException("channelListener");
-        }
-
-        if (!channelListeners.contains(channelListener)) {
-            channelListeners.add(channelListener);
-        }
-    }
-
-    /**
-     * Removes a registered channel listener.
-     * * @param channelListener
-     *
-     * @param channelListener
-     */
-    @Override
-    public void removeChannelListener(ChannelListener channelListener) {
-        channelListeners.remove(channelListener);
+        this.state = state;
     }
 
     /**
@@ -169,15 +137,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void addCommandListener(CommandChannelListener listener, boolean removeAfterReceive) {
-        if (listener == null) {
-            throw new IllegalArgumentException("listener");
-        }
-
-        if (removeAfterReceive) {
-            singleReceiveCommandListeners.add(listener);
-        } else {
-            commandListeners.add(listener);
-        }
+        addListener(listener, removeAfterReceive, commandListeners, singleReceiveCommandListeners);
     }
 
     /**
@@ -187,9 +147,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void removeCommandListener(CommandChannelListener listener) {
-        if (!commandListeners.remove(listener)) {
-            singleReceiveCommandListeners.remove(listener);
-        }
+        removeListener(listener, commandListeners, singleReceiveCommandListeners);
     }
 
     /**
@@ -216,15 +174,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void addMessageListener(MessageChannelListener listener, boolean removeAfterReceive) {
-        if (listener == null) {
-            throw new IllegalArgumentException("listener");
-        }
-
-        if (removeAfterReceive) {
-            singleReceiveMessageListeners.add(listener);
-        } else {
-            messageListeners.add(listener);
-        }
+        addListener(listener, removeAfterReceive, messageListeners, singleReceiveMessageListeners);
     }
 
     /**
@@ -234,9 +184,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void removeMessageListener(MessageChannelListener listener) {
-        if (!messageListeners.remove(listener)) {
-            singleReceiveMessageListeners.remove(listener);
-        }
+        removeListener(listener, messageListeners, singleReceiveMessageListeners);
     }
 
     /**
@@ -263,15 +211,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void addNotificationListener(NotificationChannelListener listener, boolean removeAfterReceive) {
-        if (listener == null) {
-            throw new IllegalArgumentException("listener");
-        }
-        
-        if (removeAfterReceive) {
-            singleReceiveNotificationListeners.add(listener);
-        } else {
-            notificationListeners.add(listener);
-        }
+        addListener(listener, removeAfterReceive, notificationListeners, singleReceiveNotificationListeners);
     }
 
     /**
@@ -281,9 +221,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void removeNotificationListener(NotificationChannelListener listener) {
-        if (!notificationListeners.remove(listener)) {
-            singleReceiveNotificationListeners.remove(listener);
-        }
+        removeListener(listener, notificationListeners, singleReceiveNotificationListeners);
     }
 
     /**
@@ -308,37 +246,18 @@ public abstract class ChannelBase implements Channel {
      * @param listener
      */
     @Override
-    public synchronized void addSessionListener(SessionChannelListener listener) {
+    public synchronized void setSessionListener(SessionChannelListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-
-        singleReceiveSessionListeners.add(listener);
+        checkTransportListener();
+        sessionChannelListener = listener;
+        setupTransportListener();
     }
 
-    /**
-     * Removes the specified listener.
-     *
-     * @param listener
-     */
-    @Override
-    public void removeSessionListener(SessionChannelListener listener) {
-        singleReceiveSessionListeners.remove(listener);
-    }
-    
-    private void send(Envelope envelope) throws IOException {
-        if (fillEnvelopeRecipients) {
-            fillEnvelope(envelope, true);
-        }
-        
-        transport.send(envelope);
-    }
+    protected synchronized void raiseOnReceiveMessage(Message message) {
+        ensureSessionEstablished();
 
-    private synchronized void raiseOnReceiveMessage(Message message) {
-        if (getState() != Session.SessionState.ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot receive messages in the '%s' session state", state));
-        }
-        
         for (MessageChannelListener listener : snapshot(singleReceiveMessageListeners, messageListeners)) {
             try {
                 listener.onReceiveMessage(message);
@@ -348,11 +267,9 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized void raiseOnReceiveCommand(Command command) {
-        if (getState() != Session.SessionState.ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot receive commands in the '%s' session state", state));
-        }
-        
+    protected synchronized void raiseOnReceiveCommand(Command command) {
+        ensureSessionEstablished();
+
         for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
             try {
                 listener.onReceiveCommand(command);
@@ -362,11 +279,9 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized void raiseOnReceiveNotification(Notification notification) {
-        if (getState() != Session.SessionState.ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot receive notifications in the '%s' session state", state));
-        }
-        
+    protected synchronized void raiseOnReceiveNotification(Notification notification) {
+        ensureSessionEstablished();
+
         for (NotificationChannelListener listener : snapshot(singleReceiveNotificationListeners, notificationListeners)) {
             try {
                 listener.onReceiveNotification(notification);
@@ -377,77 +292,12 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
-        for (SessionChannelListener listener : snapshot(singleReceiveSessionListeners, null)) {
-            try {
-                listener.onReceiveSession(session);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (sessionChannelListener != null) {
+            sessionChannelListener.onReceiveSession(session);
+            sessionChannelListener = null;
         }
     }
 
-    /**
-     * Merges a queue and a collection, removing all items from the queue.
-     * @param queue
-     * @param collection
-     * @param <T>
-     * @return
-     */
-    private static <T> List<T> snapshot(Queue<T> queue, Collection<T> collection) {
-        List<T> result = new ArrayList<>();
-        if (collection != null) {
-            result.addAll(collection);
-        }
-        if (queue != null) {
-            while (!queue.isEmpty()) {
-                result.add(queue.remove());
-            }
-        }
-        return result;
-    }
-
-    private synchronized void raiseOnTransportClosing() {
-        for (ChannelListener listener : snapshot(null, channelListeners)) {
-            try {
-                listener.onTransportClosing();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private synchronized void raiseOnTransportClosed() {
-        for (ChannelListener listener : snapshot(null, channelListeners)) {
-            try {
-                listener.onTransportClosed();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        // Remove reference with all listeners
-        channelListeners.clear();
-    }
-
-    protected synchronized void raiseOnTransportException(Exception exception) {
-        for (ChannelListener listener : snapshot(null, channelListeners)) {
-            try {
-                listener.onTransportException(exception);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    protected synchronized void setupTransportListener() {
-        boolean removeOnReceive = true;
-        if (getState() == Session.SessionState.ESTABLISHED) {
-            removeOnReceive = false;
-        }
-        transport.removeListener(transportListener);
-        transport.addListener(transportListener, removeOnReceive);
-    }
-    
     /**
      * Fills the envelope recipients using the session information.
      * @param envelope
@@ -478,6 +328,81 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
+    private void ensureSessionEstablished() {
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot receive in the '%s' session state", state));
+        }
+    }
+    
+    private synchronized void setupTransportListener() {
+        boolean removeOnReceive = true;
+        if (getState() == Session.SessionState.ESTABLISHED) {
+            removeOnReceive = false;
+        }
+        transport.removeListener(transportListener);
+        transport.addListener(transportListener, removeOnReceive);
+    }
+
+    private <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener");
+        }
+        checkTransportListener();
+
+        if (!singleReceiveListeners.contains(listener) &&
+                !listeners.contains(listener)) {
+            if (removeAfterReceive) {
+                singleReceiveListeners.add(listener);
+            } else {
+                listeners.add(listener);
+            }
+        }
+    }
+
+    private <TListener> void removeListener(TListener listener, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
+        if (!listeners.remove(listener)) {
+            singleReceiveListeners.remove(listener);
+        }
+    }
+
+    private void checkTransportListener() {
+        if (transportListenerException != null) {
+            throw new IllegalStateException("The transport listener has thrown an exception", transportListenerException);
+        }
+
+        if (isTransportListenerClosed) {
+            throw new IllegalStateException("The transport listener is closed");
+        }
+    }
+
+    private void send(Envelope envelope) throws IOException {
+        if (fillEnvelopeRecipients) {
+            fillEnvelope(envelope, true);
+        }
+
+        transport.send(envelope);
+    }
+    
+    /**
+     * Merges a queue and a collection, removing all items from the queue.
+     * @param queue
+     * @param collection
+     * @param <T>
+     * @return
+     */
+    private static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
+        List<T> result = new ArrayList<>();
+        if (collection != null) {
+            result.addAll(collection);
+        }
+        if (queue != null) {
+            while (!queue.isEmpty()) {
+                result.add(queue.remove());
+            }
+        }
+        return result;
+    }
+    
     private class ChannelTransportListener implements Transport.TransportListener {
         /**
          * Occurs when a envelope is received by the transport.
@@ -505,7 +430,7 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onClosing() {
-            raiseOnTransportClosing();
+            
         }
 
         /**
@@ -513,7 +438,7 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onClosed() {
-            raiseOnTransportClosed();
+            isTransportListenerClosed = true;
         }
 
         /**
@@ -524,7 +449,7 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onException(Exception e) {
-            raiseOnTransportException(e);
+            transportListenerException = e;
         }
     }
 }
