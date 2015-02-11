@@ -9,8 +9,14 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
+    public ClientChannelImpl(Transport transport) {
+        this(transport, false);
+    }
     public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
-        super(transport, fillEnvelopeRecipients);
+        this(transport, fillEnvelopeRecipients, false);
+    }
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings);
     }
 
     /**

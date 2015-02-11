@@ -9,8 +9,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class ChannelBase implements Channel {
     
+    private final static String PING_URI_TEMPLATE = "/ping";
+    private final static MediaType PING_MEDIA_TYPE = MediaType.parse("application/vnd.lime.ping+json");
+    
     private final Transport transport;
     private final boolean fillEnvelopeRecipients;
+    private final boolean autoReplyPings;
     private Node remoteNode;
     private Node localNode;
     private UUID sessionId;
@@ -26,13 +30,14 @@ public abstract class ChannelBase implements Channel {
     private SessionChannelListener sessionChannelListener;
     private final Transport.TransportListener transportListener;
 
-    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients) {
-        this.fillEnvelopeRecipients = fillEnvelopeRecipients;
+    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
         if (transport == null) {
             throw new IllegalArgumentException("transport");
         }
-        
         this.transport = transport;
+        this.fillEnvelopeRecipients = fillEnvelopeRecipients;
+        this.autoReplyPings = autoReplyPings;
+        
         commandListeners = new HashSet<>();
         messageListeners = new HashSet<>();
         notificationListeners = new HashSet<>();
@@ -40,8 +45,10 @@ public abstract class ChannelBase implements Channel {
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         transportListener = new ChannelTransportListener();
+        
         setState(Session.SessionState.NEW);
     }
+
 
     /**
      * Gets the current session transport
@@ -269,12 +276,31 @@ public abstract class ChannelBase implements Channel {
 
     protected synchronized void raiseOnReceiveCommand(Command command) {
         ensureSessionEstablished();
-
-        for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
+        if (autoReplyPings &&
+                command.getId() != null &&
+                command.getMethod() == Command.CommandMethod.GET &&
+                command.getStatus() == Command.CommandStatus.PENDING &&
+                command.getUri() != null &&
+                command.getUri().toString().equalsIgnoreCase(PING_URI_TEMPLATE)) {
+            Command pingCommandResponse = new Command(command.getId());
+            pingCommandResponse.setTo(command.getFrom());
+            pingCommandResponse.setMethod(Command.CommandMethod.GET);
+            pingCommandResponse.setStatus(Command.CommandStatus.SUCCESS);
+            pingCommandResponse.setResource(new JsonDocument(PING_MEDIA_TYPE));
             try {
-                listener.onReceiveCommand(command);
-            } catch (Exception e) {
+                sendCommand(pingCommandResponse);
+            } catch (IOException e) {
                 e.printStackTrace();
+                throw new RuntimeException("Could not send a ping response to the remote node", e);
+            }
+        }
+        else {
+            for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
+                try {
+                    listener.onReceiveCommand(command);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

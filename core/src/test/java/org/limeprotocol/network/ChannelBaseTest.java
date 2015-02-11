@@ -33,9 +33,13 @@ public class ChannelBaseTest {
     }
 
     private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
+        return getTarget(state, fillEnvelopeRecipients, false, remoteNode, localNode, sessionId);
+    }
+    
+    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
         transport = new TestTransport();
         sessionChannelListener = mock(SessionChannel.SessionChannelListener.class);
-        ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId);
+        ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, autoReplyPings, remoteNode, localNode, sessionId);
         channelBase.setSessionListener(sessionChannelListener);
         return channelBase;
     }
@@ -159,6 +163,32 @@ public class ChannelBaseTest {
         for (int i = 0; i < listenersCount; i++) {
             verify(listeners.get(i), times(commandCount)).onReceiveCommand(command);
         }
+    }
+
+    @Test
+    public void onReceiveCommand_autoReplyPings_callsSendCommandWithPingResponse() throws InterruptedException {
+        // Arrange
+        Command command = new Command(UUID.randomUUID());
+        command.setFrom(createNode());
+        command.setStatus(Command.CommandStatus.PENDING);
+        command.setMethod(Command.CommandMethod.GET);
+        command.setUri(new LimeUri("/ping"));
+        
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, null, null, null);
+
+        // Act
+        transport.raiseOnReceive(command);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        Envelope sentEnvelope = transport.sentEnvelopes.remove();
+        assertTrue(sentEnvelope instanceof Command);
+        Command sentCommand = (Command)sentEnvelope;
+        assertEquals(command.getId(), sentCommand.getId());
+        assertEquals(command.getFrom(), sentCommand.getTo());
+        assertEquals(Command.CommandStatus.SUCCESS, sentCommand.getStatus());
+        assertNotNull(sentCommand.getType());
+        assertEquals("application/vnd.lime.ping+json", sentCommand.getType().toString());
     }
     
     @Test
@@ -825,8 +855,8 @@ public class ChannelBaseTest {
     }
 
     private class TestChannel extends ChannelBase {
-        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
-            super(transport, fillEnvelopeRecipients);
+        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
+            super(transport, fillEnvelopeRecipients, autoReplyPings);
             setRemoteNode(remoteNode);
             setLocalNode(localNode);
             setState(state);
