@@ -122,17 +122,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         sendSession(session);
     }
 
-    /**
-     * Listens for a finished session envelope from the server.
-     *
-     * @param sessionListener
-     */
-    @Override
-    public void receiveFinishedSession(SessionChannelListener sessionListener) {
-
-    }
-
-
     @Override
     protected synchronized void raiseOnReceiveSession(Session session) {
         super.raiseOnReceiveSession(session);

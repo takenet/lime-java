@@ -52,10 +52,4 @@ public interface ClientChannel extends Channel {
      * Sends a finishing session envelope to the server.
      */
     void sendFinishingSession() throws IOException;
-
-    /**
-     *  Listens for a finished session envelope from the server.
-     * @param sessionListener
-     */
-    void receiveFinishedSession(SessionChannelListener sessionListener);
 }
