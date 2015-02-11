@@ -19,9 +19,8 @@ public interface ClientChannel extends Channel {
     /**
      * Sends a new session envelope to the server and listen for the response.
      * @param sessionListener
-     * @param channelListener
      */
-    void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException;
+    void startNewSession(SessionChannelListener sessionListener) throws IOException;
 
     /**
      * Sends a negotiate session envelope to accepts the session negotiation options 
@@ -29,16 +28,8 @@ public interface ClientChannel extends Channel {
      * @param sessionCompression
      * @param sessionEncryption
      * @param sessionListener
-     * @param channelListener
      */
-    void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException;
-
-    /**
-     *  Listens for a authenticating session envelope from the server, after a session negotiation.
-     * @param sessionListener
-     * @param channelListener
-     */
-    void receiveAuthenticationSession(SessionChannelListener sessionListener, ChannelListener channelListener);
+    void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) throws IOException;
 
     /**
      * Sends a authenticate session envelope to the server to establish an authenticated session 
@@ -47,9 +38,8 @@ public interface ClientChannel extends Channel {
      * @param authentication
      * @param instance
      * @param sessionListener
-     * @param channelListener
      */
-    void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException;
+    void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) throws IOException;
 
     /**
      *  Notify to the server that the specified message was received by the peer.
@@ -66,7 +56,6 @@ public interface ClientChannel extends Channel {
     /**
      *  Listens for a finished session envelope from the server.
      * @param sessionListener
-     * @param channelListener
      */
-    void receiveFinishedSession(SessionChannelListener sessionListener, ChannelListener channelListener);
+    void receiveFinishedSession(SessionChannelListener sessionListener);
 }

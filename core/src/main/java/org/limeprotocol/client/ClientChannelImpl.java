@@ -4,35 +4,34 @@ import org.limeprotocol.*;
 import org.limeprotocol.network.ChannelBase;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.security.Authentication;
-import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.UUID;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
-    protected ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
-        super(transport, fillEnvelopeRecipients);
+    public ClientChannelImpl(Transport transport) {
+        this(transport, false);
+    }
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
+        this(transport, fillEnvelopeRecipients, false);
+    }
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings);
     }
 
     /**
      * Sends a new session envelope to the server and listen for the response.
      *
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void startNewSession(SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
-
-        if(super.getState() != Session.SessionState.NEW){
-            throw new UnsupportedOperationException(StringUtils.format("Cannot start a session in the '{0}' state", super.getState()));
+    public void startNewSession(SessionChannelListener sessionListener) throws IOException {
+        if (getState() != Session.SessionState.NEW) {
+            throw new IllegalStateException(String.format("Cannot start a session in the '%s' state.", getState()));
         }
-
-        super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
-
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setState(Session.SessionState.NEW);
-
         sendSession(session);
     }
 
@@ -43,44 +42,19 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param sessionCompression
      * @param sessionEncryption
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
-
-        if (super.getState() != Session.SessionState.NEGOTIATING)
-        {
-            throw new UnsupportedOperationException(StringUtils.format("Cannot negotiate a session in the '{0}' state", super.getState()));
+    public void negotiateSession(SessionCompression sessionCompression, SessionEncryption sessionEncryption, SessionChannelListener sessionListener) throws IOException {
+        if (getState() != Session.SessionState.NEGOTIATING) {
+            throw new IllegalStateException(String.format("Cannot negotiate a session in the '%s' state.", getState()));
         }
-
+        setSessionListener(sessionListener);
         Session session = new Session();
         session.setId(super.getSessionId());
         session.setState(Session.SessionState.NEGOTIATING);
         session.setCompression(sessionCompression);
         session.setEncryption(sessionEncryption);
-
-        super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
-
         sendSession(session);
-    }
-
-    /**
-     * Listens for a authenticating session envelope from the server, after a session negotiation.
-     *
-     * @param sessionListener
-     * @param channelListener
-     */
-    @Override
-    public void receiveAuthenticationSession(SessionChannelListener sessionListener, ChannelListener channelListener) {
-
-        if (super.getState() != Session.SessionState.NEGOTIATING)
-        {
-            throw new UnsupportedOperationException(StringUtils.format("Cannot receive a authenticating session in the '{0}' state", super.getState()));
-        }
-
-        super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
     }
 
     /**
@@ -91,35 +65,24 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * @param authentication
      * @param instance
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener, ChannelListener channelListener) throws IOException {
-
-        if (super.getState() != Session.SessionState.AUTHENTICATING)
-        {
-            throw new UnsupportedOperationException(StringUtils.format("Cannot authenticate a session in the '{0}' state", super.getState()));
+    public void authenticateSession(Identity identity, Authentication authentication, String instance, SessionChannelListener sessionListener) throws IOException {
+        if (super.getState() != Session.SessionState.AUTHENTICATING) {
+            throw new UnsupportedOperationException(String.format("Cannot authenticate a session in the '%s' state", getState()));
         }
-
-        if (identity == null)
-        {
+        if (identity == null) {
             throw new IllegalArgumentException("identity");
         }
-
-        if (authentication == null)
-        {
+        if (authentication == null) {
             throw new IllegalArgumentException("authentication");
         }
-
-        super.addSessionListener(sessionListener, true);
-        super.addChannelListener(channelListener, true);
-
+        setSessionListener(sessionListener);
         Session session = new Session();
-        session.setId(super.getSessionId());
+        session.setId(getSessionId());
         session.setFrom(new Node(identity.getName(), identity.getDomain(), instance));
         session.setState(Session.SessionState.AUTHENTICATING);
         session.setAuthentication(authentication);
-
         sendSession(session);
     }
 
@@ -146,10 +109,29 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
      * Listens for a finished session envelope from the server.
      *
      * @param sessionListener
-     * @param channelListener
      */
     @Override
-    public void receiveFinishedSession(SessionChannelListener sessionListener, ChannelListener channelListener) {
+    public void receiveFinishedSession(SessionChannelListener sessionListener) {
 
+    }
+
+
+    @Override
+    protected synchronized void raiseOnReceiveSession(Session session) {
+        super.raiseOnReceiveSession(session);
+        setSessionId(session.getId());
+        setState(session.getState());
+        
+        if (session.getState() == Session.SessionState.ESTABLISHED) {
+            setLocalNode(session.getTo());
+            setRemoteNode(session.getFrom());
+        } else if (session.getState() == Session.SessionState.FINISHED || 
+                session.getState() == Session.SessionState.FAILED) {
+            try {
+                getTransport().close();
+            } catch (Exception e) {
+                transportListenerException = e;
+            }
+        }
     }
 }

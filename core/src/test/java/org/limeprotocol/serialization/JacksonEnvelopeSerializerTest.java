@@ -245,6 +245,13 @@ public class JacksonEnvelopeSerializerTest {
     //region Session
 
     @Test
+    public void deserialize_NegotiatingSession_ReturnsValidInstance() {
+        String json = "{\"state\":\"negotiating\",\"encryptionOptions\":[\"none\",\"tls\"],\"compressionOptions\":[\"none\"],\"id\":\"6dddea8a-4783-4e7e-9912-23399bf5448a\",\"from\":\"postmaster@take.io/rd000d3ac00786\"}";
+        Envelope envelope = target.deserialize(json);
+        assertThat(envelope).isInstanceOf(Session.class);
+    }
+    
+    @Test
     public void deserialize_AuthenticatingSession_ReturnsValidInstance() {
         // Arrange
         UUID id = UUID.randomUUID();

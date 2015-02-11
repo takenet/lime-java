@@ -38,37 +38,4 @@ public interface Channel extends MessageChannel, CommandChannel, NotificationCha
      * @return
      */
     Session.SessionState getState();
-
-    /**
-     * Register a channel listener.
-     * @param channelListener
-     */
-    void addChannelListener(ChannelListener channelListener, boolean removeOnException);
-
-    /**
-     * Removes a registered channel listener.
-     * * @param channelListener
-     */
-    void removeChannelListener(ChannelListener channelListener);
-    
-    /**
-     * Defines a listener for channel events. 
-     */
-    public interface ChannelListener {
-        /**
-         * Occurs when the transport listener has thrown an exception.
-         * @param exception
-         */
-        void onTransportException(Exception exception);
-
-        /**
-         * Occurs when the transport is about to be closed.
-         */
-        void onTransportClosing();
-
-        /**
-         * Occurs after the transport was closed.
-         */
-        void onTransportClosed();
-    }
 }

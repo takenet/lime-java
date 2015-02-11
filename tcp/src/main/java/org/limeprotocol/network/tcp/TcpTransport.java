@@ -101,8 +101,8 @@ public class TcpTransport extends TransportBase implements Transport {
     }
 
     @Override
-    public synchronized void addListener(TransportListener transportListener, boolean removeAfterReceive) {
-        super.addListener(transportListener, removeAfterReceive);
+    public synchronized void addListener(TransportListener listener, boolean removeAfterReceive) {
+        super.addListener(listener, removeAfterReceive);
         if (isSocketOpen() && !isListening()) {
             try {
                 startListener();
@@ -221,6 +221,11 @@ public class TcpTransport extends TransportBase implements Transport {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
                         if (jsonBufferReadResult.isSuccess()) {
                             String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
+                            if (traceWriter != null &&
+                                    traceWriter.isEnabled()) {
+                                traceWriter.trace(jsonString, TraceWriter.DataOperation.RECEIVE);
+                            }
+
                             envelope = envelopeSerializer.deserialize(jsonString);
                         }
 

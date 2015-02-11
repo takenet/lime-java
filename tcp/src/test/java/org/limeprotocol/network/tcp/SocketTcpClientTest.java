@@ -136,8 +136,4 @@ public class SocketTcpClientTest {
         // Assert
         assertFalse(actual);
     }
-
-
-
-
 }

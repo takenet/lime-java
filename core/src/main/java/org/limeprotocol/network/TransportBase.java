@@ -5,10 +5,7 @@ import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -31,23 +28,31 @@ public abstract class TransportBase implements Transport {
     }
     
     @Override
-    public void addListener(TransportListener transportListener, boolean removeAfterReceive) {
-        if (transportListener == null) {
-            throw new IllegalArgumentException("transportListener");
+    public synchronized void addListener(TransportListener listener, boolean removeAfterReceive) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener");
         }
-        if (removeAfterReceive) {
-            singleReceiveTransportListeners.add(transportListener);
-        } else {
-            transportListeners.add(transportListener);
+
+        if (!singleReceiveTransportListeners.contains(listener) &&
+                !transportListeners.contains(listener)) {
+            if (removeAfterReceive) {
+                singleReceiveTransportListeners.add(listener);
+            } else {
+                transportListeners.add(listener);
+            }
         }
     }
+
     
     @Override
-    public void removeListener(TransportListener transportListener) {
-        if (transportListener == null) {
-            throw new IllegalArgumentException("transportListener");
+    public synchronized void removeListener(TransportListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("listener");
         }
-        transportListeners.remove(transportListener);
+
+        if (!transportListeners.remove(listener)) {
+            singleReceiveTransportListeners.remove(listener);
+        }
     }
     
     @Override
@@ -104,44 +109,39 @@ public abstract class TransportBase implements Transport {
      */
     protected abstract void performClose() throws IOException;
 
-    protected synchronized void raiseOnReceive(Envelope envelope) {
-        for (TransportListener listener : transportListeners) {
-            listener.onReceive(envelope);
-        }
-        while (!singleReceiveTransportListeners.isEmpty()) {
-            TransportListener listener = singleReceiveTransportListeners.remove();
+    protected void raiseOnReceive(Envelope envelope) {
+        for (TransportListener listener : getInvocationListeners()) {
             listener.onReceive(envelope);
         }
     }
 
-    protected synchronized void raiseOnException(Exception e) {
-        for (TransportListener listener : transportListeners) {
+    protected void raiseOnException(Exception e) {
+        for (TransportListener listener : getInvocationListeners()) {
             listener.onException(e);
         }
-        for (TransportListener transportListener : singleReceiveTransportListeners) {
-            transportListener.onException(e);
-        }
     }
 
-    protected boolean hasAnyListener() {
+    protected synchronized boolean hasAnyListener() {
         return !(transportListeners.isEmpty() && singleReceiveTransportListeners.isEmpty());
     }
 
-    private synchronized void raiseOnClosing() {
-        for (TransportListener listener : transportListeners) {
-            listener.onClosing();
-        }
-        for (TransportListener listener : singleReceiveTransportListeners) {
+    protected void raiseOnClosing() {
+        for (TransportListener listener : getInvocationListeners()) {
             listener.onClosing();
         }
     }
 
-    private synchronized void raiseOnClosed() {
-        for (TransportListener listener : transportListeners) {
+    protected void raiseOnClosed() {
+        for (TransportListener listener : getInvocationListeners()) {
             listener.onClosed();
         }
-        for (TransportListener listener : singleReceiveTransportListeners) {
-            listener.onClosed();
+    }
+
+    private synchronized List<TransportListener> getInvocationListeners() {
+        List<TransportListener> invocationListeners = new ArrayList<>(transportListeners);
+        while (!singleReceiveTransportListeners.isEmpty()) {
+            invocationListeners.add(singleReceiveTransportListeners.remove());
         }
+        return invocationListeners;
     }
 }
