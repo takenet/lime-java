@@ -190,26 +190,27 @@ public class TcpTransportTest {
         };
 
         clientChannel.startNewSession(sessionChannelListener);
-        
-        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+
+        int timeout = 10000;
+        if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                 receivedSession[0] != null) {
             if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
                 receivedSession[0] = null;
                 clientChannel.negotiateSession(SessionCompression.NONE, SessionEncryption.TLS, sessionChannelListener);
-                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                         receivedSession[0] != null) {
                     if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
                         clientChannel.getTransport().setEncryption(SessionEncryption.TLS);
                         receivedSession[0] = null;
                         clientChannel.setSessionListener(sessionChannelListener);
-                        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                        if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                                 receivedSession[0] != null) {
                             if (receivedSession[0].getState() == Session.SessionState.AUTHENTICATING) {
                                 Identity identity = new Identity(UUID.randomUUID().toString(), "take.io");
                                 Authentication authentication = new GuestAuthentication();
                                 receivedSession[0] = null;
                                 clientChannel.authenticateSession(identity, authentication, "default", sessionChannelListener);
-                                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                                if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                                         receivedSession[0] != null) {
                                     if (receivedSession[0].getState() == Session.SessionState.ESTABLISHED) {
                                         System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
@@ -227,7 +228,7 @@ public class TcpTransportTest {
 
     @Test
     @Ignore
-    public void establishSession_WithTls_ReceivesEstablishedSession() throws URISyntaxException, IOException, InterruptedException, TimeoutException {
+    public void establishSession_WithTls_ReceivesEstablishedSession() throws URISyntaxException, IOException, InterruptedException {
         TcpTransport transport = new TcpTransport(
                 new JacksonEnvelopeSerializer(),
                 new SocketTcpClientFactory(),
@@ -248,14 +249,32 @@ public class TcpTransportTest {
 
         ClientChannel clientChannel = new ClientChannelImpl(transport, true);
 
-        Session result = clientChannel.establishSession(SessionCompression.NONE, SessionEncryption.TLS,
-                new Identity(UUID.randomUUID().toString(), "take.io"), new GuestAuthentication(), "default");
+        final Semaphore semaphore = new Semaphore(1);
+        semaphore.acquire();
 
-        assertNotNull(result);
-        assertEquals(Session.SessionState.ESTABLISHED, result.getState());
+        clientChannel.establishSession(SessionCompression.NONE, SessionEncryption.NONE,
+                new Identity(UUID.randomUUID().toString(), "take.io"), new GuestAuthentication(), "default",
+                new ClientChannel.SessionEstablishListener() {
+                    @Override
+                    public void onReceiveSession(Session session) {
+                        assertNotNull(session);
+                        assertEquals(Session.SessionState.ESTABLISHED, session.getState());
+                        semaphore.release();
+                    }
+
+                    @Override
+                    public void onFailure(Exception exception) {
+                        fail(exception.getMessage());
+                        semaphore.release();
+                    }
+                });
+
+        if (!semaphore.tryAcquire(1, 40, TimeUnit.SECONDS)) {
+            fail("Timeout establishing session");
+        }
     }
 
-        @Test
+    @Test
     public void onReceive_oneRead_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
         String messageJson = Dummy.createMessageJson();

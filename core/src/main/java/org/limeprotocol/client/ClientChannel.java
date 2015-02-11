@@ -58,9 +58,26 @@ public interface ClientChannel extends Channel {
      * @param encryption Chosen encryption, or null for the first one supported by the server
      * @param identity
      * @param authentication
-     * @return
      */
-    Session establishSession(SessionCompression compression, SessionEncryption encryption,
-                                  Identity identity, Authentication authentication, String instance)
-            throws IOException, InterruptedException, TimeoutException;
+    void establishSession(SessionCompression compression, SessionEncryption encryption,
+                                  Identity identity, Authentication authentication, String instance,
+                                  SessionEstablishListener listener)
+            throws IOException;
+
+    /**
+     * Defines listener for session establishment
+     */
+    public interface SessionEstablishListener {
+        /**
+         * Occurs when the result of session establishment is reached
+         * @param session
+         */
+        void onReceiveSession(Session session);
+
+        /**
+         * Occurs if there is any unexpected failure during session establishment
+         * @param exception
+         */
+        void onFailure(Exception exception);
+    }
 }

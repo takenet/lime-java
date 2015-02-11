@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.limeprotocol.Session.*;
 import static org.limeprotocol.Session.SessionState.*;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
@@ -70,7 +71,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         }
         setSessionListener(sessionListener);
         Session session = new Session();
-        session.setId(super.getSessionId());
+        session.setId(getSessionId());
         session.setState(NEGOTIATING);
         session.setCompression(sessionCompression);
         session.setEncryption(sessionEncryption);
@@ -145,14 +146,18 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
     }
 
     @Override
-    public Session establishSession(SessionCompression compression, SessionEncryption encryption,
-                                    Identity identity, Authentication authentication, String instance)
-            throws IOException, InterruptedException, TimeoutException {
+    public void establishSession(SessionCompression compression, SessionEncryption encryption,
+                                    Identity identity, Authentication authentication, String instance,
+                                    SessionEstablishListener listener)
+            throws IOException {
 
         if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot establish a session in the '%s' state", getState()));
         }
 
+        if (listener == null) {
+            throw new IllegalArgumentException("listener");
+        }
         if (identity == null) {
             throw new IllegalArgumentException("identity");
         }
@@ -160,47 +165,10 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             throw new IllegalArgumentException("authentication");
         }
 
-        Session receivedSession = null;
-        SessionReceiver receiver = new SessionReceiver();
+        SessionEstablishing establishingListener = new SessionEstablishing(this, compression, encryption, identity,
+                authentication, instance, listener);
 
-        this.startNewSession(receiver);
-        receivedSession = receiver.waitForResponse();
-
-        if (receivedSession.getState() == NEGOTIATING) {
-            SessionCompression desiredCompression = compression;
-            if (desiredCompression == null) {
-                desiredCompression = receivedSession.getCompressionOptions()[0];
-            }
-
-            SessionEncryption desiredEncryption = encryption;
-            if (desiredEncryption == null) {
-                desiredEncryption = receivedSession.getEncryptionOptions()[0];
-            }
-
-            this.negotiateSession(desiredCompression, desiredEncryption, receiver);
-            receivedSession = receiver.waitForResponse();
-
-            if (receivedSession.getState() == NEGOTIATING) {
-                // Configure transport
-                if (receivedSession.getCompression() != this.getTransport().getCompression()) {
-                    this.getTransport().setCompression(receivedSession.getCompression());
-                }
-                if (receivedSession.getEncryption() != this.getTransport().getEncryption()) {
-                    this.getTransport().setEncryption(receivedSession.getEncryption());
-                }
-                this.setSessionListener(receiver);
-                receivedSession = receiver.waitForResponse();
-            }
-
-            if (receivedSession.getState() == AUTHENTICATING) {
-                do {
-                    this.authenticateSession(identity, authentication, instance, receiver);
-                    receivedSession = receiver.waitForResponse();
-                } while (receivedSession.getState() == AUTHENTICATING);
-            }
-        }
-
-        return receivedSession;
+        startNewSession(establishingListener);
     }
     /**
      *  Fills the envelope recipients
@@ -230,7 +198,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     @Override
     protected synchronized void raiseOnReceiveSession(Session session) {
-        super.raiseOnReceiveSession(session);
         setSessionId(session.getId());
         setState(session.getState());
         
@@ -245,6 +212,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                 transportListenerException = e;
             }
         }
+        super.raiseOnReceiveSession(session);
     }
 
     @Override
@@ -268,32 +236,73 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         }
     }
 
-    private class SessionReceiver implements SessionChannelListener {
-        private final int RECEIVE_TIMEOUT_IN_SECS = 2;
+    private static class SessionEstablishing implements SessionChannelListener {
 
-        private final Semaphore semaphore = new Semaphore(1);
-        private final Session[] receivedSession = { null };
+        private final ClientChannel channel;
+        private SessionCompression compression;
+        private SessionEncryption encryption;
+        private final Identity identity;
+        private final Authentication authentication;
+        private final String instance;
+        private final SessionEstablishListener listener;
 
-        public SessionReceiver() {
-            try {
-                semaphore.acquire();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        public SessionEstablishing(ClientChannel channel, SessionCompression compression, SessionEncryption encryption, Identity identity,
+                                   Authentication authentication, String instance, SessionEstablishListener listener) {
+            this.channel = channel;
+            this.compression = compression;
+            this.encryption = encryption;
+            this.identity = identity;
+            this.authentication = authentication;
+            this.instance = instance;
+            this.listener = listener;
         }
 
         @Override
-        public void onReceiveSession(Session session) {
-            receivedSession[0] = session;
-            semaphore.release();
-        }
+        public void onReceiveSession(Session receivedSession) {
+            if (receivedSession.getState() == NEGOTIATING) {
+                if (receivedSession.getCompressionOptions() != null) {
+                    // Send desired options
+                    SessionCompression desiredCompression = compression;
+                    if (desiredCompression == null) {
+                        desiredCompression = receivedSession.getCompressionOptions()[0];
+                    }
 
-        public Session waitForResponse() throws InterruptedException, TimeoutException {
-            if (semaphore.tryAcquire(1, RECEIVE_TIMEOUT_IN_SECS, TimeUnit.SECONDS) &&
-                    receivedSession[0] != null) {
-                return receivedSession[0];
-            } else {
-                throw new TimeoutException();
+                    SessionEncryption desiredEncryption = encryption;
+                    if (desiredEncryption == null) {
+                        desiredEncryption = receivedSession.getEncryptionOptions()[0];
+                    }
+
+                    try {
+                        channel.negotiateSession(desiredCompression, desiredEncryption, this);
+                    } catch (Exception e) {
+                        this.listener.onFailure(e);
+                    }
+                } else {
+                    // Configure transport
+                    if (receivedSession.getCompression() != channel.getTransport().getCompression()) {
+                        try {
+                            channel.getTransport().setCompression(receivedSession.getCompression());
+                        } catch (Exception e) {
+                            this.listener.onFailure(e);
+                        }
+                    }
+                    if (receivedSession.getEncryption() != channel.getTransport().getEncryption()) {
+                        try {
+                            channel.getTransport().setEncryption(receivedSession.getEncryption());
+                        } catch (Exception e) {
+                            this.listener.onFailure(e);
+                        }
+                    }
+                    channel.setSessionListener(this);
+                }
+            } else if (receivedSession.getState() == AUTHENTICATING) {
+                try {
+                    channel.authenticateSession(identity, authentication, instance, this);
+                } catch (Exception e) {
+                    this.listener.onFailure(e);
+                }
+            } else if (receivedSession.getState() == ESTABLISHED) {
+                this.listener.onReceiveSession(receivedSession);
             }
         }
     }
