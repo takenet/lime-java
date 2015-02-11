@@ -479,6 +479,6 @@ public class ClientChannelImplTest {
     }
 
     private TestClientChannel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId, boolean autoNotifyReceipt) {
-        return new TestClientChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId, autoNotifyReceipt);
+        return new TestClientChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId, false, autoNotifyReceipt);
     }
 }
