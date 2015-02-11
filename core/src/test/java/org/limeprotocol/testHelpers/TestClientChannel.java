@@ -9,8 +9,10 @@ import java.util.UUID;
 import static org.limeprotocol.Session.SessionState;
 
 public class TestClientChannel extends ClientChannelImpl {
-    public TestClientChannel(Transport transport, SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId, boolean autoNotifyReceipt) {
-        super(transport, fillEnvelopeRecipients, autoNotifyReceipt);
+    public TestClientChannel(Transport transport, SessionState state, boolean fillEnvelopeRecipients,
+                             Node remoteNode, Node localNode, UUID sessionId,
+                             boolean autoReplyPings, boolean autoNotifyReceipt) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings, autoNotifyReceipt);
         setRemoteNode(remoteNode);
         setLocalNode(localNode);
         setState(state);
