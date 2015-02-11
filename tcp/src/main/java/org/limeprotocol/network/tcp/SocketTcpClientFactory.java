@@ -3,6 +3,6 @@ package org.limeprotocol.network.tcp;
 public class SocketTcpClientFactory implements TcpClientFactory {
     @Override
     public TcpClient create() {
-        return new SocketTcpClient();
+        return new SocketTcpClient(new CustomTrustManager(null));
     }
 }
