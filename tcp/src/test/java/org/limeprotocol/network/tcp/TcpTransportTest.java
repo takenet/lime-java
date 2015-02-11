@@ -1,15 +1,15 @@
 package org.limeprotocol.network.tcp;
 
 import org.junit.Test;
-import org.limeprotocol.Envelope;
-import org.limeprotocol.Session;
-import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.client.ClientChannelImpl;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
+import org.limeprotocol.security.Authentication;
+import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.serialization.EnvelopeSerializer;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.mockito.invocation.InvocationOnMock;
@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -161,6 +162,7 @@ public class TcpTransportTest {
                     @Override
                     public void trace(String data, DataOperation operation) {
                         System.out.printf("%s: %s", operation.toString(), data);
+                        System.out.println();
                     }
 
                     @Override
@@ -176,56 +178,44 @@ public class TcpTransportTest {
         semaphore.acquire();
 
         final Session[] receivedSession = {null};
-        clientChannel.setSessionListener(new SessionChannel.SessionChannelListener() {
+        SessionChannel.SessionChannelListener sessionChannelListener = new SessionChannel.SessionChannelListener() {
             @Override
             public void onReceiveSession(Session session) {
                 receivedSession[0] = session;
                 semaphore.release();
             }
-        });
+        };
 
-        clientChannel.getTransport().addListener(new Transport.TransportListener() {
-            @Override
-            public void onReceive(Envelope envelope) {
-
-            }
-
-            @Override
-            public void onClosing() {
-
-            }
-
-            @Override
-            public void onClosed() {
-
-            }
-
-            @Override
-            public void onException(Exception e) {
-                e.printStackTrace();
-            }
-        }, false);
-
-        Session session = new Session();
-        session.setState(Session.SessionState.NEW);
-        clientChannel.sendSession(session);
+        clientChannel.startNewSession(sessionChannelListener);
         
-        if (semaphore.tryAcquire(1, 5000, TimeUnit.MILLISECONDS)) {
-            session = new Session();
-            session.setId(receivedSession[0].getId());
+        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                receivedSession[0] != null) {
             if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
-                session.setCompression(receivedSession[0].getCompressionOptions()[0]);
-                session.setEncryption(receivedSession[0].getEncryptionOptions()[0]);
                 receivedSession[0] = null;
-                clientChannel.setSessionListener(new SessionChannel.SessionChannelListener() {
-                    @Override
-                    public void onReceiveSession(Session session) {
-                        receivedSession[0] = session;
-                        semaphore.release();
+                clientChannel.negotiateSession(SessionCompression.NONE, SessionEncryption.TLS, sessionChannelListener);
+                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                        receivedSession[0] != null) {
+                    if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
+                        clientChannel.getTransport().setEncryption(SessionEncryption.TLS);
+                        receivedSession[0] = null;
+                        clientChannel.setSessionListener(sessionChannelListener);
+                        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                                receivedSession[0] != null) {
+                            if (receivedSession[0].getState() == Session.SessionState.AUTHENTICATING) {
+                                Identity identity = new Identity(UUID.randomUUID().toString(), "take.io");
+                                Authentication authentication = new GuestAuthentication();
+                                receivedSession[0] = null;
+                                clientChannel.authenticateSession(identity, authentication, "default", sessionChannelListener);
+                                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                                        receivedSession[0] != null) {
+                                    if (receivedSession[0].getState() == Session.SessionState.ESTABLISHED) {
+                                        System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
+                                    }
+                                }
+                            }
+                        }
                     }
-                });
-                clientChannel.sendSession(session);
-                semaphore.tryAcquire(1, 5000, TimeUnit.MILLISECONDS);
+                }
             }
         }
 

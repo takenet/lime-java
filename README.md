@@ -1,5 +1,4 @@
-
-![Travis-CI](https://travis-ci.org/takenet/lime-java.svg?branch=master)
+![TC](http://take-teamcity.cloudapp.net/app/rest/builds/buildType:(id:Lime_Java)/statusIcon)
 
 # lime-java
 Java implementation of the LIME Protocol
