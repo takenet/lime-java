@@ -6,7 +6,10 @@ import org.limeprotocol.network.TransportBase;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 public class TestTransport extends TransportBase {
         private List<Envelope> sentEnvelopes;
@@ -25,7 +28,9 @@ public class TestTransport extends TransportBase {
         @Override
         public void send(Envelope envelope) throws IOException {
                 sentEnvelopes.add(envelope);
-                raiseOnReceive(outgoingEnvelopes.poll());
+                if(outgoingEnvelopes.size() != 0) {
+                        raiseOnReceive(outgoingEnvelopes.poll());
+                }
         }
 
         @Override
