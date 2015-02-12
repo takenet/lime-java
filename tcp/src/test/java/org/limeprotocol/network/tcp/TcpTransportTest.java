@@ -2,11 +2,9 @@ package org.limeprotocol.network.tcp;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.client.ClientChannelImpl;
-import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
@@ -27,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -202,7 +199,7 @@ public class TcpTransportTest {
                     if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
                         clientChannel.getTransport().setEncryption(SessionEncryption.TLS);
                         receivedSession[0] = null;
-                        clientChannel.setSessionListener(sessionChannelListener);
+                        clientChannel.enqueueSessionListener(sessionChannelListener);
                         if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                                 receivedSession[0] != null) {
                             if (receivedSession[0].getState() == Session.SessionState.AUTHENTICATING) {
@@ -283,7 +280,7 @@ public class TcpTransportTest {
         Envelope envelope = mock(Envelope.class);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, false);
+        target.setListener(transportListener);
 
         // Act
         target.open(Dummy.createUri());
@@ -306,7 +303,7 @@ public class TcpTransportTest {
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, false);
+        target.setListener(transportListener);
 
         // Act
         target.open(Dummy.createUri());
@@ -354,7 +351,7 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, false);
+        target.setListener(transportListener);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
@@ -404,7 +401,7 @@ public class TcpTransportTest {
         byte[][] messageBufferParts = splitBuffer(messageBuffer);
         int bufferSize = messageBuffer.length + Dummy.createRandomInt(1000);
         TestInputStream inputStream = new TestInputStream(messageBufferParts);
-        TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
+        final TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(anyString())).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -416,12 +413,13 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, true);
+        target.setListener(transportListener);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                target.setListener(null);
                 semaphore.release();
                 return null;
             }
@@ -438,7 +436,6 @@ public class TcpTransportTest {
         verify(transportListener, never()).onException(any(Exception.class));
         assertEquals(messagesCount - 1 , messageJsonQueue.size());
     }
-    
     
     @Test
     public void onReceive_multipleReadsMultipleEnvelopesWithInvalidCharsBetween_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
@@ -473,7 +470,7 @@ public class TcpTransportTest {
             }
         });
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, false);
+        target.setListener(transportListener);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
         doAnswer(new Answer() {
@@ -514,7 +511,7 @@ public class TcpTransportTest {
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream(), bufferSize);
         when(envelopeSerializer.deserialize(anyString())).thenReturn(mock(Envelope.class));
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, false);
+        target.setListener(transportListener);
 
         // Act
         target.open(Dummy.createUri());
@@ -530,7 +527,7 @@ public class TcpTransportTest {
         // Arrange
         TcpTransport target = getAndOpenTarget();
         Transport.TransportListener transportListener = mock(Transport.TransportListener.class);
-        target.addListener(transportListener, false);
+        target.setListener(transportListener);
         
         // Act
         target.close();

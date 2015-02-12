@@ -2,18 +2,13 @@ package org.limeprotocol.client;
 
 import org.limeprotocol.*;
 import org.limeprotocol.network.ChannelBase;
-import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import static org.limeprotocol.Session.*;
 import static org.limeprotocol.Session.SessionState.*;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
@@ -50,7 +45,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot start a session in the '%s' state.", getState()));
         }
-        setSessionListener(sessionListener);
+        enqueueSessionListener(sessionListener);
         Session session = new Session();
         session.setState(NEW);
         sendSession(session);
@@ -69,7 +64,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (getState() != NEGOTIATING) {
             throw new IllegalStateException(String.format("Cannot negotiate a session in the '%s' state.", getState()));
         }
-        setSessionListener(sessionListener);
+        enqueueSessionListener(sessionListener);
         Session session = new Session();
         session.setId(getSessionId());
         session.setState(NEGOTIATING);
@@ -98,7 +93,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (authentication == null) {
             throw new IllegalArgumentException("authentication");
         }
-        setSessionListener(sessionListener);
+        enqueueSessionListener(sessionListener);
         Session session = new Session();
         session.setId(getSessionId());
         session.setFrom(new Node(identity.getName(), identity.getDomain(), instance));
@@ -293,7 +288,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                             this.listener.onFailure(e);
                         }
                     }
-                    channel.setSessionListener(this);
+                    channel.enqueueSessionListener(this);
                 }
             } else if (receivedSession.getState() == AUTHENTICATING) {
                 try {

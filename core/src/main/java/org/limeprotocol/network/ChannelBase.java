@@ -255,7 +255,7 @@ public abstract class ChannelBase implements Channel {
      * @param listener
      */
     @Override
-    public synchronized void setSessionListener(SessionChannelListener listener) {
+    public synchronized void enqueueSessionListener(SessionChannelListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -320,9 +320,13 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
-        SessionChannelListener listener = sessionChannelListeners.poll();
+        SessionChannelListener listener = sessionChannelListeners.remove();
         if (listener != null) {
             listener.onReceiveSession(session);
+        }
+
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            transport.setListener(null);
         }
     }
 
@@ -363,12 +367,7 @@ public abstract class ChannelBase implements Channel {
     }
     
     private synchronized void setupTransportListener() {
-        boolean removeOnReceive = true;
-        if (getState() == Session.SessionState.ESTABLISHED) {
-            removeOnReceive = false;
-        }
-        transport.removeListener(transportListener);
-        transport.addListener(transportListener, removeOnReceive);
+        transport.setListener(transportListener);
     }
 
     private <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {

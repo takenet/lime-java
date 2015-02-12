@@ -40,7 +40,7 @@ public class ChannelBaseTest {
         transport = new TestTransport();
         sessionChannelListener = mock(SessionChannel.SessionChannelListener.class);
         ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, autoReplyPings, remoteNode, localNode, sessionId);
-        channelBase.setSessionListener(sessionChannelListener);
+        channelBase.enqueueSessionListener(sessionChannelListener);
         return channelBase;
     }
 
@@ -507,7 +507,7 @@ public class ChannelBaseTest {
         transport.raiseOnClosed();
 
         // Act
-        target.setSessionListener(listener);
+        target.enqueueSessionListener(listener);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -519,7 +519,7 @@ public class ChannelBaseTest {
         transport.raiseOnException(new Exception());
 
         // Act
-        target.setSessionListener(listener);
+        target.enqueueSessionListener(listener);
     }
     
     @Test
@@ -528,7 +528,7 @@ public class ChannelBaseTest {
         SessionChannel.SessionChannelListener listener = mock(SessionChannel.SessionChannelListener.class);
         Session session = createSession(Session.SessionState.ESTABLISHED);
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        target.setSessionListener(listener);
+        target.enqueueSessionListener(listener);
 
         // Act
         transport.raiseOnReceive(session);
@@ -637,7 +637,7 @@ public class ChannelBaseTest {
         // Assert
         assertEquals(sessionState, actual);
     }
-
+/*
     @Test
     public void setState_negotiation_setsValueAndStartsRemovableListener() {
         // Arrange
@@ -654,7 +654,7 @@ public class ChannelBaseTest {
         assertNotNull(listener.transportListener);
         assertEquals(true, listener.removeAfterReceive);
     }
-
+*/
     @Test(expected = IllegalArgumentException.class)
     public void setState_null_throwsIllegalArgumentException() {
         // Arrange
@@ -872,12 +872,10 @@ public class ChannelBaseTest {
     private class TestTransport extends TransportBase implements Transport {
         public URI openUri;
         public Queue<Envelope> sentEnvelopes;
-        public Queue<TransportListenerRemoveAfterReceive> addedListeners;
         public boolean closeInvoked;
 
         public TestTransport() {
             sentEnvelopes = new LinkedBlockingQueue<>();
-            addedListeners = new LinkedBlockingQueue<>();
         }
 
         /**
@@ -909,36 +907,9 @@ public class ChannelBaseTest {
         }
 
         @Override
-        public void addListener(TransportListener listener, boolean removeAfterReceive) {
-            super.addListener(listener, removeAfterReceive);
-            addedListeners.add(new TransportListenerRemoveAfterReceive(listener, removeAfterReceive));
-        }
-
-        @Override
-        public void removeListener(TransportListener listener) {
-            super.removeListener(listener);
-
-            TransportListenerRemoveAfterReceive transportListenerRemoveAfterReceive = null;
-            
-            for (TransportListenerRemoveAfterReceive addedListener : addedListeners) {
-                if (addedListener.transportListener == listener) {
-                    transportListenerRemoveAfterReceive = addedListener;
-                    break;
-                }
-            }
-            
-            if (transportListenerRemoveAfterReceive != null) {
-                addedListeners.remove(transportListenerRemoveAfterReceive);
-            }
+        public void setListener(TransportListener listener) {
+            super.setListener(listener);
         }
     }
 
-    public class TransportListenerRemoveAfterReceive {
-        public final Transport.TransportListener transportListener;
-        public final boolean removeAfterReceive;
-        public TransportListenerRemoveAfterReceive(Transport.TransportListener transportListener, boolean removeAfterReceive) {
-            this.transportListener = transportListener;
-            this.removeAfterReceive = removeAfterReceive;
-        }
-    }
 }

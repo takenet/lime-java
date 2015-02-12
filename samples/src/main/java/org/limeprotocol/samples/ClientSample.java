@@ -7,8 +7,6 @@ import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.network.*;
 import org.limeprotocol.network.tcp.SocketTcpClientFactory;
 import org.limeprotocol.network.tcp.TcpTransport;
-import org.limeprotocol.security.Authentication;
-import org.limeprotocol.security.GuestAuthentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 
@@ -16,9 +14,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.Scanner;
-import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -90,7 +86,7 @@ public class ClientSample {
                     if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
                         clientChannel.getTransport().setEncryption(SessionEncryption.TLS);
                         receivedSession[0] = null;
-                        clientChannel.setSessionListener(sessionChannelListener);
+                        clientChannel.enqueueSessionListener(sessionChannelListener);
                         if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
                                 receivedSession[0] != null) {
                             if (receivedSession[0].getState() == Session.SessionState.AUTHENTICATING) {
@@ -103,6 +99,7 @@ public class ClientSample {
                                         receivedSession[0] != null) {
                                     if (receivedSession[0].getState() == Session.SessionState.ESTABLISHED) {
                                         System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
+                                        System.out.println();
                                         clientChannel.addMessageListener(new MessageChannel.MessageChannelListener() {
                                             @Override
                                             public void onReceiveMessage(Message message) {
@@ -125,7 +122,7 @@ public class ClientSample {
                                             }
                                         }, false);
 
-                                        clientChannel.setSessionListener(sessionChannelListener);
+                                        clientChannel.enqueueSessionListener(sessionChannelListener);
                                         
                                         while (clientChannel.getState() == Session.SessionState.ESTABLISHED) {
                                             out.print("Destination node (Type EXIT to quit): ");

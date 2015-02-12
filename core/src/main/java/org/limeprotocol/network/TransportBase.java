@@ -15,44 +15,18 @@ public abstract class TransportBase implements Transport {
     
     private SessionCompression compression;
     private SessionEncryption encryption;
-    private Set<TransportListener> transportListeners;
-    private final Queue<TransportListener> singleReceiveTransportListeners;
+    private TransportListener transportListener;
     private boolean closingInvoked;
     private boolean closedInvoked;
 
     protected TransportBase() {
         compression = SessionCompression.NONE;
         encryption = SessionEncryption.NONE;
-        transportListeners = new HashSet<>();
-        singleReceiveTransportListeners = new LinkedBlockingQueue<>();
     }
     
     @Override
-    public synchronized void addListener(TransportListener listener, boolean removeAfterReceive) {
-        if (listener == null) {
-            throw new IllegalArgumentException("listener");
-        }
-
-        if (!singleReceiveTransportListeners.contains(listener) &&
-                !transportListeners.contains(listener)) {
-            if (removeAfterReceive) {
-                singleReceiveTransportListeners.add(listener);
-            } else {
-                transportListeners.add(listener);
-            }
-        }
-    }
-
-    
-    @Override
-    public synchronized void removeListener(TransportListener listener) {
-        if (listener == null) {
-            throw new IllegalArgumentException("listener");
-        }
-
-        if (!transportListeners.remove(listener)) {
-            singleReceiveTransportListeners.remove(listener);
-        }
+    public void setListener(TransportListener listener) {
+        this.transportListener = listener;
     }
     
     @Override
@@ -110,38 +84,35 @@ public abstract class TransportBase implements Transport {
     protected abstract void performClose() throws IOException;
 
     protected void raiseOnReceive(Envelope envelope) {
-        for (TransportListener listener : getInvocationListeners()) {
+        TransportListener listener = this.transportListener;
+        if (listener != null) {
             listener.onReceive(envelope);
         }
     }
 
     protected void raiseOnException(Exception e) {
-        for (TransportListener listener : getInvocationListeners()) {
+        TransportListener listener = this.transportListener;
+        if (listener != null) {
             listener.onException(e);
         }
     }
 
-    protected synchronized boolean hasAnyListener() {
-        return !(transportListeners.isEmpty() && singleReceiveTransportListeners.isEmpty());
+    protected TransportListener getListener() {
+        return transportListener;
     }
 
     protected void raiseOnClosing() {
-        for (TransportListener listener : getInvocationListeners()) {
+        TransportListener listener = this.transportListener;
+        if (listener != null) {
             listener.onClosing();
         }
     }
 
     protected void raiseOnClosed() {
-        for (TransportListener listener : getInvocationListeners()) {
+        TransportListener listener = this.transportListener;
+        if (listener != null) {
             listener.onClosed();
         }
     }
-
-    private synchronized List<TransportListener> getInvocationListeners() {
-        List<TransportListener> invocationListeners = new ArrayList<>(transportListeners);
-        while (!singleReceiveTransportListeners.isEmpty()) {
-            invocationListeners.add(singleReceiveTransportListeners.remove());
-        }
-        return invocationListeners;
-    }
+    
 }

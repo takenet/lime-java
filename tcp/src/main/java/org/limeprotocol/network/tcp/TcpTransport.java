@@ -104,17 +104,17 @@ public class TcpTransport extends TransportBase implements Transport {
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
         initializeStreams();
-        if (hasAnyListener()) {
-            startListener();
+        if (getListener() != null) {
+            startListenerThread();
         }
     }
 
     @Override
-    public synchronized void addListener(TransportListener listener, boolean removeAfterReceive) {
-        super.addListener(listener, removeAfterReceive);
+    public void setListener(TransportListener listener) {
+        super.setListener(listener);
         if (isSocketOpen() && !isListening()) {
             try {
-                startListener();
+                startListenerThread();
             } catch (IOException e) {
                 e.printStackTrace();
                 throw new RuntimeException("An error occurred while starting the listener task", e);
@@ -124,7 +124,7 @@ public class TcpTransport extends TransportBase implements Transport {
 
     @Override
     protected void performClose() throws IOException {
-        stopListener();
+        stopListenerThread();
         if (tcpClient != null) {
             tcpClient.close();
         }
@@ -150,11 +150,11 @@ public class TcpTransport extends TransportBase implements Transport {
         switch (encryption) {
             case TLS:
                 if (!tcpClient.isTlsStarted()) {
-                    stopListener();
+                    stopListenerThread();
                     tcpClient.startTls();
                     initializeStreams();
-                    if (hasAnyListener()) {
-                        startListener();
+                    if (getListener() != null) {
+                        startListenerThread();
                     }
                 }
                 break;
@@ -188,7 +188,7 @@ public class TcpTransport extends TransportBase implements Transport {
         return listenerFuture != null && !listenerFuture.isDone();
     }
     
-    private synchronized void startListener() throws IOException {
+    private synchronized void startListenerThread() throws IOException {
         ensureSocketOpen();
         if (isListening()) {
             throw new IllegalStateException("The input listener is already started");
@@ -196,7 +196,7 @@ public class TcpTransport extends TransportBase implements Transport {
         listenerFuture = executorService.submit(new JsonListener());
     }
     
-    private synchronized void stopListener() {
+    private synchronized void stopListenerThread() {
         if (isListening()) {
             if (!listenerFuture.cancel(true)) {
                 throw new IllegalStateException("Could not stop the input listener");
@@ -224,7 +224,7 @@ public class TcpTransport extends TransportBase implements Transport {
         @Override
         public Void call() throws Exception {
             try {
-                while (hasAnyListener()) {
+                while (getListener() != null) {
                     Envelope envelope = null;
                     while (envelope == null) {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
