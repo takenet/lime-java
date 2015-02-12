@@ -31,7 +31,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     @Override
     public String serialize(Envelope envelope) {
         try {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(envelope);
+            return mapper.writeValueAsString(envelope);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
