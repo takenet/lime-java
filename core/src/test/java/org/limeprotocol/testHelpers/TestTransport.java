@@ -14,6 +14,7 @@ import java.util.Queue;
 public class TestTransport extends TransportBase {
         private List<Envelope> sentEnvelopes;
         private Queue<Envelope> outgoingEnvelopes;
+        private boolean isClosed;
 
         public TestTransport() {
                 outgoingEnvelopes = new LinkedList<>();
@@ -38,11 +39,25 @@ public class TestTransport extends TransportBase {
 
         }
 
+        @Override
+        public synchronized void close(){
+                try {
+                        super.close();
+                        isClosed = true;
+                } catch (IOException e) {
+                        e.printStackTrace();
+                }
+        }
+
         public void addNextEnvelopeToReturn(Envelope envelope) {
                 outgoingEnvelopes.add(envelope);
         }
 
         public Envelope[] getSentEnvelopes() {
                 return Iterators.toArray(sentEnvelopes.iterator(), Envelope.class);
+        }
+
+        public boolean isClosed() {
+                return isClosed;
         }
 }

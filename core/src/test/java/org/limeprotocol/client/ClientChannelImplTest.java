@@ -462,6 +462,31 @@ public class ClientChannelImplTest {
 
     }
 
+    @Test
+    public void receiveFinishedSessionAsync_EstablishedStateFinishedSessionReceived_SetsStateAndClosesTransport()
+    {
+        Session session = createSession(SessionState.FINISHED);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true);
+        target.setSessionListener(listener);
+
+        transport.addNextEnvelopeToReturn(session);
+
+        try {
+            target.sendFinishingSession();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assertThat(target.getState()).isEqualTo(session.getState());
+        assertThat(transport.getSentEnvelopes()).hasSize(1);
+
+        Session sentSession = (Session) transport.getSentEnvelopes()[0];
+
+        assertThat(sentSession.getState()).isEqualTo(SessionState.FINISHING);
+        assertThat(transport.isClosed());
+    }
+
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
     }
