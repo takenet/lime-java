@@ -170,7 +170,6 @@ public class ChannelBaseTest {
         // Arrange
         Command command = new Command(UUID.randomUUID());
         command.setFrom(createNode());
-        command.setStatus(Command.CommandStatus.PENDING);
         command.setMethod(Command.CommandMethod.GET);
         command.setUri(new LimeUri("/ping"));
         

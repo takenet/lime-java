@@ -185,7 +185,6 @@ public class Dummy {
         command.setFrom(Dummy.createNode());
         command.setTo(Dummy.createNode());
         command.setMethod(Command.CommandMethod.GET);
-        command.setStatus(Command.CommandStatus.PENDING);
         command.setResource(resource);
 
         return command;

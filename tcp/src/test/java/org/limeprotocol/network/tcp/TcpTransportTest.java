@@ -188,7 +188,7 @@ public class TcpTransportTest {
 
         clientChannel.startNewSession(sessionChannelListener);
 
-        int timeout = 10000;
+        int timeout = 100000;
         if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                 receivedSession[0] != null) {
             if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
@@ -251,7 +251,7 @@ public class TcpTransportTest {
 
         clientChannel.establishSession(SessionCompression.NONE, SessionEncryption.NONE,
                 new Identity(UUID.randomUUID().toString(), "take.io"), new GuestAuthentication(), "default",
-                new ClientChannel.SessionEstablishListener() {
+                new ClientChannel.EstablishSessionListener() {
                     @Override
                     public void onReceiveSession(Session session) {
                         assertNotNull(session);

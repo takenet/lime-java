@@ -83,36 +83,35 @@ public abstract class TransportBase implements Transport {
      */
     protected abstract void performClose() throws IOException;
 
+    protected TransportListener getListener() {
+        return transportListener;
+    }
+    
     protected void raiseOnReceive(Envelope envelope) {
-        TransportListener listener = this.transportListener;
+        TransportListener listener = getListener();
         if (listener != null) {
             listener.onReceive(envelope);
         }
     }
 
     protected void raiseOnException(Exception e) {
-        TransportListener listener = this.transportListener;
+        TransportListener listener = getListener();
         if (listener != null) {
             listener.onException(e);
         }
     }
 
-    protected TransportListener getListener() {
-        return transportListener;
-    }
-
     protected void raiseOnClosing() {
-        TransportListener listener = this.transportListener;
+        TransportListener listener = getListener();
         if (listener != null) {
             listener.onClosing();
         }
     }
 
     protected void raiseOnClosed() {
-        TransportListener listener = this.transportListener;
+        TransportListener listener = getListener();
         if (listener != null) {
             listener.onClosed();
         }
     }
-    
 }

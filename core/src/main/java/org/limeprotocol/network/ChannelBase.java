@@ -281,7 +281,7 @@ public abstract class ChannelBase implements Channel {
         if (autoReplyPings &&
                 command.getId() != null &&
                 command.getMethod() == Command.CommandMethod.GET &&
-                command.getStatus() == Command.CommandStatus.PENDING &&
+                command.getStatus() == null &&
                 command.getUri() != null &&
                 command.getUri().toString().equalsIgnoreCase(PING_URI_TEMPLATE)) {
             Command pingCommandResponse = new Command(command.getId());
@@ -320,13 +320,13 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            transport.setListener(null);
+        }
+
         SessionChannelListener listener = sessionChannelListeners.remove();
         if (listener != null) {
             listener.onReceiveSession(session);
-        }
-
-        if (getState() != Session.SessionState.ESTABLISHED) {
-            transport.setListener(null);
         }
     }
 

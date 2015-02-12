@@ -15,23 +15,22 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     private boolean autoNotifyReceipt;
 
-
     public ClientChannelImpl(Transport transport) {
         this(transport, false);
     }
-    
+
     public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients) {
         this(transport, fillEnvelopeRecipients, false);
     }
-    
+
     public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
         this(transport, fillEnvelopeRecipients, autoReplyPings, false);
     }
 
-    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, 
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings,
                              boolean autoNotifyReceipt) {
         super(transport, fillEnvelopeRecipients, autoReplyPings);
-        
+
         this.autoNotifyReceipt = autoNotifyReceipt;
     }
 
@@ -142,14 +141,13 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     @Override
     public void establishSession(SessionCompression compression, SessionEncryption encryption,
-                                    Identity identity, Authentication authentication, String instance,
-                                    SessionEstablishListener listener)
+                                 Identity identity, Authentication authentication, String instance,
+                                 EstablishSessionListener listener)
             throws IOException {
 
         if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot establish a session in the '%s' state", getState()));
         }
-
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -165,27 +163,21 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
         startNewSession(establishingListener);
     }
+
     /**
-     *  Fills the envelope recipients
-     *  using the session information
+     * Fills the envelope recipients
+     * using the session information
      */
     @Override
-    protected void fillEnvelope(Envelope envelope, boolean isSending)
-    {
+    protected void fillEnvelope(Envelope envelope, boolean isSending) {
         super.fillEnvelope(envelope, isSending);
 
-        if (isSending &&
-                this.getLocalNode() != null)
-        {
-            if (envelope.getPp() == null)
-            {
-                if (envelope.getFrom() != null &&
-                        !envelope.getFrom().equals(this.getLocalNode()))
-                {
+        if (isSending && this.getLocalNode() != null) {
+            if (envelope.getPp() == null) {
+                if (envelope.getFrom() != null && !envelope.getFrom().equals(this.getLocalNode())) {
                     envelope.setPp(this.getLocalNode().copy());
                 }
-            } else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain()))
-            {
+            } else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain())) {
                 envelope.getPp().setDomain(this.getLocalNode().getDomain());
             }
         }
@@ -195,7 +187,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
     protected synchronized void raiseOnReceiveSession(Session session) {
         setSessionId(session.getId());
         setState(session.getState());
-        
+
         if (session.getState() == ESTABLISHED) {
             setLocalNode(session.getTo());
             setRemoteNode(session.getFrom());
@@ -214,17 +206,11 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
     protected synchronized void raiseOnReceiveMessage(Message message) {
         super.raiseOnReceiveMessage(message);
 
-        if(autoNotifyReceipt &&
+        if (autoNotifyReceipt &&
                 message.getId() != null &&
-                message.getFrom() != null){
-
-            Notification notification = new Notification();
-            notification.setId(message.getId());
-            notification.setTo(message.getFrom());
-            notification.setEvent(Notification.Event.RECEIVED);
-
+                message.getFrom() != null) {
             try {
-                sendNotification(notification);
+                sendReceivedNotification(message.getId(), message.getFrom());
             } catch (IOException e) {
                 transportListenerException = e;
             }
@@ -239,10 +225,10 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         private final Identity identity;
         private final Authentication authentication;
         private final String instance;
-        private final SessionEstablishListener listener;
+        private final EstablishSessionListener listener;
 
         public SessionEstablishing(ClientChannel channel, SessionCompression compression, SessionEncryption encryption, Identity identity,
-                                   Authentication authentication, String instance, SessionEstablishListener listener) {
+                                   Authentication authentication, String instance, EstablishSessionListener listener) {
             this.channel = channel;
             this.compression = compression;
             this.encryption = encryption;
@@ -257,18 +243,18 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             if (receivedSession.getState() == NEGOTIATING) {
                 if (receivedSession.getCompressionOptions() != null) {
                     // Send desired options
-                    SessionCompression desiredCompression = compression;
-                    if (desiredCompression == null) {
-                        desiredCompression = receivedSession.getCompressionOptions()[0];
+                    SessionCompression selectedCompression = compression;
+                    if (selectedCompression == null) {
+                        selectedCompression = receivedSession.getCompressionOptions()[0];
                     }
 
-                    SessionEncryption desiredEncryption = encryption;
-                    if (desiredEncryption == null) {
-                        desiredEncryption = receivedSession.getEncryptionOptions()[0];
+                    SessionEncryption selectEncryption = encryption;
+                    if (selectEncryption == null) {
+                        selectEncryption = receivedSession.getEncryptionOptions()[0];
                     }
 
                     try {
-                        channel.negotiateSession(desiredCompression, desiredEncryption, this);
+                        channel.negotiateSession(selectedCompression, selectEncryption, this);
                     } catch (Exception e) {
                         this.listener.onFailure(e);
                     }

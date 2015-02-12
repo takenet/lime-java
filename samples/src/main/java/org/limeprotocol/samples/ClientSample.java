@@ -4,6 +4,7 @@ import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.client.ClientChannelImpl;
 import org.limeprotocol.messaging.contents.PlainText;
+import org.limeprotocol.messaging.resource.Presence;
 import org.limeprotocol.network.*;
 import org.limeprotocol.network.tcp.SocketTcpClientFactory;
 import org.limeprotocol.network.tcp.TcpTransport;
@@ -15,6 +16,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -58,101 +60,113 @@ public class ClientSample {
         transport.open(serverUri);
 
         // Creates a new client channel
-        ClientChannel clientChannel = new ClientChannelImpl(transport);
-
+        ClientChannel clientChannel = new ClientChannelImpl(transport, true, true, true);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
-        final Session[] receivedSession = {null};
-        SessionChannel.SessionChannelListener sessionChannelListener = new SessionChannel.SessionChannelListener() {
-            @Override
-            public void onReceiveSession(Session session) {
-                
-                out.printf(String.format("Session with id '%s' received: State: %s - Reason: %s", session.getId(), session.getState(), session.getReason()));
-                out.println();
-                receivedSession[0] = session;
-                semaphore.release();
-            }
-        };
 
-        clientChannel.startNewSession(sessionChannelListener);
+        clientChannel.establishSession(
+                SessionCompression.NONE,
+                SessionEncryption.TLS,
+                new Identity("samples", "take.io"),
+                new PlainAuthentication() {{
+                    setToBase64Password("take1234");
+                }},
+                "default",
+                new ClientChannel.EstablishSessionListener() {
+                    @Override
+                    public void onFailure(Exception exception) {
+                        out.printf("Session establishment failed");
+                        exception.printStackTrace();
+                        semaphore.release();
+                    }
 
-        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
-                receivedSession[0] != null) {
-            if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
-                receivedSession[0] = null;
-                clientChannel.negotiateSession(SessionCompression.NONE, SessionEncryption.TLS, sessionChannelListener);
-                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
-                        receivedSession[0] != null) {
-                    if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
-                        clientChannel.getTransport().setEncryption(SessionEncryption.TLS);
-                        receivedSession[0] = null;
-                        clientChannel.enqueueSessionListener(sessionChannelListener);
-                        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
-                                receivedSession[0] != null) {
-                            if (receivedSession[0].getState() == Session.SessionState.AUTHENTICATING) {
-                                Identity identity = new Identity("samples", "take.io");
-                                PlainAuthentication authentication = new PlainAuthentication();
-                                authentication.setToBase64Password("take1234");
-                                receivedSession[0] = null;
-                                clientChannel.authenticateSession(identity, authentication, "default", sessionChannelListener);
-                                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
-                                        receivedSession[0] != null) {
-                                    if (receivedSession[0].getState() == Session.SessionState.ESTABLISHED) {
-                                        System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
-                                        System.out.println();
-                                        clientChannel.addMessageListener(new MessageChannel.MessageChannelListener() {
-                                            @Override
-                                            public void onReceiveMessage(Message message) {
-                                                out.printf(String.format("Message with id '%s' received from '%s': %s", message.getId(), message.getFrom(), message.getContent()));
-                                                out.println();
-                                            }
-                                        }, false);
-                                        clientChannel.addCommandListener(new CommandChannel.CommandChannelListener() {
-                                            @Override
-                                            public void onReceiveCommand(Command command) {
-                                                out.printf(String.format("Command with id '%s' received from '%s':  Method: %s - URI: %s", command.getId(), command.getFrom(), command.getMethod(), command.getUri()));
-                                                out.println();
-                                            }
-                                        }, false);
-                                        clientChannel.addNotificationListener(new NotificationChannel.NotificationChannelListener() {
-                                            @Override
-                                            public void onReceiveNotification(Notification notification) {
-                                                out.printf(String.format("Notification with id '%s' received from '%s': Event: %s", notification.getId(), notification.getFrom(), notification.getEvent()));
-                                                out.println();
-                                            }
-                                        }, false);
-
-                                        clientChannel.enqueueSessionListener(sessionChannelListener);
-                                        
-                                        while (clientChannel.getState() == Session.SessionState.ESTABLISHED) {
-                                            out.print("Destination node (Type EXIT to quit): ");
-                                            String toInput = inScanner.nextLine();
-                                            if (toInput != null &&
-                                                    toInput.equalsIgnoreCase("exit")) {
-                                                break;
-                                            }
-                                            
-                                            if (toInput != null && !toInput.isEmpty()) {
-                                                Node node = Node.parse(toInput);
-                                                out.print("Message text: ");
-                                                PlainText plainText = new PlainText(inScanner.nextLine());
-                                                Message message = new Message();
-                                                message.setTo(node);
-                                                message.setContent(plainText);
-                                                clientChannel.sendMessage(message);
-                                            }
-                                        }
-                                        
-                                        semaphore.acquire();
-                                    }
-                                }
-                            }
-                        }
+                    @Override
+                    public void onReceiveSession(Session session) {
+                        out.printf(String.format("Session with id '%s' received: State: %s - Reason: %s", session.getId(), session.getState(), session.getReason()));
+                        out.println();
+                        semaphore.release();
                     }
                 }
+        );
+
+        if (semaphore.tryAcquire(1, 6000, TimeUnit.SECONDS)) {
+            if (clientChannel.getState() == Session.SessionState.ESTABLISHED) {
+                System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
+                System.out.println();
+                clientChannel.addMessageListener(new MessageChannel.MessageChannelListener() {
+                    @Override
+                    public void onReceiveMessage(Message message) {
+                        out.printf(String.format("Message with id '%s' received from '%s': %s", message.getId(), message.getFrom(), message.getContent()));
+                        out.println();
+                    }
+                }, false);
+                clientChannel.addCommandListener(new CommandChannel.CommandChannelListener() {
+                    @Override
+                    public void onReceiveCommand(Command command) {
+                        out.printf(String.format("Command with id '%s' received from '%s':  Method: %s - URI: %s - Status: %s", command.getId(), command.getFrom(), command.getMethod(), command.getUri(), command.getStatus()));
+                        out.println();
+                    }
+                }, false);
+                clientChannel.addNotificationListener(new NotificationChannel.NotificationChannelListener() {
+                    @Override
+                    public void onReceiveNotification(Notification notification) {
+                        out.printf(String.format("Notification with id '%s' received from '%s': Event: %s", notification.getId(), notification.getFrom(), notification.getEvent()));
+                        out.println();
+                    }
+                }, false);
+                
+                clientChannel.enqueueSessionListener(new SessionChannel.SessionChannelListener() {
+                    @Override
+                    public void onReceiveSession(Session session) {
+                        out.printf(String.format("Session with id '%s' received: State: %s - Reason: %s", session.getId(), session.getState(), session.getReason()));
+                        out.println();
+                        semaphore.release();
+                    }
+                });
+
+                final Presence presence = new Presence();
+                presence.setStatus(Presence.PresenceStatus.AVAILABLE);
+                Command presenceCommand = new Command(UUID.randomUUID()) {{
+                    setMethod(Command.CommandMethod.SET);
+                    setResource(presence);
+                    setUri(new LimeUri("/presence"));
+                }};
+
+                clientChannel.sendCommand(presenceCommand);
+
+                while (clientChannel.getState() == Session.SessionState.ESTABLISHED) {
+                    out.print("Destination node (Type EXIT to quit): ");
+                    String toInput = inScanner.nextLine();
+                    if (toInput != null &&
+                            toInput.equalsIgnoreCase("exit")) {
+                        out.println("Finishing the session...");
+                        clientChannel.sendFinishingSession();
+                        break;
+                    }
+
+                    if (toInput != null && !toInput.isEmpty()) {
+                        final Node node = Node.parse(toInput);
+                        out.print("Message text: ");
+                        final PlainText plainText = new PlainText(inScanner.nextLine());
+                        Message message = new Message(UUID.randomUUID()) {{
+                            setTo(node);
+                            setContent(plainText);
+                        }};
+
+                        clientChannel.sendMessage(message);
+                    }
+                }
+
+                if (semaphore.tryAcquire(1, 5000, TimeUnit.MILLISECONDS)) {
+                    out.println("Session finished");
+                } else {
+                    out.println("Timeout exceeded");
+                }
             }
+        } else {
+            out.println("Timeout exceeded");
         }
         
-
+        exit(0);
     }
 }
