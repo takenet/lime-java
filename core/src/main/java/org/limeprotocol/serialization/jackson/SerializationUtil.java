@@ -13,6 +13,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class SerializationUtil {
     private static Map<MediaType, Class<? extends Document>> documentTypesMap;
@@ -29,7 +30,7 @@ public class SerializationUtil {
                 try {
                     document = documentType.getConstructor().newInstance();
                 } catch (Exception e) {
-                    System.out.println("Document does not have an empty constructor:" + documentType);
+                    Logger.getAnonymousLogger().warning("Document does not have an empty constructor:" + documentType);
                 }
                 if (document != null) {
                     documentTypesMap.put(document.getMediaType(), documentType);
