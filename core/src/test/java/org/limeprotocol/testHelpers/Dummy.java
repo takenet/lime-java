@@ -172,6 +172,10 @@ public class Dummy {
         return message;
     }
 
+    public static PlainDocument createTextContent() {
+        return new PlainDocument(createRandomString(150), MediaType.parse("text/plain"));
+    }
+
     public static Command createCommand(){
         return createCommand(null);
     }

@@ -1,11 +1,7 @@
 package org.limeprotocol.client;
 
-import org.limeprotocol.Identity;
-import org.limeprotocol.Node;
-import org.limeprotocol.SessionCompression;
-import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.*;
 import org.limeprotocol.network.Channel;
-import org.limeprotocol.network.SessionChannel;
 import org.limeprotocol.security.Authentication;
 
 import java.io.IOException;
@@ -46,16 +42,39 @@ public interface ClientChannel extends Channel {
      * @param messageId
      * @param to
      */
-    void sendReceivedNotification(UUID messageId, Node to);
+    void sendReceivedNotification(UUID messageId, Node to) throws IOException;
 
     /**
      * Sends a finishing session envelope to the server.
      */
-    void sendFinishingSession();
+    void sendFinishingSession() throws IOException;
 
     /**
-     *  Listens for a finished session envelope from the server.
-     * @param sessionListener
+     * Performs the session negotiation and authentication
+     * @param compression Chosen compression, or null for the first one supported by the server
+     * @param encryption Chosen encryption, or null for the first one supported by the server
+     * @param identity
+     * @param authentication
      */
-    void receiveFinishedSession(SessionChannelListener sessionListener);
+    void establishSession(SessionCompression compression, SessionEncryption encryption,
+                                  Identity identity, Authentication authentication, String instance,
+                                  SessionEstablishListener listener)
+            throws IOException;
+
+    /**
+     * Defines listener for session establishment
+     */
+    public interface SessionEstablishListener {
+        /**
+         * Occurs when the result of session establishment is reached
+         * @param session
+         */
+        void onReceiveSession(Session session);
+
+        /**
+         * Occurs if there is any unexpected failure during session establishment
+         * @param exception
+         */
+        void onFailure(Exception exception);
+    }
 }

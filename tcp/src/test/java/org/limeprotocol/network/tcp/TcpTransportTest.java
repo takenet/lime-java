@@ -1,6 +1,8 @@
 package org.limeprotocol.network.tcp;
 
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.client.ClientChannelImpl;
@@ -25,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -187,26 +190,27 @@ public class TcpTransportTest {
         };
 
         clientChannel.startNewSession(sessionChannelListener);
-        
-        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+
+        int timeout = 10000;
+        if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                 receivedSession[0] != null) {
             if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
                 receivedSession[0] = null;
                 clientChannel.negotiateSession(SessionCompression.NONE, SessionEncryption.TLS, sessionChannelListener);
-                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                         receivedSession[0] != null) {
                     if (receivedSession[0].getState() == Session.SessionState.NEGOTIATING) {
                         clientChannel.getTransport().setEncryption(SessionEncryption.TLS);
                         receivedSession[0] = null;
                         clientChannel.setSessionListener(sessionChannelListener);
-                        if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                        if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                                 receivedSession[0] != null) {
                             if (receivedSession[0].getState() == Session.SessionState.AUTHENTICATING) {
                                 Identity identity = new Identity(UUID.randomUUID().toString(), "take.io");
                                 Authentication authentication = new GuestAuthentication();
                                 receivedSession[0] = null;
                                 clientChannel.authenticateSession(identity, authentication, "default", sessionChannelListener);
-                                if (semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS) &&
+                                if (semaphore.tryAcquire(1, timeout, TimeUnit.MILLISECONDS) &&
                                         receivedSession[0] != null) {
                                     if (receivedSession[0].getState() == Session.SessionState.ESTABLISHED) {
                                         System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
@@ -220,6 +224,54 @@ public class TcpTransportTest {
         }
 
         assertNotNull(receivedSession[0]);
+    }
+
+    @Test
+    @Ignore
+    public void establishSession_WithTls_ReceivesEstablishedSession() throws URISyntaxException, IOException, InterruptedException {
+        TcpTransport transport = new TcpTransport(
+                new JacksonEnvelopeSerializer(),
+                new SocketTcpClientFactory(),
+                new TraceWriter() {
+                    @Override
+                    public void trace(String data, DataOperation operation) {
+                        System.out.printf("%s: %s", operation.toString(), data);
+                        System.out.println();
+                    }
+
+                    @Override
+                    public boolean isEnabled() {
+                        return true;
+                    }
+                });
+
+        transport.open(new URI("net.tcp://takenet-iris.cloudapp.net:55321"));
+
+        ClientChannel clientChannel = new ClientChannelImpl(transport, true);
+
+        final Semaphore semaphore = new Semaphore(1);
+        semaphore.acquire();
+
+        clientChannel.establishSession(SessionCompression.NONE, SessionEncryption.NONE,
+                new Identity(UUID.randomUUID().toString(), "take.io"), new GuestAuthentication(), "default",
+                new ClientChannel.SessionEstablishListener() {
+                    @Override
+                    public void onReceiveSession(Session session) {
+                        assertNotNull(session);
+                        assertEquals(Session.SessionState.ESTABLISHED, session.getState());
+                        semaphore.release();
+                    }
+
+                    @Override
+                    public void onFailure(Exception exception) {
+                        fail(exception.getMessage());
+                        semaphore.release();
+                    }
+                });
+
+        if (!semaphore.tryAcquire(1, 40, TimeUnit.SECONDS)) {
+            fail("Timeout establishing session");
+        }
     }
 
     @Test

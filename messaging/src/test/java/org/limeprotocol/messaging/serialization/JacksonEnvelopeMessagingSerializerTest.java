@@ -49,7 +49,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void serialize_TextMessage_ReturnsValidJsonString()
     {
-        PlainText content = createTextContent();
+        PlainText content = createPlainText();
         Message message = createMessage(content);
         message.setPp(createNode());
 
@@ -68,7 +68,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void serialize_FireAndForgetTextMessage_ReturnsValidJsonString()
     {
-        PlainText content = createTextContent();
+        PlainText content = createPlainText();
         Message message = createMessage(content);
         message.setId(null);
 
