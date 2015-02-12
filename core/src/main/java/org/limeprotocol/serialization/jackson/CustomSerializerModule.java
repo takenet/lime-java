@@ -5,8 +5,15 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import org.limeprotocol.*;
+import org.limeprotocol.security.Authentication;
+
+import java.util.Iterator;
+import java.util.List;
+
+import static org.limeprotocol.security.Authentication.*;
 
 public class CustomSerializerModule extends SimpleModule {
 
@@ -55,6 +62,25 @@ public class CustomSerializerModule extends SimpleModule {
                     return new DocumentSerializer((JsonSerializer<Object>) serializer);
                 }
                 return super.modifySerializer(config, beanDesc, serializer);
+            }
+
+            @Override
+            public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
+                Class<?> beanClass = beanDesc.getBeanClass();
+                if (Authentication.class.isAssignableFrom(beanClass)) {
+                    removeAuthenticationSchemeProperty(beanProperties);
+                }
+                return super.changeProperties(config, beanDesc, beanProperties);
+            }
+
+            private void removeAuthenticationSchemeProperty(List<BeanPropertyWriter> beanProperties) {
+                for (Iterator<BeanPropertyWriter> iterator = beanProperties.iterator(); iterator.hasNext(); ) {
+                    BeanPropertyWriter propertyWriter = iterator.next();
+                    if(propertyWriter.getPropertyType() == AuthenticationScheme.class) {
+                        iterator.remove();
+                        break;
+                    }
+                }
             }
         });
     };

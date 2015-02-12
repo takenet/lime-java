@@ -227,7 +227,6 @@ public class TcpTransportTest {
     }
 
     @Test
-    @Ignore
     public void establishSession_WithTls_ReceivesEstablishedSession() throws URISyntaxException, IOException, InterruptedException {
         TcpTransport transport = new TcpTransport(
                 new JacksonEnvelopeSerializer(),

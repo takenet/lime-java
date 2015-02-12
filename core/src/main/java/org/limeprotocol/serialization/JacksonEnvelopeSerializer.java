@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.*;
 import org.limeprotocol.security.Authentication;
@@ -24,6 +25,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     public JacksonEnvelopeSerializer() {
         this.mapper = new ObjectMapper()
                 .setSerializationInclusion(Include.NON_NULL)
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .registerModule(new CustomSerializerModule());
     }
