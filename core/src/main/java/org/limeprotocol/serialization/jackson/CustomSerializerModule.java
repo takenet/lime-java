@@ -13,7 +13,7 @@ import org.limeprotocol.security.Authentication;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.limeprotocol.security.Authentication.*;
+import static org.limeprotocol.security.Authentication.AuthenticationScheme;
 
 public class CustomSerializerModule extends SimpleModule {
 
@@ -54,9 +54,6 @@ public class CustomSerializerModule extends SimpleModule {
             @Override
             public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc, JsonSerializer<?> serializer) {
                 Class<?> beanClass = beanDesc.getBeanClass();
-                if (beanClass == Command.class) {
-                    return new CommandSerializer((JsonSerializer<Object>) serializer);
-                }
 
                 if (Document.class.isAssignableFrom(beanClass)) {
                     return new DocumentSerializer((JsonSerializer<Object>) serializer);
