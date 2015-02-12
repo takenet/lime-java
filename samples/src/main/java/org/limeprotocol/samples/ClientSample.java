@@ -6,6 +6,7 @@ import org.limeprotocol.client.ClientChannelImpl;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Presence;
 import org.limeprotocol.network.*;
+import org.limeprotocol.network.tcp.CustomTrustManager;
 import org.limeprotocol.network.tcp.SocketTcpClientFactory;
 import org.limeprotocol.network.tcp.TcpTransport;
 import org.limeprotocol.security.PlainAuthentication;
@@ -44,7 +45,7 @@ public class ClientSample {
         URI serverUri = new URI(String.format("net.tcp://%s:%d", hostName, portNumber));
         TcpTransport transport = new TcpTransport(
                 new JacksonEnvelopeSerializer(),
-                new SocketTcpClientFactory(),
+                new SocketTcpClientFactory(new CustomTrustManager(null)),
                 new TraceWriter() {
                     @Override
                     public void trace(String data, DataOperation operation) {
