@@ -25,6 +25,13 @@
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>0.9.9</version>
+            <exclusions>
+                <exclusion>
+                    <!-- Fix for Android compilation (https://code.google.com/p/reflections/issues/detail?id=98&thanks=98&ts=1327489720) -->
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
