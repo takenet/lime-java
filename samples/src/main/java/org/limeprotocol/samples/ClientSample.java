@@ -5,6 +5,8 @@ import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.client.ClientChannelImpl;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.resource.Presence;
+import org.limeprotocol.messaging.resource.Receipt;
+import org.limeprotocol.messaging.resource.UriTemplates;
 import org.limeprotocol.network.*;
 import org.limeprotocol.network.tcp.CustomTrustManager;
 import org.limeprotocol.network.tcp.SocketTcpClientFactory;
@@ -125,15 +127,28 @@ public class ClientSample {
                     }
                 });
 
-                final Presence presence = new Presence();
-                presence.setStatus(Presence.PresenceStatus.AVAILABLE);
+                // Sets the presence
+                final Presence presence = new Presence() {{
+                    setStatus(Presence.PresenceStatus.AVAILABLE);
+                }};
                 Command presenceCommand = new Command(UUID.randomUUID()) {{
                     setMethod(Command.CommandMethod.SET);
                     setResource(presence);
-                    setUri(new LimeUri("/presence"));
+                    setUri(new LimeUri(UriTemplates.PRESENCE));
                 }};
-
                 clientChannel.sendCommand(presenceCommand);
+                
+                // Sets the receipts
+                final Receipt receipt = new Receipt() {{
+                    setEvents(new Notification.Event[] {
+                        Notification.Event.DISPATCHED , Notification.Event.RECEIVED });
+                }};
+                Command receiptCommand = new Command(UUID.randomUUID()) {{
+                    setMethod(Command.CommandMethod.SET);
+                    setResource(receipt);
+                    setUri(new LimeUri(UriTemplates.RECEIPT));
+                }};
+                clientChannel.sendCommand(receiptCommand);
 
                 while (clientChannel.getState() == Session.SessionState.ESTABLISHED) {
                     out.print("Destination node (Type EXIT to quit): ");

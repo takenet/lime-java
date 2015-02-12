@@ -240,50 +240,42 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
         @Override
         public void onReceiveSession(Session receivedSession) {
-            if (receivedSession.getState() == NEGOTIATING) {
-                if (receivedSession.getCompressionOptions() != null) {
-                    // Send desired options
-                    SessionCompression selectedCompression = compression;
-                    if (selectedCompression == null) {
-                        selectedCompression = receivedSession.getCompressionOptions()[0];
-                    }
+            try {
+                if (receivedSession.getState() == NEGOTIATING) {
+                    if (receivedSession.getCompressionOptions() != null) {
+                        // Send desired options
+                        SessionCompression selectedCompression = compression;
+                        if (selectedCompression == null) {
+                            selectedCompression = receivedSession.getCompressionOptions()[0];
+                        }
 
-                    SessionEncryption selectEncryption = encryption;
-                    if (selectEncryption == null) {
-                        selectEncryption = receivedSession.getEncryptionOptions()[0];
-                    }
+                        SessionEncryption selectEncryption = encryption;
+                        if (selectEncryption == null) {
+                            selectEncryption = receivedSession.getEncryptionOptions()[0];
+                        }
 
-                    try {
-                        channel.negotiateSession(selectedCompression, selectEncryption, this);
-                    } catch (Exception e) {
-                        this.listener.onFailure(e);
-                    }
-                } else {
-                    // Configure transport
-                    if (receivedSession.getCompression() != channel.getTransport().getCompression()) {
                         try {
+                            channel.negotiateSession(selectedCompression, selectEncryption, this);
+                        } catch (Exception e) {
+                            this.listener.onFailure(e);
+                        }
+                    } else {
+                        // Configure transport
+                        if (receivedSession.getCompression() != channel.getTransport().getCompression()) {
                             channel.getTransport().setCompression(receivedSession.getCompression());
-                        } catch (Exception e) {
-                            this.listener.onFailure(e);
                         }
-                    }
-                    if (receivedSession.getEncryption() != channel.getTransport().getEncryption()) {
-                        try {
+                        if (receivedSession.getEncryption() != channel.getTransport().getEncryption()) {
                             channel.getTransport().setEncryption(receivedSession.getEncryption());
-                        } catch (Exception e) {
-                            this.listener.onFailure(e);
                         }
+                        channel.enqueueSessionListener(this);
                     }
-                    channel.enqueueSessionListener(this);
-                }
-            } else if (receivedSession.getState() == AUTHENTICATING) {
-                try {
+                } else if (receivedSession.getState() == AUTHENTICATING) {
                     channel.authenticateSession(identity, authentication, instance, this);
-                } catch (Exception e) {
-                    this.listener.onFailure(e);
+                } else {
+                    this.listener.onReceiveSession(receivedSession);
                 }
-            } else if (receivedSession.getState() == ESTABLISHED) {
-                this.listener.onReceiveSession(receivedSession);
+            } catch (Exception e) {
+                this.listener.onFailure(e);
             }
         }
     }
