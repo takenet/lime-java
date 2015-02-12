@@ -6,6 +6,7 @@ import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
 import org.limeprotocol.serialization.EnvelopeSerializer;
+import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -29,6 +30,14 @@ public class TcpTransport extends TransportBase implements Transport {
     private Future<?> listenerFuture;
     private ExecutorService executorService;
 
+    public TcpTransport() {
+        this(new JacksonEnvelopeSerializer(), new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
+    }
+    
+    public TcpTransport(EnvelopeSerializer envelopeSerializer) {
+        this(envelopeSerializer, new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
+    }
+    
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
         this(envelopeSerializer, tcpClientFactory, null, DEFAULT_BUFFER_SIZE);
     }

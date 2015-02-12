@@ -50,6 +50,7 @@
         <module>core</module>
         <module>messaging</module>
         <module>tcp</module>
+        <module>samples</module>
     </modules>
 
 
