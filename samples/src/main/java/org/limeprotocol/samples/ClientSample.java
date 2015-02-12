@@ -35,7 +35,6 @@ public class ClientSample {
         }
         
         out.print("Port number (ENTER for default): ");
-        
         int portNumber;
         try {
             portNumber = Integer.parseInt(inScanner.nextLine());
@@ -78,7 +77,7 @@ public class ClientSample {
                 new ClientChannel.EstablishSessionListener() {
                     @Override
                     public void onFailure(Exception exception) {
-                        out.printf("Session establishment failed");
+                        out.printf("Session establishment failed: ");
                         exception.printStackTrace();
                         semaphore.release();
                     }
@@ -92,7 +91,7 @@ public class ClientSample {
                 }
         );
 
-        if (semaphore.tryAcquire(1, 6000, TimeUnit.SECONDS)) {
+        if (semaphore.tryAcquire(1, 60, TimeUnit.SECONDS)) {
             if (clientChannel.getState() == Session.SessionState.ESTABLISHED) {
                 System.out.printf("Session established - Id: %s - Remote node: %s - Local node: %s", clientChannel.getSessionId(), clientChannel.getRemoteNode(), clientChannel.getLocalNode());
                 System.out.println();
