@@ -67,16 +67,19 @@ public class CustomSerializerModule extends SimpleModule {
             @Override
             public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
                 Class<?> beanClass = beanDesc.getBeanClass();
-                if (Authentication.class.isAssignableFrom(beanClass)) {
-                    removeAuthenticationSchemeProperty(beanProperties);
+
+                if(Document.class.isAssignableFrom(beanClass)){
+                    removeProperty(MediaType.class, beanProperties);
+                } else if (Authentication.class.isAssignableFrom(beanClass)) {
+                    removeProperty(AuthenticationScheme.class, beanProperties);
                 }
                 return super.changeProperties(config, beanDesc, beanProperties);
             }
 
-            private void removeAuthenticationSchemeProperty(List<BeanPropertyWriter> beanProperties) {
+            private void removeProperty(Class type, List<BeanPropertyWriter> beanProperties) {
                 for (Iterator<BeanPropertyWriter> iterator = beanProperties.iterator(); iterator.hasNext(); ) {
                     BeanPropertyWriter propertyWriter = iterator.next();
-                    if(propertyWriter.getPropertyType() == AuthenticationScheme.class) {
+                    if(propertyWriter.getPropertyType() == type) {
                         iterator.remove();
                         break;
                     }

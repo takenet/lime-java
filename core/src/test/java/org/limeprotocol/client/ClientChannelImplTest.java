@@ -389,7 +389,7 @@ public class ClientChannelImplTest {
 
     //endregion sendMessage
 
-    //region receiveMessageAsync
+    //region receiveMessage
 
     @Test
     public void receiveMessage_MessageReceivedAndAutoNotifyReceiptTrue_SendsNotificationToTransport()
@@ -434,10 +434,10 @@ public class ClientChannelImplTest {
         assertThat(transport.getSentEnvelopes()).isEmpty();
     }
 
-    // endregion receiveMessageAsync
+    // endregion receiveMessage
 
     @Test
-    public void authenticateSessionAsync_AuthenticatingStateEstablishedSessionReceived_SetsStateAndNodeProperties()
+    public void authenticateSession_AuthenticatingStateEstablishedSessionReceived_SetsStateAndNodeProperties()
     {
 
         PlainAuthentication authentication = createPlainAuthentication();
@@ -463,7 +463,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void receiveFinishedSessionAsync_EstablishedStateFinishedSessionReceived_SetsStateAndClosesTransport()
+    public void receiveFinishedSession_EstablishedStateFinishedSessionReceived_SetsStateAndClosesTransport()
     {
         Session session = createSession(SessionState.FINISHED);
 
@@ -486,6 +486,19 @@ public class ClientChannelImplTest {
         assertThat(sentSession.getState()).isEqualTo(SessionState.FINISHING);
         assertThat(transport.isClosed());
     }
+
+    @Test
+    public void receiveFinishedSession_EstablishedStateFailedSessionReceived_SetsStateAndClosesTransport()
+    {
+        Session receivedSession = createSession(SessionState.FAILED);
+
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true);
+        target.raiseOnReceiveSession(receivedSession);
+
+        assertThat(target.getState()).isEqualTo(receivedSession.getState());
+        assertThat(transport.isClosed());
+    }
+
 
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
