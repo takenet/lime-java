@@ -27,7 +27,7 @@ public abstract class ChannelBase implements Channel {
     private final Queue<CommandChannelListener> singleReceiveCommandListeners;
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
-    private SessionChannelListener sessionChannelListener;
+    private Queue<SessionChannelListener> sessionChannelListeners;
     private final Transport.TransportListener transportListener;
 
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
@@ -44,6 +44,8 @@ public abstract class ChannelBase implements Channel {
         singleReceiveCommandListeners = new LinkedBlockingQueue<>();
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
+        sessionChannelListeners = new LinkedBlockingQueue<>();
+
         transportListener = new ChannelTransportListener();
         
         setState(Session.SessionState.NEW);
@@ -258,7 +260,7 @@ public abstract class ChannelBase implements Channel {
             throw new IllegalArgumentException("listener");
         }
         checkTransportListener();
-        sessionChannelListener = listener;
+        sessionChannelListeners.add(listener);
         setupTransportListener();
     }
 
@@ -318,9 +320,9 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
-        if (sessionChannelListener != null) {
-            sessionChannelListener.onReceiveSession(session);
-            sessionChannelListener = null;
+        SessionChannelListener listener = sessionChannelListeners.poll();
+        if (listener != null) {
+            listener.onReceiveSession(session);
         }
     }
 

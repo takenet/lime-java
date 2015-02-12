@@ -11,7 +11,7 @@ import static org.limeprotocol.testHelpers.Dummy.*;
 
 public class MessagingTestDummy {
 
-    public static PlainText createTextContent()
+    public static PlainText createPlainText()
     {
         return new PlainText(createRandomString(150));
     }
