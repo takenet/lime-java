@@ -154,10 +154,11 @@ public class TcpTransportTest {
     }
     
     @Test
+    @Ignore
     public void send_realTcpClient_receivesEnvelope() throws URISyntaxException, IOException, InterruptedException {
         TcpTransport transport = new TcpTransport(
                 new JacksonEnvelopeSerializer(),
-                new SocketTcpClientFactory(),
+                new SocketTcpClientFactory(new CustomTrustManager(null)),
                 new TraceWriter() {
                     @Override
                     public void trace(String data, DataOperation operation) {
