@@ -190,9 +190,7 @@ public class JacksonEnvelopeSerializerTest {
         assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
 
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
-
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_VALUE_KEY).isEqualTo(content.getValue());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(message.getContent().toString());
     }
 
     //endregion Message
@@ -200,7 +198,7 @@ public class JacksonEnvelopeSerializerTest {
     //region Notification
 
     @Test
-    public void Serialize_FailedNotification_ReturnsValidJsonString()
+    public void serialize_FailedNotification_ReturnsValidJsonString()
     {
         Notification notification = createNotification(Notification.Event.FAILED);
         notification.setId(UUID.randomUUID());
