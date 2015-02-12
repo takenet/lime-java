@@ -468,7 +468,7 @@ public class ClientChannelImplTest {
         Session session = createSession(SessionState.FINISHED);
 
         TestClientChannel target = getTarget(SessionState.ESTABLISHED, true);
-        target.setSessionListener(listener);
+        target.enqueueSessionListener(listener);
 
         transport.addNextEnvelopeToReturn(session);
 
@@ -488,7 +488,7 @@ public class ClientChannelImplTest {
     }
 
     @Test
-    public void receiveFinishedSession_EstablishedStateFailedSessionReceived_SetsStateAndClosesTransport()
+    public void raiseOnReceiveSession_EstablishedStateFailedSessionReceived_SetsStateAndClosesTransport()
     {
         Session receivedSession = createSession(SessionState.FAILED);
 

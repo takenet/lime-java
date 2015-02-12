@@ -324,7 +324,7 @@ public abstract class ChannelBase implements Channel {
             transport.setListener(null);
         }
 
-        SessionChannelListener listener = sessionChannelListeners.remove();
+        SessionChannelListener listener = sessionChannelListeners.poll();
         if (listener != null) {
             listener.onReceiveSession(session);
         }
