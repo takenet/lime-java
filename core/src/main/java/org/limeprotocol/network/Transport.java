@@ -22,15 +22,8 @@ public interface Transport {
     /**
      *  Register the specified listener for receiving envelopes.
      * @param transportListener
-     * @param removeAfterReceive
      */
-    void addListener(TransportListener transportListener, boolean removeAfterReceive);
-
-    /**
-     * Unregister the specified listener.
-     * @param transportListener
-     */
-    void removeListener(TransportListener transportListener);
+    void setListener(TransportListener transportListener);
     
     /**
      * Opens the transport connection with the specified Uri.

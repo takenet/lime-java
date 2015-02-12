@@ -24,6 +24,6 @@ public class Reason {
 
     @Override
     public String toString() {
-        return StringUtils.format("{0} (Code {1})", description, code);
+        return String.format("%s (Code %d)", description, code);
     }
 }

@@ -38,7 +38,6 @@ public class PlainText extends DocumentBase {
         return new PlainText(value);
     }
 
-
     /**
      * Returns a String that represents this instance.
      * @return
