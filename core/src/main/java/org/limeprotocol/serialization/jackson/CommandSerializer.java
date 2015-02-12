@@ -19,10 +19,6 @@ public class CommandSerializer extends StdSerializer<Command> {
 
     @Override
     public void serialize(Command command, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-        if(command.getStatus() == Command.CommandStatus.PENDING) {
-            command.setStatus(null);
-        }
-
         defaultSerializer.serialize(command, jsonGenerator, serializerProvider);
     }
 }

@@ -121,23 +121,17 @@ public class Command extends Envelope {
         OBSERVE
     }
 
-    /// <summary>
-    /// Represents the status
-    /// of a resource operation
-    /// </summary>
+    /**
+     * Represents the status of a resource operation.
+     */
     public enum CommandStatus {
-        /// <summary>
-        /// The resource action is pending
-        /// </summary>
-        PENDING,
-        /// <summary>
-        /// The resource action was
-        /// sucessfully
-        /// </summary>
+        /**
+         * The resource action has been successfully executed.
+         */
         SUCCESS,
-        /// <summary>
-        ///
-        /// </summary>
+        /**
+         * The resource action has failed.
+         */
         FAILURE
     }
 

@@ -58,19 +58,13 @@ public interface ClientChannel extends Channel {
      */
     void establishSession(SessionCompression compression, SessionEncryption encryption,
                                   Identity identity, Authentication authentication, String instance,
-                                  SessionEstablishListener listener)
+                                  EstablishSessionListener listener)
             throws IOException;
 
     /**
      * Defines listener for session establishment
      */
-    public interface SessionEstablishListener {
-        /**
-         * Occurs when the result of session establishment is reached
-         * @param session
-         */
-        void onReceiveSession(Session session);
-
+    public interface EstablishSessionListener extends SessionChannelListener {
         /**
          * Occurs if there is any unexpected failure during session establishment
          * @param exception

@@ -255,7 +255,7 @@ public abstract class ChannelBase implements Channel {
      * @param listener
      */
     @Override
-    public synchronized void setSessionListener(SessionChannelListener listener) {
+    public synchronized void enqueueSessionListener(SessionChannelListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -281,7 +281,7 @@ public abstract class ChannelBase implements Channel {
         if (autoReplyPings &&
                 command.getId() != null &&
                 command.getMethod() == Command.CommandMethod.GET &&
-                command.getStatus() == Command.CommandStatus.PENDING &&
+                command.getStatus() == null &&
                 command.getUri() != null &&
                 command.getUri().toString().equalsIgnoreCase(PING_URI_TEMPLATE)) {
             Command pingCommandResponse = new Command(command.getId());
@@ -320,6 +320,10 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
+        if (getState() != Session.SessionState.ESTABLISHED) {
+            transport.setListener(null);
+        }
+
         SessionChannelListener listener = sessionChannelListeners.poll();
         if (listener != null) {
             listener.onReceiveSession(session);
@@ -363,12 +367,7 @@ public abstract class ChannelBase implements Channel {
     }
     
     private synchronized void setupTransportListener() {
-        boolean removeOnReceive = true;
-        if (getState() == Session.SessionState.ESTABLISHED) {
-            removeOnReceive = false;
-        }
-        transport.removeListener(transportListener);
-        transport.addListener(transportListener, removeOnReceive);
+        transport.setListener(transportListener);
     }
 
     private <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
