@@ -83,41 +83,6 @@ public class Group extends DocumentBase {
         PUBLIC
     }
 
-    public class GroupMember extends DocumentBase {
-
-        public static final String MIME_TYPE = "application/vnd.lime.groupmember+json";
-
-        public GroupMember() {
-            super(MediaType.parse(MIME_TYPE));
-        }
-
-        /**
-         * The identity of the member, in the name@domain format.
-         */
-        private Identity identity;
-
-        /**
-         * The role of the identity in the group.
-         */
-        private GroupMemberRole role;
-
-        public Identity getIdentity() {
-            return identity;
-        }
-
-        public void setIdentity(Identity identity) {
-            this.identity = identity;
-        }
-
-        public GroupMemberRole getRole() {
-            return role;
-        }
-
-        public void setRole(GroupMemberRole role) {
-            this.role = role;
-        }
-    }
-
 
     public enum GroupMemberRole {
         /**
