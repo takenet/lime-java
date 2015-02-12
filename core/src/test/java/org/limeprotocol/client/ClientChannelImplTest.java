@@ -499,6 +499,27 @@ public class ClientChannelImplTest {
         assertThat(transport.isClosed());
     }
 
+    @Test
+    public void authenticateSession_AuthenticatingStateFailedSessionReceived_SetsStateAndClosesTransport()
+    {
+        Authentication authentication = createPlainAuthentication();
+        Identity identity = createIdentity();
+        Session receivedSession = createSession(SessionState.FAILED);
+
+        transport.addNextEnvelopeToReturn(receivedSession);
+
+        TestClientChannel target = getTarget(SessionState.AUTHENTICATING, true);
+
+        try {
+            target.authenticateSession(identity, authentication, null, listener);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        assertThat(target.getState()).isEqualTo(receivedSession.getState());
+        assertThat(transport.isClosed());
+    }
+
 
     private TestClientChannel getTarget() {
         return getTarget(SessionState.NEW);
