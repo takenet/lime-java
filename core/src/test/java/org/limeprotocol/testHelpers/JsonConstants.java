@@ -55,8 +55,6 @@ public class JsonConstants {
     public static class Message {
         public static final String TYPE_KEY = "type";
         public static final String CONTENT_KEY = "content";
-        public static final String VALUE_KEY = "value";
-        public static final String CONTENT_VALUE_KEY = CONTENT_KEY + "." + VALUE_KEY;
     }
 
     public static class Notification {
@@ -68,8 +66,6 @@ public class JsonConstants {
 
     public static class PlainText {
         public static final String CONTENT_KEY = "content";
-        public static final String TEXT_KEY = "text";
-        public static final String CONTENT_TEXT_KEY = CONTENT_KEY + "." + TEXT_KEY;
     }
 
     public static class DocumentCollection {

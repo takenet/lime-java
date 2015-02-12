@@ -61,8 +61,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
 
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
-        assertThatJson(resultString).node(JsonConstants.PlainText.CONTENT_TEXT_KEY).isEqualTo(content.getText());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
     }
 
     @Test
@@ -77,9 +76,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertJsonEnvelopeProperties(message, resultString, FROM_KEY, TO_KEY);
 
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isPresent();
-
-        assertThatJson(resultString).node(JsonConstants.PlainText.CONTENT_TEXT_KEY).isEqualTo(content.getText());
+        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
     }
 
     //endregion Message

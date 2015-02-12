@@ -46,8 +46,13 @@ public class CustomSerializerModule extends SimpleModule {
         context.addBeanSerializerModifier(new BeanSerializerModifier() {
             @Override
             public JsonSerializer<?> modifySerializer(SerializationConfig config, BeanDescription beanDesc, JsonSerializer<?> serializer) {
-                if (beanDesc.getBeanClass() == Command.class) {
+                Class<?> beanClass = beanDesc.getBeanClass();
+                if (beanClass == Command.class) {
                     return new CommandSerializer((JsonSerializer<Object>) serializer);
+                }
+
+                if (Document.class.isAssignableFrom(beanClass)) {
+                    return new DocumentSerializer((JsonSerializer<Object>) serializer);
                 }
                 return super.modifySerializer(config, beanDesc, serializer);
             }
