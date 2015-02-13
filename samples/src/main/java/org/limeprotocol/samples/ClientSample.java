@@ -31,7 +31,7 @@ public class ClientSample {
         out.print("Host name (ENTER for default): ");
         String hostName = inScanner.nextLine();
         if (hostName == null || hostName.isEmpty()) {
-            hostName = InetAddress.getLocalHost().getHostName();
+            hostName = "takenet-iris.cloudapp.net";//InetAddress.getLocalHost().getHostName();
         }
         
         out.print("Port number (ENTER for default): ");
@@ -142,6 +142,15 @@ public class ClientSample {
                     setEvents(new Notification.Event[] {
                         Notification.Event.DISPATCHED , Notification.Event.RECEIVED });
                 }};
+
+                // Get presence
+                Command getPresenceCommand = new Command(UUID.randomUUID()) {{
+                    setMethod(Command.CommandMethod.GET);
+                    setUri(new LimeUri(UriTemplates.PRESENCE));
+                }};
+                clientChannel.sendCommand(getPresenceCommand);
+
+
                 Command receiptCommand = new Command(UUID.randomUUID()) {{
                     setMethod(Command.CommandMethod.SET);
                     setResource(receipt);
