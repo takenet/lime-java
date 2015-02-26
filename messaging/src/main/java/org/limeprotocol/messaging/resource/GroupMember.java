@@ -3,6 +3,7 @@ package org.limeprotocol.messaging.resource;
 import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
+import org.limeprotocol.Node;
 
 public class GroupMember extends DocumentBase {
 
@@ -12,29 +13,62 @@ public class GroupMember extends DocumentBase {
         super(MediaType.parse(MIME_TYPE));
     }
 
-    /**
-     * The identity of the member, in the name@domain format.
-     */
-    private Identity identity;
+    private Node address;
+    private GroupMemberRole role;
 
     /**
-     * The role of the identity in the group.
+     * Gets the identity of the member, in the name@domain format.
      */
-    private Group.GroupMemberRole role;
-
-    public Identity getIdentity() {
-        return identity;
+    public Node getAddress() {
+        return address;
     }
 
-    public void setIdentity(Identity identity) {
-        this.identity = identity;
+    /**
+     * Sets the identity of the member, in the name@domain format.
+     */
+    public void setAddress(Node address) {
+        this.address = address;
     }
 
-    public Group.GroupMemberRole getRole() {
+    /**
+     * Gets the role of the identity in the group.
+     */
+    public GroupMemberRole getRole() {
         return role;
     }
 
-    public void setRole(Group.GroupMemberRole role) {
+    /**
+     * Sets the role of the identity in the group.
+     */
+    public void setRole(GroupMemberRole role) {
         this.role = role;
+    }
+
+    public enum GroupMemberRole {
+        /**
+         * The member can send and receive
+         * messages to the group.
+         * It's the default value.
+         */
+        MEMBER,
+
+        /**
+         * The member can only receive messages
+         * from the group, and doesn't have permission to send.
+         */
+        LISTENER,
+
+        /**
+         * The member can send and receive messages to
+         * the group and can kick and
+         * ban contacts from it.
+         */
+        MODERATOR,
+
+        /**
+         * The owner have the permission to manage moderators,
+         * change and delete the group.
+         */
+        OWNER
     }
 }

@@ -82,34 +82,4 @@ public class Group extends DocumentBase {
          */
         PUBLIC
     }
-
-
-    public enum GroupMemberRole {
-        /**
-         * The member can send and receive
-         * messages to the group.
-         * It's the default value.
-         */
-        MEMBER,
-
-        /**
-         * The member can only receive messages
-         * from the group, and doesn't have permission to send.
-         */
-        LISTENER,
-
-        /**
-         * The member can send and receive messages to
-         * the group and can kick and
-         * ban contacts from it.
-         */
-        MODERATOR,
-
-        /**
-         * The owner have the permission to manage moderators,
-         * change and delete the group.
-         */
-        OWNER
-    }
-
 }
