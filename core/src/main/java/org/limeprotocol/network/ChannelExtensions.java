@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ChannelExtensions {
 
@@ -47,7 +48,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> TResource getResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException {
+    public static <TResource extends Document> TResource getResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
         return getResource(channel, limeUri, null);
     }
 
@@ -61,7 +62,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> TResource getResource(Channel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException {
+    public static <TResource extends Document> TResource getResource(Channel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -92,7 +93,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> void setResource(Channel channel, final LimeUri limeUri, final TResource resource) throws IOException, InterruptedException {
+    public static <TResource extends Document> void setResource(Channel channel, final LimeUri limeUri, final TResource resource) throws IOException, InterruptedException, TimeoutException {
         setResource(channel, limeUri, null, resource);
     }
 
@@ -106,7 +107,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> void setResource(Channel channel, final LimeUri limeUri, final Node from, final TResource resource) throws IOException, InterruptedException {
+    public static <TResource extends Document> void setResource(Channel channel, final LimeUri limeUri, final Node from, final TResource resource) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -137,7 +138,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static void deleteResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException {
+    public static void deleteResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
         deleteResource(channel, limeUri, null);
     }
     
@@ -149,7 +150,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static void deleteResource(Channel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException {
+    public static void deleteResource(Channel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -178,7 +179,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Command processCommand(Channel channel, Command command) throws IOException, InterruptedException {
+    public static Command processCommand(Channel channel, Command command) throws IOException, InterruptedException, TimeoutException {
         return processCommand(channel, command, DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
@@ -193,7 +194,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Command processCommand(Channel channel, Command command, long timeout, TimeUnit timeoutTimeUnit) throws IOException, InterruptedException {
+    public static Command processCommand(Channel channel, final Command command, long timeout, TimeUnit timeoutTimeUnit) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -210,22 +211,24 @@ public class ChannelExtensions {
             throw new IllegalArgumentException("The command status must not be defined");
         }
 
-        final Command[] responseCommand = new Command[0];
+        final Command[] responseCommand = new Command[1];
         final Semaphore clientChannelSemaphore = new Semaphore(1);
-        
-        synchronized (channel) {
-            channel.addCommandListener(new CommandChannel.CommandChannelListener() {
-                @Override
-                public void onReceiveCommand(Command command) {
-                    responseCommand[0] = command;
+        clientChannelSemaphore.acquire();
+        channel.addCommandListener(new CommandChannel.CommandChannelListener() {
+            @Override
+            public void onReceiveCommand(Command c) {
+                if (c.getId().equals(command.getId())) {
+                    responseCommand[0] = c;
                     clientChannelSemaphore.release();
                 }
-            }, true);
+            }
+        }, true);
 
-            clientChannelSemaphore.acquire();
-            channel.sendCommand(command);
-            clientChannelSemaphore.tryAcquire(1, timeout, timeoutTimeUnit);
+        channel.sendCommand(command);
+        if (!clientChannelSemaphore.tryAcquire(1, timeout, timeoutTimeUnit)) {
+            throw new TimeoutException("The request has timed out");
         }
+
 
         return responseCommand[0];
     }
