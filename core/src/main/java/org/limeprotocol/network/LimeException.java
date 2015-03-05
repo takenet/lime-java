@@ -18,4 +18,12 @@ public class LimeException extends RuntimeException {
             
         this.reason = reason;
     }
+
+    /**
+     * Gets the reason associated to the exception.
+     * @return
+     */
+    public Reason getReason() {
+        return reason;
+    }
 }
