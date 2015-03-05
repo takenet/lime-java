@@ -26,4 +26,9 @@ public class LimeException extends RuntimeException {
     public Reason getReason() {
         return reason;
     }
+
+    @Override
+    public String getMessage() {
+        return reason.getDescription();
+    }
 }
