@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 public class SerializationUtil {
-    private static Map<MediaType, Class<? extends Document>> documentTypesMap;
+    public static Map<MediaType, Class<? extends Document>> documentTypesMap;
 
     static {
         Reflections reflections = new Reflections("org.limeprotocol.*");
@@ -40,7 +40,6 @@ public class SerializationUtil {
     }
 
     public static Document deserializeDocument(ObjectMapper mapper, ObjectNode node, String documentName) {
-
         JsonNode typeNode = node.get("type");
 
         if (typeNode == null) {
@@ -72,6 +71,4 @@ public class SerializationUtil {
     public static Class<? extends Document> findDocumentClassFor(MediaType mediaType) {
         return documentTypesMap.get(mediaType);
     }
-
-
 }

@@ -56,7 +56,6 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
             } else {
                 throw new IllegalArgumentException("Envelope deserialization not implemented for this value");
             }
-
         } catch (IOException e) {
             throw new IllegalArgumentException("JSON string is not a valid envelope", e);
         }
@@ -64,7 +63,6 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 
     private Authentication parseAuthentication(JsonNode schemeNode, JsonNode authenticationNode) {
         AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
-
         if (scheme == null) {
             return null;
         }
@@ -95,9 +93,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     }
 
     private Command parseCommand(ObjectNode node) {
-
         Document document = deserializeDocument(mapper, node, "resource");
-
         Command command = mapper.convertValue(node, Command.class);
         command.setResource(document);
 
@@ -105,12 +101,10 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     }
 
     private Message parseMessage(ObjectNode node) {
-
         Document document = deserializeDocument(mapper, node, "content");
-
         Message message = mapper.convertValue(node, Message.class);
-
         message.setContent(document);
+        
         return message;
     }
 }
