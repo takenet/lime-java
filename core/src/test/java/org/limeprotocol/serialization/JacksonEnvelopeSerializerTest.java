@@ -585,7 +585,6 @@ public class JacksonEnvelopeSerializerTest {
         String propertyValue1 = createRandomString(10);
         long propertyValue2 = (long) createRandomLong();
 
-
         String json = StringUtils.format(
                 "{\"type\":\"{0}\",\"content\":{\"{1}\":\"{2}\",\"{3}\":{4}},\"id\":\"{5}\",\"from\":\"{6}\",\"pp\":\"{7}\",\"to\":\"{8}\",\"metadata\":{\"{9}\":\"{10}\",\"{11}\":\"{12}\"}}",
                 type,

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
+import org.limeprotocol.serialization.SerializationUtil;
 
 import java.io.IOException;
 import java.util.Iterator;

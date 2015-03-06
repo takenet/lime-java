@@ -12,8 +12,8 @@ import java.util.Set;
  * Represents a generic JSON document.
  */
 public final class JsonDocument extends DocumentBase implements Map<String, Object> {
-    private Map<String, Object> json;
 
+    private Map<String, Object> json;
 
     /**
      * Initializes a new instance of the JsonDocument class.
@@ -39,7 +39,6 @@ public final class JsonDocument extends DocumentBase implements Map<String, Obje
             throw new IllegalArgumentException("The media type is not a valid json type");
         }
     }
-
 
     public void setMediaType(MediaType mediaType) {
         if (mediaType == null) {
