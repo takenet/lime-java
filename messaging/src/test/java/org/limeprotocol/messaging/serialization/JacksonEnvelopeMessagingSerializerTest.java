@@ -3,11 +3,12 @@ package org.limeprotocol.messaging.serialization;
 import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
+import org.limeprotocol.messaging.Registrator;
 import org.limeprotocol.messaging.contents.ChatState;
 import org.limeprotocol.messaging.contents.PlainText;
-import org.limeprotocol.messaging.resource.Capability;
-import org.limeprotocol.messaging.resource.Contact;
-import org.limeprotocol.messaging.resource.Receipt;
+import org.limeprotocol.messaging.resources.Capability;
+import org.limeprotocol.messaging.resources.Contact;
+import org.limeprotocol.messaging.resources.Receipt;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
@@ -39,6 +40,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
     @Before
     public void setUp() throws Exception {
+        Registrator.registerDocuments();
         target = new JacksonEnvelopeSerializer();
     }
 

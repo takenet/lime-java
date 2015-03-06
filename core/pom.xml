@@ -22,18 +22,6 @@
             <version>2.5.0</version>
         </dependency>
         <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.9</version>
-            <exclusions>
-                <exclusion>
-                    <!-- Fix for Android compilation (https://code.google.com/p/reflections/issues/detail?id=98&thanks=98&ts=1327489720) -->
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
