@@ -30,7 +30,7 @@
         <dependency>
             <groupId>org.limeprotocol</groupId>
             <artifactId>lime-java-core</artifactId>
-            <version>1.0.0</version>
+            <version>${lime.version}</version>
         </dependency>
         <dependency>
             <groupId>org.limeprotocol</groupId>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.limeprotocol</groupId>
             <artifactId>lime-java-messaging</artifactId>
-            <version>1.0.0</version>
+            <version>${lime.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

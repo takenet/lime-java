@@ -30,7 +30,7 @@
         <dependency>
             <groupId>org.limeprotocol</groupId>
             <artifactId>lime-java-core</artifactId>
-            <version>1.0.0</version>
+            <version>${lime.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
