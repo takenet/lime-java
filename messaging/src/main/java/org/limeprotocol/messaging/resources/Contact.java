@@ -1,4 +1,4 @@
-package org.limeprotocol.messaging.resource;
+package org.limeprotocol.messaging.resources;
 
 import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;

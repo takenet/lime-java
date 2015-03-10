@@ -910,5 +910,4 @@ public class ChannelBaseTest {
             super.setListener(listener);
         }
     }
-
 }

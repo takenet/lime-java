@@ -4,8 +4,8 @@ import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.messaging.contents.PlainText;
-import org.limeprotocol.messaging.resource.Capability;
-import org.limeprotocol.messaging.resource.Contact;
+import org.limeprotocol.messaging.resources.Capability;
+import org.limeprotocol.messaging.resources.Contact;
 
 import static org.limeprotocol.testHelpers.Dummy.*;
 
