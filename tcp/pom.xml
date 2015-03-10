@@ -7,13 +7,24 @@
     <parent>
         <artifactId>lime-java</artifactId>
         <groupId>org.limeprotocol</groupId>
-        <version>1.0.0</version>
+        <version>${lime.version}</version>
     </parent>
 
-    <groupId>org.limeprotocol</groupId>
     <artifactId>lime-java-tcp</artifactId>
-    <version>1.0.0</version>
     <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <skip>false</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>

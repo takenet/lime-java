@@ -6,13 +6,25 @@
 
     <groupId>lime-java</groupId>
     <artifactId>lime-java-samples</artifactId>
-    <version>1.0.0</version>
 
     <parent>
         <artifactId>lime-java</artifactId>
         <groupId>org.limeprotocol</groupId>
-        <version>1.0.0</version>
+        <version>${lime.version}</version>
     </parent>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     
     <dependencies>
         <dependency>
@@ -23,7 +35,7 @@
         <dependency>
             <groupId>org.limeprotocol</groupId>
             <artifactId>lime-java-tcp</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.5</version>
         </dependency>
         <dependency>
             <groupId>org.limeprotocol</groupId>
