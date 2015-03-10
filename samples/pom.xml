@@ -35,7 +35,7 @@
         <dependency>
             <groupId>org.limeprotocol</groupId>
             <artifactId>lime-java-tcp</artifactId>
-            <version>1.0.5</version>
+            <version>${lime.version}</version>
         </dependency>
         <dependency>
             <groupId>org.limeprotocol</groupId>
