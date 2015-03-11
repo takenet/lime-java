@@ -5,7 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <lime.version>1.0.10</lime.version>
+        <build.number>11</build.number>
+        <lime.version>1.0.${build.number}</lime.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bintray.repo>takenet/maven</bintray.repo>
         <bintray.package>${artifactId}</bintray.package>
