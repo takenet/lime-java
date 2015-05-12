@@ -30,7 +30,10 @@ public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCol
 
         DocumentCollection collection = new DocumentCollection();
 
-        int total = node.get("total").asInt();
+        int total = 0;
+        if (node.has("total")) {
+            total = node.get("total").asInt();
+        }
         Document[] items = new Document[total];
         MediaType itemType = MediaType.parse(node.get("itemType").asText());
 

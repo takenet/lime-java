@@ -104,7 +104,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         String resultString = target.serialize(command);
 
-        assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY );
+        assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, PP_KEY, TO_KEY, METADATA_KEY);
 
         assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
 
@@ -164,13 +164,13 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         contact = (Contact)contacts[1];
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ NAME_KEY).isEqualTo(contact.getName());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]." + NAME_KEY).isEqualTo(contact.getName());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
         contact = (Contact)contacts[2];
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]." + IDENTITY_KEY).isEqualTo(contact.getIdentity());
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ NAME_KEY).isEqualTo(contact.getName());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]." + NAME_KEY).isEqualTo(contact.getName());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
@@ -216,7 +216,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
 
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY).isPresent();
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY).isPresent().isArray().ofLength(3);
 
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEM_TYPE_KEY).isEqualTo(contact1.getMediaType().toString());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + TOTAL_KEY).isEqualTo(resource.getTotal());
@@ -524,6 +524,47 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThat(contacts[2].getSharePresence()).isNotNull().isFalse();
     }
 
+    @Test
+    public void deserialize_EmptyContactCollectionResponseCommandWithMissingTotal_ReturnsValidInstance() {
+        // Arrange
+        Command.CommandMethod method = Command.CommandMethod.GET;
+
+        UUID id = UUID.randomUUID();
+        Node from = createNode();
+        Node  pp = createNode();
+        Node to = createNode();
+
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.collection+json\",\"resource\":{\"itemType\":\"application/vnd.lime.contact+json\",\"items\":[]},\"method\":\"get\",\"status\":\"success\",\"id\":\"{0}\",\"from\":\"{1}\",\"pp\":\"{2}\",\"to\":\"{3}\"}",
+                id,
+                from,
+                pp,
+                to);
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        assertThat(envelope).isInstanceOf(Command.class);
+
+        Command command = (Command)envelope;
+
+        assertThat(command.getId()).isEqualTo(id);
+        assertThat(command.getFrom()).isEqualTo(from);
+        assertThat(command.getTo()).isEqualTo(to);
+        assertThat(command.getPp()).isEqualTo(pp);
+        assertThat(command.getMetadata()).isNull();
+
+        assertThat(command.getMethod()).isEqualTo(method);
+
+        assertThat(command.getType().toString()).isEqualTo(DocumentCollection.MIME_TYPE);
+        assertThat(command.getResource()).isNotNull().isInstanceOf(DocumentCollection.class);
+
+        DocumentCollection documents = (DocumentCollection)command.getResource();
+        assertThat(documents.getTotal()).isEqualTo(0);
+
+        Document[] items = documents.getItems();
+        assertThat(items).isNotNull().hasSize(0);
+    }
 
     //endregion Command
 
