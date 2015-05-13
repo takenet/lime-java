@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <build.number>11</build.number>
+        <build.number>SNAPSHOT</build.number>
         <lime.version>1.0.${build.number}</lime.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bintray.repo>takenet/maven</bintray.repo>
-        <bintray.package>${artifactId}</bintray.package>
+        <bintray.package>${project.artifactId}</bintray.package>
         <bintray.api.prefix>https://api.bintray.com/</bintray.api.prefix>
         <bintray.package.url>${bintray.api.prefix}/maven/${bintray.repo}/${bintray.package}</bintray.package.url>
         <bintray.publish.url>${bintray.api.prefix}/content/${bintray.repo}/${bintray.package}</bintray.publish.url>
@@ -99,7 +99,7 @@
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                    <skip>true</skip>
+                    <updateReleaseInfo>true</updateReleaseInfo>
                 </configuration>
             </plugin>
 

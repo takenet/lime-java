@@ -48,3 +48,6 @@ target
 tcp/target
 core/target
 resources/target
+
+# Deployment generated files
+.flattened-pom.xml
