@@ -80,6 +80,22 @@ public class Account extends DocumentBase {
      */
     private Boolean storeMessageContent;
 
+    /**
+     * Base64 representation of the account password.
+     */
+    private String password;
+
+    /**
+     * Base64 representation of the account password.
+     * Mandatory in case of updating account password.
+     */
+    private String oldPassword;
+
+    /**
+     * Access key for updating the account without knowing the old password.
+     */
+    private String accessKey;
+
     public Boolean getAllowAnonymousSender() {
         return allowAnonymousSender;
     }
@@ -166,5 +182,29 @@ public class Account extends DocumentBase {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getOldPassword() {
+        return oldPassword;
+    }
+
+    public void setOldPassword(String oldPassword) {
+        this.oldPassword = oldPassword;
+    }
+
+    public String getAccessKey() {
+        return accessKey;
+    }
+
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
     }
 }
