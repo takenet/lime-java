@@ -4,8 +4,11 @@ import org.limeprotocol.*;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static org.limeprotocol.Session.*;
 
 public abstract class ChannelBase implements Channel {
     
@@ -18,7 +21,7 @@ public abstract class ChannelBase implements Channel {
     private Node remoteNode;
     private Node localNode;
     private UUID sessionId;
-    private Session.SessionState state;
+    private SessionState state;
     private boolean isTransportListenerClosed;
     protected Exception transportListenerException;
     private final Set<CommandChannelListener> commandListeners;
@@ -48,7 +51,7 @@ public abstract class ChannelBase implements Channel {
 
         transportListener = new ChannelTransportListener();
         
-        setState(Session.SessionState.NEW);
+        setState(SessionState.NEW);
     }
 
 
@@ -111,11 +114,11 @@ public abstract class ChannelBase implements Channel {
      * @return
      */
     @Override
-    public Session.SessionState getState() {
+    public SessionState getState() {
         return state;
     }
 
-    protected synchronized void setState(Session.SessionState state) {
+    protected synchronized void setState(SessionState state) {
         if (state == null) {
             throw new IllegalArgumentException("state");
         }
@@ -132,7 +135,7 @@ public abstract class ChannelBase implements Channel {
         if (command == null) {
             throw new IllegalArgumentException("command");
         }
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a command in the '%s' session state", state));
         }
 
@@ -170,7 +173,7 @@ public abstract class ChannelBase implements Channel {
         if (message == null) {
             throw new IllegalArgumentException("message");
         }
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a message in the '%s' session state", state));
         }
 
@@ -208,7 +211,7 @@ public abstract class ChannelBase implements Channel {
         if (notification == null) {
             throw new IllegalArgumentException("notification");
         }
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a notification in the '%s' session state", state));
         }
 
@@ -246,7 +249,7 @@ public abstract class ChannelBase implements Channel {
         if (session == null) {
             throw new IllegalArgumentException("session");
         }
-        if (getState() == Session.SessionState.FINISHED || getState() == Session.SessionState.FAILED) {
+        if (getState() == SessionState.FINISHED || getState() == SessionState.FAILED) {
             throw new IllegalStateException(String.format("Cannot send a session in the '%s' session state", state));
         }
         send(session);
@@ -323,7 +326,7 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != SessionState.ESTABLISHED) {
             transport.setListener(null);
         }
 
@@ -364,7 +367,7 @@ public abstract class ChannelBase implements Channel {
     }
 
     private void ensureSessionEstablished() {
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot receive in the '%s' session state", state));
         }
     }
@@ -405,6 +408,16 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
+    private void handleTransportListenerException(Exception e) {
+        this.transportListenerException = e;
+        if (e instanceof SocketException) {
+            this.setState(SessionState.FAILED);
+            this.setLocalNode(null);
+            this.setRemoteNode(null);
+            this.setSessionId(null);
+        }
+    }
+
     private void send(Envelope envelope) throws IOException {
         checkTransportListener();
 
@@ -434,7 +447,7 @@ public abstract class ChannelBase implements Channel {
         }
         return result;
     }
-    
+
     private class ChannelTransportListener implements Transport.TransportListener {
         /**
          * Occurs when a envelope is received by the transport.
@@ -481,7 +494,7 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onException(Exception e) {
-            transportListenerException = e;
+            handleTransportListenerException(e);
         }
     }
 }
