@@ -135,6 +135,7 @@ public abstract class ChannelBase implements Channel {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a command in the '%s' session state", state));
         }
+
         send(command);
     }
 
@@ -172,6 +173,7 @@ public abstract class ChannelBase implements Channel {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a message in the '%s' session state", state));
         }
+
         send(message);
     }
 
@@ -209,6 +211,7 @@ public abstract class ChannelBase implements Channel {
         if (getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a notification in the '%s' session state", state));
         }
+
         send(notification);
     }
 
@@ -403,6 +406,8 @@ public abstract class ChannelBase implements Channel {
     }
 
     private void send(Envelope envelope) throws IOException {
+        checkTransportListener();
+
         if (fillEnvelopeRecipients) {
             fillEnvelope(envelope, true);
         }
