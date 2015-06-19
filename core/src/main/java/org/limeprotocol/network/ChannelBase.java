@@ -3,6 +3,7 @@ package org.limeprotocol.network;
 import org.limeprotocol.*;
 import org.limeprotocol.util.StringUtils;
 
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.*;
@@ -410,7 +411,7 @@ public abstract class ChannelBase implements Channel {
 
     private void handleTransportListenerException(Exception e) {
         this.transportListenerException = e;
-        if (e instanceof SocketException) {
+        if (e instanceof IOException) {
             this.setState(SessionState.FAILED);
             this.setLocalNode(null);
             this.setRemoteNode(null);
