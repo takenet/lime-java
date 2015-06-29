@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static org.limeprotocol.Session.SessionState.*;
+
 public abstract class ChannelBase implements Channel {
     
     private final static String PING_URI_TEMPLATE = "/ping";
@@ -46,7 +48,7 @@ public abstract class ChannelBase implements Channel {
 
         transportEnvelopeListener = new ChannelTransportEnvelopeListener();
 
-        setState(Session.SessionState.NEW);
+        setState(NEW);
     }
 
     /**
@@ -129,7 +131,7 @@ public abstract class ChannelBase implements Channel {
         if (command == null) {
             throw new IllegalArgumentException("command");
         }
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a command in the '%s' session state", state));
         }
         send(command);
@@ -166,7 +168,7 @@ public abstract class ChannelBase implements Channel {
         if (message == null) {
             throw new IllegalArgumentException("message");
         }
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a message in the '%s' session state", state));
         }
         send(message);
@@ -203,7 +205,7 @@ public abstract class ChannelBase implements Channel {
         if (notification == null) {
             throw new IllegalArgumentException("notification");
         }
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a notification in the '%s' session state", state));
         }
         send(notification);
@@ -240,7 +242,7 @@ public abstract class ChannelBase implements Channel {
         if (session == null) {
             throw new IllegalArgumentException("session");
         }
-        if (getState() == Session.SessionState.FINISHED || getState() == Session.SessionState.FAILED) {
+        if (getState() == FINISHED || getState() == FAILED) {
             throw new IllegalStateException(String.format("Cannot send a session in the '%s' session state", state));
         }
         send(session);
@@ -316,7 +318,7 @@ public abstract class ChannelBase implements Channel {
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != ESTABLISHED) {
             transport.setEnvelopeListener(null);
         }
 
@@ -357,7 +359,7 @@ public abstract class ChannelBase implements Channel {
     }
 
     private void ensureSessionEstablished() {
-        if (getState() != Session.SessionState.ESTABLISHED) {
+        if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot receive in the '%s' session state", state));
         }
     }
