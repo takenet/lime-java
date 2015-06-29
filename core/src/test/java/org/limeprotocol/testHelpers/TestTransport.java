@@ -12,52 +12,52 @@ import java.util.List;
 import java.util.Queue;
 
 public class TestTransport extends TransportBase {
-        private List<Envelope> sentEnvelopes;
-        private Queue<Envelope> outgoingEnvelopes;
-        private boolean isClosed;
+    private List<Envelope> sentEnvelopes;
+    private Queue<Envelope> outgoingEnvelopes;
+    private boolean isClosed;
 
-        public TestTransport() {
-                outgoingEnvelopes = new LinkedList<>();
-                sentEnvelopes = new ArrayList<>();
+    public TestTransport() {
+        outgoingEnvelopes = new LinkedList<>();
+        sentEnvelopes = new ArrayList<>();
+    }
+
+    @Override
+    protected void performClose() throws IOException {
+
+    }
+
+    @Override
+    public void send(Envelope envelope) throws IOException {
+        sentEnvelopes.add(envelope);
+        if (outgoingEnvelopes.size() != 0) {
+            raiseOnReceive(outgoingEnvelopes.poll());
         }
+    }
 
-        @Override
-        protected void performClose() throws IOException {
+    @Override
+    public void open(URI uri) throws IOException {
 
+    }
+
+    @Override
+    public synchronized void close() {
+        try {
+            super.close();
+            isClosed = true;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
-        @Override
-        public void send(Envelope envelope) throws IOException {
-                sentEnvelopes.add(envelope);
-                if(outgoingEnvelopes.size() != 0) {
-                        raiseOnReceive(outgoingEnvelopes.poll());
-                }
-        }
+    public void addNextEnvelopeToReturn(Envelope envelope) {
+        outgoingEnvelopes.add(envelope);
+    }
 
-        @Override
-        public void open(URI uri) throws IOException {
+    public Envelope[] getSentEnvelopes() {
+        return Iterators.toArray(sentEnvelopes.iterator(), Envelope.class);
+    }
 
-        }
-
-        @Override
-        public synchronized void close(){
-                try {
-                        super.close();
-                        isClosed = true;
-                } catch (IOException e) {
-                        e.printStackTrace();
-                }
-        }
-
-        public void addNextEnvelopeToReturn(Envelope envelope) {
-                outgoingEnvelopes.add(envelope);
-        }
-
-        public Envelope[] getSentEnvelopes() {
-                return Iterators.toArray(sentEnvelopes.iterator(), Envelope.class);
-        }
-
-        public boolean isClosed() {
-                return isClosed;
-        }
+    public boolean isClosed() {
+        return isClosed;
+    }
 }

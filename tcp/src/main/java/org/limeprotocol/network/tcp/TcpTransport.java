@@ -101,14 +101,14 @@ public class TcpTransport extends TransportBase implements Transport {
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
         initializeStreams();
-        if (getListener() != null) {
+        if (getStateListener() != null) {
             startListenerThread();
         }
     }
 
     @Override
-    public void setListener(TransportListener listener) {
-        super.setListener(listener);
+    public void setEnvelopeListener(TransportEnvelopeListener listener) {
+        super.setEnvelopeListener(listener);
         if (listener != null && isSocketOpen() && !isListening()) {
             try {
                 startListenerThread();
@@ -149,7 +149,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     stopListenerThread();
                     tcpClient.startTls();
                     initializeStreams();
-                    if (getListener() != null) {
+                    if (getStateListener() != null) {
                         startListenerThread();
                     }
                 }
@@ -223,7 +223,7 @@ public class TcpTransport extends TransportBase implements Transport {
         @Override
         public void run() {
             try {
-                while (getListener() != null && !isStopping()) {
+                while (getEnvelopeListener() != null && !isStopping()) {
                     Envelope envelope = null;
                     while (envelope == null) {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();

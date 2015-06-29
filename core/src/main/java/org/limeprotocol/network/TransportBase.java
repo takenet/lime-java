@@ -6,7 +6,6 @@ import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *  Base class for transport implementation.
@@ -15,7 +14,8 @@ public abstract class TransportBase implements Transport {
     
     private SessionCompression compression;
     private SessionEncryption encryption;
-    private TransportListener transportListener;
+    private TransportEnvelopeListener transportEnvelopeListener;
+    private TransportStateListener transportStateListener;
     private boolean closingInvoked;
     private boolean closedInvoked;
 
@@ -23,10 +23,15 @@ public abstract class TransportBase implements Transport {
         compression = SessionCompression.NONE;
         encryption = SessionEncryption.NONE;
     }
-    
+
     @Override
-    public void setListener(TransportListener listener) {
-        this.transportListener = listener;
+    public void setEnvelopeListener(TransportEnvelopeListener listener) {
+        this.transportEnvelopeListener = listener;
+    }
+
+    @Override
+    public void setStateListener(TransportStateListener listener) {
+        this.transportStateListener = listener;
     }
     
     @Override
@@ -83,35 +88,47 @@ public abstract class TransportBase implements Transport {
      */
     protected abstract void performClose() throws IOException;
 
-    protected TransportListener getListener() {
-        return transportListener;
+    protected TransportEnvelopeListener getEnvelopeListener() {
+        return transportEnvelopeListener;
+    }
+
+    protected TransportStateListener getStateListener() {
+        return transportStateListener;
     }
     
     protected void raiseOnReceive(Envelope envelope) {
-        TransportListener listener = getListener();
+        TransportEnvelopeListener listener = getEnvelopeListener();
         if (listener != null) {
             listener.onReceive(envelope);
+        } else {
+            System.out.println("An envelope was received while there's no listener registered - Id: " + envelope.getId() + " - Type: " + envelope.getClass().getSimpleName());
         }
     }
 
     protected void raiseOnException(Exception e) {
-        TransportListener listener = getListener();
+        TransportStateListener listener = getStateListener();
         if (listener != null) {
             listener.onException(e);
+        } else {
+            System.out.println("An transport exception was received while there's no listener registered: " + e.toString());
         }
     }
 
     protected void raiseOnClosing() {
-        TransportListener listener = getListener();
+        TransportStateListener listener = getStateListener();
         if (listener != null) {
             listener.onClosing();
+        } else {
+            System.out.println("The transport is about to be closed while there's no listener registered");
         }
     }
 
     protected void raiseOnClosed() {
-        TransportListener listener = getListener();
+        TransportStateListener listener = getStateListener();
         if (listener != null) {
             listener.onClosed();
+        } else {
+            System.out.println("The transport was closed while there's no listener registered");
         }
     }
 }

@@ -95,32 +95,6 @@ public class ChannelBaseTest {
         verify(listener, times(1)).onReceiveCommand(command);
     }
 
-
-    @Test(expected = IllegalStateException.class)
-    public void addCommandListener_transportClosed_throwsIllegalStateException() {
-        // Arrange
-        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
-        Command command = createCommand(createPlainDocument());
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnClosed();
-        
-        // Act
-        target.addCommandListener(listener, true);
-        
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void addCommandListener_transportThrewException_throwsIllegalStateException() {
-        // Arrange
-        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
-        Command command = createCommand(createPlainDocument());
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnException(new Exception());
-
-        // Act
-        target.addCommandListener(listener, true);
-    }
-
     @Test
     public void onReceiveCommand_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
         // Arrange
@@ -268,30 +242,6 @@ public class ChannelBaseTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void addMessageListener_transportClosed_throwsIllegalStateException() {
-        // Arrange
-        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
-        Message message = createMessage(createPlainDocument());
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnClosed();
-
-        // Act
-        target.addMessageListener(listener, true);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void addMessageListener_transportThrewException_throwsIllegalStateException() {
-        // Arrange
-        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
-        Message message = createMessage(createPlainDocument());
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnException(new Exception());
-
-        // Act
-        target.addMessageListener(listener, true);
-    }
-
     @Test
     public void onReceiveMessage_noRecipients_fillsFromTheSession() throws InterruptedException {
         // Arrange
@@ -405,30 +355,6 @@ public class ChannelBaseTest {
         target.sendNotification(notification);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void addNotificationListener_transportClosed_throwsIllegalStateException() {
-        // Arrange
-        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
-        Notification notification = createNotification(Notification.Event.RECEIVED);
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnClosed();
-
-        // Act
-        target.addNotificationListener(listener, true);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void addNotificationListener_transportThrewException_throwsIllegalStateException() {
-        // Arrange
-        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
-        Notification notification = createNotification(Notification.Event.RECEIVED);
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnException(new Exception());
-
-        // Act
-        target.addNotificationListener(listener, true);
-    }
-    
     @Test
     public void onReceiveNotification_registeredListenerTwoReceives_callsListenerAndUnregister() throws InterruptedException {
         // Arrange
@@ -495,30 +421,6 @@ public class ChannelBaseTest {
 
         // Act
         target.sendSession(session);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void addSessionListener_transportClosed_throwsIllegalStateException() {
-        // Arrange
-        SessionChannel.SessionChannelListener listener = mock(SessionChannel.SessionChannelListener.class);
-        Session session = createSession(Session.SessionState.FINISHED);
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnClosed();
-
-        // Act
-        target.enqueueSessionListener(listener);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void addSessionListener_transportThrewException_throwsIllegalStateException() {
-        // Arrange
-        SessionChannel.SessionChannelListener listener = mock(SessionChannel.SessionChannelListener.class);
-        Session session = createSession(Session.SessionState.FINISHED);
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
-        transport.raiseOnException(new Exception());
-
-        // Act
-        target.enqueueSessionListener(listener);
     }
     
     @Test
@@ -906,8 +808,8 @@ public class ChannelBaseTest {
         }
 
         @Override
-        public void setListener(TransportListener listener) {
-            super.setListener(listener);
+        public void setStateListener(TransportStateListener listener) {
+            super.setStateListener(listener);
         }
     }
 }

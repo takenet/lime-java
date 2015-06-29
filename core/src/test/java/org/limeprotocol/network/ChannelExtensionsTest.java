@@ -58,7 +58,7 @@ public class ChannelExtensionsTest {
         transport.onSentCallback = new Runnable() {
             @Override
             public void run() {
-                transport.getListener().onReceive(responseCommand);
+                transport.getEnvelopeListener().onReceive(responseCommand);
             }
         };
         
@@ -130,8 +130,8 @@ public class ChannelExtensionsTest {
         }
 
         @Override
-        public void setListener(TransportListener listener) {
-            super.setListener(listener);
+        public void setStateListener(TransportStateListener listener) {
+            super.setStateListener(listener);
         }
     }
     

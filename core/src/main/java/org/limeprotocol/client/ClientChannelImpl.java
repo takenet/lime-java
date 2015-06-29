@@ -195,8 +195,8 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                 session.getState() == FAILED) {
             try {
                 getTransport().close();
-            } catch (Exception e) {
-                transportListenerException = e;
+            } catch (IOException e) {
+                throw new RuntimeException("An error occurred while closing the transport", e);
             }
         }
         super.raiseOnReceiveSession(session);
@@ -212,7 +212,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             try {
                 sendReceivedNotification(message.getId(), message.getFrom());
             } catch (IOException e) {
-                transportListenerException = e;
+                throw new RuntimeException("An error occurred while sending a message receipt", e);
             }
         }
     }

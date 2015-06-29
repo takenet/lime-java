@@ -31,7 +31,7 @@ public class ClientSample {
         out.print("Host name (ENTER for default): ");
         String hostName = inScanner.nextLine();
         if (hostName == null || hostName.isEmpty()) {
-            hostName = "takenet-iris.cloudapp.net";//InetAddress.getLocalHost().getHostName();
+            hostName = "takenet-iris.cloudapp.net";
         }
         
         out.print("Port number (ENTER for default): ");
@@ -59,6 +59,24 @@ public class ClientSample {
                         return true;
                     }
                 });
+
+        transport.setStateListener(new Transport.TransportStateListener() {
+            @Override
+            public void onClosing() {
+                System.out.println("The transport is closing...");
+            }
+
+            @Override
+            public void onClosed() {
+                System.out.println("The transport is closed");
+            }
+
+            @Override
+            public void onException(Exception e) {
+                System.out.println("The transport failed - Exception: " + e.toString());
+            }
+        });
+
         transport.open(serverUri);
 
         // Creates a new client channel

@@ -19,8 +19,6 @@ public abstract class ChannelBase implements Channel {
     private Node localNode;
     private UUID sessionId;
     private Session.SessionState state;
-    private boolean isTransportListenerClosed;
-    protected Exception transportListenerException;
     private final Set<CommandChannelListener> commandListeners;
     private final Set<MessageChannelListener> messageListeners;
     private final Set<NotificationChannelListener> notificationListeners;
@@ -28,7 +26,7 @@ public abstract class ChannelBase implements Channel {
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
     private Queue<SessionChannelListener> sessionChannelListeners;
-    private final Transport.TransportListener transportListener;
+    private final Transport.TransportEnvelopeListener transportEnvelopeListener;
 
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
         if (transport == null) {
@@ -46,11 +44,10 @@ public abstract class ChannelBase implements Channel {
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         sessionChannelListeners = new LinkedBlockingQueue<>();
 
-        transportListener = new ChannelTransportListener();
-        
+        transportEnvelopeListener = new ChannelTransportEnvelopeListener();
+
         setState(Session.SessionState.NEW);
     }
-
 
     /**
      * Gets the current session transport
@@ -259,7 +256,6 @@ public abstract class ChannelBase implements Channel {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        checkTransportListener();
         sessionChannelListeners.add(listener);
         setupTransportListener();
     }
@@ -321,7 +317,7 @@ public abstract class ChannelBase implements Channel {
 
     protected synchronized void raiseOnReceiveSession(Session session) {
         if (getState() != Session.SessionState.ESTABLISHED) {
-            transport.setListener(null);
+            transport.setEnvelopeListener(null);
         }
 
         SessionChannelListener listener = sessionChannelListeners.poll();
@@ -367,14 +363,13 @@ public abstract class ChannelBase implements Channel {
     }
     
     private synchronized void setupTransportListener() {
-        transport.setListener(transportListener);
+        transport.setEnvelopeListener(transportEnvelopeListener);
     }
 
     private <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
-        checkTransportListener();
 
         if (!singleReceiveListeners.contains(listener) &&
                 !listeners.contains(listener)) {
@@ -389,16 +384,6 @@ public abstract class ChannelBase implements Channel {
     private <TListener> void removeListener(TListener listener, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
         if (!listeners.remove(listener)) {
             singleReceiveListeners.remove(listener);
-        }
-    }
-
-    private void checkTransportListener() {
-        if (transportListenerException != null) {
-            throw new IllegalStateException("The transport listener has thrown an exception", transportListenerException);
-        }
-
-        if (isTransportListenerClosed) {
-            throw new IllegalStateException("The transport listener is closed");
         }
     }
 
@@ -429,8 +414,9 @@ public abstract class ChannelBase implements Channel {
         }
         return result;
     }
-    
-    private class ChannelTransportListener implements Transport.TransportListener {
+
+    private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
+
         /**
          * Occurs when a envelope is received by the transport.
          *
@@ -450,33 +436,6 @@ public abstract class ChannelBase implements Channel {
             } else if (envelope instanceof Session) {
                 raiseOnReceiveSession((Session) envelope);
             }
-        }
-
-        /**
-         * Occurs when the channel is about to be closed.
-         */
-        @Override
-        public void onClosing() {
-            
-        }
-
-        /**
-         * Occurs after the connection was closed.
-         */
-        @Override
-        public void onClosed() {
-            isTransportListenerClosed = true;
-        }
-
-        /**
-         * Occurs when an exception is thrown
-         * during the receive process.
-         *
-         * @param e The thrown exception.
-         */
-        @Override
-        public void onException(Exception e) {
-            transportListenerException = e;
         }
     }
 }

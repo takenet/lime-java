@@ -1,7 +1,6 @@
 package org.limeprotocol.network;
 
 import org.limeprotocol.Envelope;
-import org.limeprotocol.Session;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
@@ -21,9 +20,15 @@ public interface Transport {
 
     /**
      *  Register the specified listener for receiving envelopes.
-     * @param transportListener
+     * @param transportEnvelopeListener
      */
-    void setListener(TransportListener transportListener);
+    void setEnvelopeListener(TransportEnvelopeListener transportEnvelopeListener);
+
+    /**
+     *  Register the specified listener for receiving state change events.
+     * @param transportStateListener
+     */
+    void setStateListener(TransportStateListener transportStateListener);
     
     /**
      * Opens the transport connection with the specified Uri.
@@ -73,16 +78,20 @@ public interface Transport {
     void setEncryption(SessionEncryption encryption) throws IOException;
 
     /**
-     * Defines a envelope transport listener. 
+     * Defines a envelope transport listener.
      */
-    public interface TransportListener
-    {
+    public interface TransportEnvelopeListener {
         /**
          * Occurs when a envelope is received by the transport.
          * @param envelope
          */
         void onReceive(Envelope envelope);
-
+    }
+    
+    /**
+     * Defines a envelope transport state listener.
+     */
+    public interface TransportStateListener {
         /**
          * Occurs when the transport is about to be closed.
          */
@@ -94,8 +103,7 @@ public interface Transport {
         void onClosed();
 
         /**
-         * Occurs when an exception is thrown
-         * during the receive process.
+         * Occurs when an exception is thrown during the receive process.
          * @param e The thrown exception.
          */
         void onException(Exception e);
