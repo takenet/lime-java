@@ -4,8 +4,11 @@ import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.messaging.contents.PlainText;
+import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
+
+import java.net.URISyntaxException;
 
 import static org.limeprotocol.testHelpers.Dummy.*;
 
@@ -14,6 +17,16 @@ public class MessagingTestDummy {
     public static PlainText createPlainText()
     {
         return new PlainText(createRandomString(150));
+    }
+
+    public static Account createAccount() {
+        Account account = new Account();
+        account.setFullName(createRandomString(20));
+        try {
+            account.setPhotoUri(createUri("http", 80));
+        } catch (URISyntaxException ignore) {
+        }
+        return account;
     }
 
     public static Capability createCapability() {

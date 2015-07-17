@@ -4,6 +4,8 @@ import org.limeprotocol.Document;
 import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
+import java.net.URI;
+
 public class Account extends DocumentBase {
 
     public static final String RESOURCE_PATH = "/account";
@@ -38,6 +40,11 @@ public class Account extends DocumentBase {
      * The user phone number
      */
     private String phoneNumber;
+
+    /**
+     * The user photo URI
+     */
+    private URI photoUri;
 
     /**
      * The user cellphone number
@@ -150,6 +157,14 @@ public class Account extends DocumentBase {
 
     public void setCellPhoneNumber(String cellPhoneNumber) {
         this.cellPhoneNumber = cellPhoneNumber;
+    }
+
+    public URI getPhotoUri() {
+        return photoUri;
+    }
+
+    public void setPhotoUri(URI photoUri) {
+        this.photoUri = photoUri;
     }
 
     public String getCity() {

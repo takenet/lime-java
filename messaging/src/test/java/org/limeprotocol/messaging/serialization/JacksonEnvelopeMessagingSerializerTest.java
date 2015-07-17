@@ -6,13 +6,17 @@ import org.limeprotocol.*;
 import org.limeprotocol.messaging.Registrator;
 import org.limeprotocol.messaging.contents.ChatState;
 import org.limeprotocol.messaging.contents.PlainText;
+import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
 import org.limeprotocol.messaging.resources.Receipt;
+import org.limeprotocol.messaging.testHelpers.MessagingJsonConstants;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +27,9 @@ import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.limeprotocol.Command.CommandMethod.SET;
+import static org.limeprotocol.Command.CommandMethod.GET;
 import static org.limeprotocol.Notification.Event;
+import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Account.*;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_CONTENT_TYPES_KEY;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Capability.RESOURCE_TYPES_KEY;
 import static org.limeprotocol.messaging.testHelpers.MessagingJsonConstants.Contact.*;
@@ -120,6 +126,29 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[0]").isEqualTo(resource.getResourceTypes()[0].toString());
         assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[1]").isEqualTo(resource.getResourceTypes()[1].toString());
         assertThatJson(resultString).node(RESOURCE_TYPES_KEY + "[2]").isEqualTo(resource.getResourceTypes()[2].toString());
+
+        assertThatJson(resultString).node(STATUS_KEY).isAbsent();
+        assertThatJson(resultString).node(REASON_KEY).isAbsent();
+    }
+
+    @Test
+    public void serialize_AccountRequestCommand_ReturnsValidJsonString()
+    {
+        Account resource = createAccount();
+        Command command = createCommand(resource);
+        command.setMethod(Command.CommandMethod.GET);
+
+        String resultString = target.serialize(command);
+
+        assertJsonEnvelopeProperties(command, resultString, ID_KEY, FROM_KEY, TO_KEY);
+
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
+
+        assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
+
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + FULL_NAME_KEY).isEqualTo(resource.getFullName());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + PHOTO_URI_KEY).isEqualTo(resource.getPhotoUri().toString());
 
         assertThatJson(resultString).node(STATUS_KEY).isAbsent();
         assertThatJson(resultString).node(REASON_KEY).isAbsent();
@@ -433,6 +462,47 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThat(command.getResource()).isNotNull().isInstanceOf(Receipt.class);
         Receipt receipt = (Receipt) command.getResource();
         assertThat(receipt.getEvents()).containsOnly(Event.DISPATCHED, Event.RECEIVED);
+
+        assertThat(command.getUri()).isNull();
+    }
+
+    @Test
+    public void deserialize_AccountRequestCommand_ReturnsValidInstance() throws URISyntaxException {
+        // Arrange
+        Command.CommandMethod method = GET;
+        UUID id = UUID.randomUUID();
+        String fullName = createRandomString(30);
+        URI photoUri = createUri("http", 80);
+
+        String json = StringUtils.format(
+                "{\"type\":\"{0}\",\"resource\":{\"fullName\":\"{1}\",\"photoUri\":\"{2}\"},\"method\":\"{3}\",\"id\":\"{4}\"}",
+                Account.MIME_TYPE,
+                fullName,
+                photoUri,
+                StringUtils.toCamelCase(method.toString()),
+                id);
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+
+        Command command = (Command)envelope;
+
+        assertThat(command.getId()).isEqualTo(id);
+        assertThat(command.getFrom()).isNull();
+        assertThat(command.getTo()).isNull();
+        assertThat(command.getPp()).isNull();
+        assertThat(command.getMetadata()).isNull();
+
+        assertThat(command.getMethod()).isEqualTo(method);
+
+        assertThat(command.getType().toString()).isEqualTo(Account.MIME_TYPE);
+        assertThat(command.getResource()).isNotNull().isInstanceOf(Account.class);
+        Account account = (Account) command.getResource();
+        assertThat(account.getFullName()).isEqualTo(fullName);
+        assertThat(account.getPhotoUri()).isEqualTo(photoUri);
 
         assertThat(command.getUri()).isNull();
     }
