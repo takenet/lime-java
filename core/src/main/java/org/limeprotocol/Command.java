@@ -111,6 +111,18 @@ public class Command extends Envelope {
         DELETE,
 
         /**
+         * Subscribes to the resource, allowing the originator to be notified when the value
+         * of the resource changes in the destination.
+         */
+        SUBSCRIBE,
+
+        /**
+         * Unsubscribes to the resource, signaling to the destination that the originator do
+         * not want to receive further notifications about the resource.
+         */
+        UNSUBSCRIBE,
+
+        /**
          * Notify the destination about a change
          * in the resource value of the sender.
          * This method is one way and the destination
