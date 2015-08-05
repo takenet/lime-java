@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <build.number>103</build.number>
+        <build.number>105</build.number>
         <lime.version>1.0.${build.number}</lime.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bintray.repo>takenet/maven</bintray.repo>
@@ -158,7 +158,7 @@
                                 }
 
                                 if (bintrayServer == null){
-                                    fail("A server with id 'bintray-takenet' must be declared e settings.xml")
+                                    fail("A server with id 'bintray-takenet' must be declared in settings.xml")
                                 }
 
                                 def provider = new BasicCredentialsProvider();

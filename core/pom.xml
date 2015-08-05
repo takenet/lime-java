@@ -12,6 +12,7 @@
 
     <artifactId>lime-java-core</artifactId>
     <packaging>jar</packaging>
+    <version>${lime.version}</version>
 
     <build>
         <plugins>

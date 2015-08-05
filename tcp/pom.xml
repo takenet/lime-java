@@ -12,6 +12,7 @@
 
     <artifactId>lime-java-tcp</artifactId>
     <packaging>jar</packaging>
+    <version>${lime.version}</version>
 
     <build>
         <plugins>
