@@ -186,19 +186,19 @@ public class JacksonEnvelopeMessagingSerializerTest {
         Document[] contacts = resource.getItems();
 
         Contact contact = (Contact)contacts[0];
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity().toString());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ NAME_KEY).isEqualTo(contact.getName());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[0]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
         contact = (Contact)contacts[1];
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IDENTITY_KEY).isEqualTo(contact.getIdentity().toString());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]." + NAME_KEY).isEqualTo(contact.getName());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[1]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());
 
         contact = (Contact)contacts[2];
-        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]." + IDENTITY_KEY).isEqualTo(contact.getIdentity());
+        assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]." + IDENTITY_KEY).isEqualTo(contact.getIdentity().toString());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]." + NAME_KEY).isEqualTo(contact.getName());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ IS_PENDING_KEY).isEqualTo(contact.getIsPending());
         assertThatJson(resultString).node(RESOURCE_KEY + "." + ITEMS_KEY + "[2]."+ SHARE_ACCOUNT_INFO_KEY).isEqualTo(contact.getShareAccountInfo());

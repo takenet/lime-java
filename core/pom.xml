@@ -38,6 +38,7 @@
             <groupId>net.javacrumbs.json-unit</groupId>
             <artifactId>json-unit-fluent</artifactId>
             <version>1.5.1</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.easytesting</groupId>

@@ -182,7 +182,13 @@ public class Presence extends DocumentBase {
          * that it may not be reading or processing
          * the received envelopes.
          */
-        AWAY
+        AWAY,
+
+        /**
+         * The node is available for messaging but the actual
+         * stored presence value is unavailable.
+         */
+        INVISIBLE
     }
 
 }
