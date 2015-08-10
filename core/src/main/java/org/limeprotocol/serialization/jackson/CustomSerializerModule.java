@@ -21,11 +21,14 @@ public class CustomSerializerModule extends SimpleModule {
         super("CustomSerializers", new Version(1, 0, 0, null));
         addSerializer(Enum.class, new EnumSerializer());
         addSerializer(new NodeSerializer());
+        addSerializer(new IdentitySerializer());
         addSerializer(new MediaTypeSerializer());
         addSerializer(new LimeUriSerializer());
+
         addDeserializer(Node.class, new NodeDeserializer());
         addDeserializer(Identity.class, new IdentityDeserializer());
         addDeserializer(MediaType.class, new MediaTypeDeserializer());
+        addDeserializer(LimeUri.class, new LimeUriDeserializer());
     }
 
     @Override

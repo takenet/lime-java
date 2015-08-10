@@ -6,11 +6,12 @@
 
     <properties>
         <build.number>109</build.number>
+        <build.number>107</build.number>
         <lime.version>1.0.${build.number}</lime.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bintray.repo>takenet/maven</bintray.repo>
         <bintray.package>${project.artifactId}</bintray.package>
-        <bintray.api.prefix>https://api.bintray.com/</bintray.api.prefix>
+        <bintray.api.prefix>https://api.bintray.com</bintray.api.prefix>
         <bintray.package.url>${bintray.api.prefix}/maven/${bintray.repo}/${bintray.package}</bintray.package.url>
         <bintray.publish.url>${bintray.api.prefix}/content/${bintray.repo}/${bintray.package}</bintray.publish.url>
     </properties>
@@ -158,7 +159,7 @@
                                 }
 
                                 if (bintrayServer == null){
-                                    fail("A server with id 'bintray-takenet' must be declared e settings.xml")
+                                    fail("A server with id 'bintray-takenet' must be declared in settings.xml")
                                 }
 
                                 def provider = new BasicCredentialsProvider();

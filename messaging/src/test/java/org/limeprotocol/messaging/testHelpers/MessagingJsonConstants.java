@@ -25,7 +25,7 @@ public class MessagingJsonConstants {
         public static final String PHONE_NUMBER_KEY = "phoneNumber";
         public static final String PHOTO_URI_KEY = "photoUri";
         public static final String CELL_PHONE_NUMBER_KEY = "cellPhoneNumber";
-        public static final String IS_TEMPORARY_KEY = "isTemporary";
+        public static final String IS_TEMPORARY_KEY = "getIsTemporary";
         public static final String PASSWORD_KEY = "password";
         public static final String OLD_PASSWORD_KEY = "oldPassword";
         public static final String INBOX_SIZE_KEY = "inboxSize";

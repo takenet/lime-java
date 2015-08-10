@@ -125,25 +125,26 @@ public class Presence extends DocumentBase {
         IDENTITY_BY_DISTANCE,
 
         /**
-         * Deliver envelopes addressed to the current session
-         * instance (name@domain/instance) and envelopes addressed
-         * to the identity (name@domain) if the value of the
-         * priority property is the largest among the available
-         * nodes of the identity with this setting.
-         */
-        IDENTITY_BY_PRIORITY,
-
-        /**
          * Deliver any envelopes addressed to the identity name@domain,
          * including the envelopes addressed to any specific instance.
          */
         PROMISCUOUS,
 
         /**
+         * Deliver envelopes addressed to the current session
+         * instance (name@domain/instance) and envelopes addresses to the node domain.
          * This rule is intended to be used only for external domain authorities
-         * (gateways) and sub-domain authorities (applications), in order to
-         * deliver envelopes addressed to their domain using the smallest distance
-         * from the origitator among the available connected nodes for these authorities.
+         * (gateways) and sub-domain authorities (applications).
+         */
+        DOMAIN,
+
+        /**
+         * Deliver envelopes addressed to the current session
+         * instance (name@domain/instance) and envelopes addresses to the node domain
+         * if the distance from the originator is the smallest among the available
+         * nodes of the domain with this setting.
+         * This rule is intended to be used only for external domain authorities
+         * (gateways) and sub-domain authorities (applications)
          */
         DOMAIN_BY_DISTANCE
     }
@@ -181,7 +182,13 @@ public class Presence extends DocumentBase {
          * that it may not be reading or processing
          * the received envelopes.
          */
-        AWAY
+        AWAY,
+
+        /**
+         * The node is available for messaging but the actual
+         * stored presence value is unavailable.
+         */
+        INVISIBLE
     }
 
 }

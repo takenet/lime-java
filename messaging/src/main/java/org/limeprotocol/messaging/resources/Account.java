@@ -2,6 +2,7 @@ package org.limeprotocol.messaging.resources;
 
 import org.limeprotocol.Document;
 import org.limeprotocol.DocumentBase;
+import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
 
 import java.net.URI;
@@ -59,6 +60,22 @@ public class Account extends DocumentBase {
     private Boolean isTemporary;
 
     /**
+     * Base64 representation of the account password.
+     */
+    private String password;
+
+    /**
+     * Base64 representation of the account password.
+     * Mandatory in case of updating account password.
+     */
+    private String oldPassword;
+
+    /**
+     * Access key for updating the account without knowing the old password.
+     */
+    private String accessKey;
+
+    /**
      * Size of account inbox
      * for storing offline messages
      */
@@ -88,20 +105,9 @@ public class Account extends DocumentBase {
     private Boolean storeMessageContent;
 
     /**
-     * Base64 representation of the account password.
+     * Alternative account address.
      */
-    private String password;
-
-    /**
-     * Base64 representation of the account password.
-     * Mandatory in case of updating account password.
-     */
-    private String oldPassword;
-
-    /**
-     * Access key for updating the account without knowing the old password.
-     */
-    private String accessKey;
+    private Identity alternativeAccount;
 
     public Boolean getAllowAnonymousSender() {
         return allowAnonymousSender;
@@ -119,12 +125,36 @@ public class Account extends DocumentBase {
         this.allowUnknownSender = allowUnknownSender;
     }
 
-    public Boolean isTemporary() {
+    public Boolean getIsTemporary() {
         return isTemporary;
     }
 
     public void setIsTemporary(Boolean isTemporary) {
         this.isTemporary = isTemporary;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getOldPassword() {
+        return oldPassword;
+    }
+
+    public void setOldPassword(String oldPassword) {
+        this.oldPassword = oldPassword;
+    }
+
+    public String getAccessKey() {
+        return accessKey;
+    }
+
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
     }
 
     public Boolean getStoreMessageContent() {
@@ -199,27 +229,11 @@ public class Account extends DocumentBase {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getPassword() {
-        return password;
+    public Identity getAlternativeAccount() {
+        return alternativeAccount;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getOldPassword() {
-        return oldPassword;
-    }
-
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
-    }
-
-    public String getAccessKey() {
-        return accessKey;
-    }
-
-    public void setAccessKey(String accessKey) {
-        this.accessKey = accessKey;
+    public void setAlternativeAccount(Identity alternativeAccount) {
+        this.alternativeAccount = alternativeAccount;
     }
 }
