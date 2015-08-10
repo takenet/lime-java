@@ -6,7 +6,6 @@
 
     <properties>
         <build.number>109</build.number>
-        <build.number>107</build.number>
         <lime.version>1.0.${build.number}</lime.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bintray.repo>takenet/maven</bintray.repo>

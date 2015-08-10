@@ -12,7 +12,6 @@
 
     <artifactId>lime-java-messaging</artifactId>
     <packaging>jar</packaging>
-    <version>${lime.version}</version>
 
     <build>
         <plugins>
