@@ -125,7 +125,7 @@ public class Account extends DocumentBase {
         this.allowUnknownSender = allowUnknownSender;
     }
 
-    public Boolean isTemporary() {
+    public Boolean getIsTemporary() {
         return isTemporary;
     }
 
