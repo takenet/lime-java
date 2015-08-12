@@ -2,6 +2,9 @@ package org.limeprotocol.messaging.resources;
 
 import org.limeprotocol.*;
 
+import java.net.URI;
+import java.util.Date;
+
 public class Group extends DocumentBase {
 
     public static final String MIME_TYPE = "application/vnd.lime.group+json";
@@ -24,6 +27,21 @@ public class Group extends DocumentBase {
      * Type of the group.
      */
     private GroupType type;
+
+    /**
+     * The group photo URI.
+     */
+    private URI photoUri;
+
+    /**
+     * IDENTITY of the group's creator.
+     */
+    private Identity creator;
+
+    /**
+     * Creation date of the group.
+     */
+    private Date created;
 
     /**
      * Members uri of the contact group.
@@ -60,6 +78,30 @@ public class Group extends DocumentBase {
 
     public void setType(GroupType type) {
         this.type = type;
+    }
+
+    public URI getPhotoUri() {
+        return photoUri;
+    }
+
+    public void setPhotoUri(URI photoUri) {
+        this.photoUri = photoUri;
+    }
+
+    public Identity getCreator() {
+        return creator;
+    }
+
+    public void setCreator(Identity creator) {
+        this.creator = creator;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public enum GroupType {
