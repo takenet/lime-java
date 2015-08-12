@@ -8,11 +8,12 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 public class SocketTcpClient implements TcpClient {
 
     private final X509TrustManager trustManager;
+    private final boolean socketTcpNoDelay;
+    private final boolean socketKeepAlive;
     private final Socket socket;
     private SSLSocket sslSocket;
     private SSLSocketFactory sslSocketFactory;
@@ -21,13 +22,21 @@ public class SocketTcpClient implements TcpClient {
         this(null);
     }
     public SocketTcpClient(X509TrustManager trustManager) {
+        this(trustManager, false, false);
+    }
+
+    public SocketTcpClient(X509TrustManager trustManager, boolean socketTcpNoDelay, boolean socketKeepAlive) {
         this.trustManager = trustManager;
+        this.socketTcpNoDelay = socketTcpNoDelay;
+        this.socketKeepAlive = socketKeepAlive;
         socket = new Socket();
     }
 
     @Override
     public void connect(SocketAddress endpoint) throws IOException {
         socket.connect(endpoint);
+        socket.setTcpNoDelay(socketTcpNoDelay);
+        socket.setKeepAlive(socketKeepAlive);
     }
 
     @Override

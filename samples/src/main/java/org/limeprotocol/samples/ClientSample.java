@@ -46,7 +46,7 @@ public class ClientSample {
         URI serverUri = new URI(String.format("net.tcp://%s:%d", hostName, portNumber));
         TcpTransport transport = new TcpTransport(
                 new JacksonEnvelopeSerializer(),
-                new SocketTcpClientFactory(new CustomTrustManager(null)),
+                new SocketTcpClientFactory(new CustomTrustManager(null), true, true),
                 new TraceWriter() {
                     @Override
                     public void trace(String data, DataOperation operation) {
