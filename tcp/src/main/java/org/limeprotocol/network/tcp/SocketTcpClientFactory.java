@@ -12,7 +12,7 @@ public class SocketTcpClientFactory implements TcpClientFactory {
     }
 
     public SocketTcpClientFactory(X509TrustManager trustManager) {
-        this(trustManager, false, false);
+        this(trustManager, true, false);
     }
 
     public SocketTcpClientFactory(X509TrustManager trustManager, boolean socketTcpNoDelay, boolean socketKeepAlive) {

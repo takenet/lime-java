@@ -22,7 +22,7 @@ public class SocketTcpClient implements TcpClient {
         this(null);
     }
     public SocketTcpClient(X509TrustManager trustManager) {
-        this(trustManager, false, false);
+        this(trustManager, true, false);
     }
 
     public SocketTcpClient(X509TrustManager trustManager, boolean socketTcpNoDelay, boolean socketKeepAlive) {
