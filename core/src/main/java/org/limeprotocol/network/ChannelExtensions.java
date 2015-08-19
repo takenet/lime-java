@@ -194,7 +194,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Command processCommand(Channel channel, final Command command, long timeout, TimeUnit timeoutTimeUnit) throws IOException, InterruptedException, TimeoutException {
+    public static Command processCommand(final Channel channel, final Command command, long timeout, TimeUnit timeoutTimeUnit) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -214,7 +214,8 @@ public class ChannelExtensions {
         final Command[] responseCommand = new Command[1];
         final Semaphore clientChannelSemaphore = new Semaphore(1);
         clientChannelSemaphore.acquire();
-        channel.addCommandListener(new CommandChannel.CommandChannelListener() {
+
+        CommandChannel.CommandChannelListener listener = new CommandChannel.CommandChannelListener() {
             @Override
             public void onReceiveCommand(Command c) {
                 if (c.getId().equals(command.getId())) {
@@ -222,14 +223,17 @@ public class ChannelExtensions {
                     clientChannelSemaphore.release();
                 }
             }
-        }, true);
+        };
+        channel.addCommandListener(listener, false);
 
-        channel.sendCommand(command);
-        if (!clientChannelSemaphore.tryAcquire(1, timeout, timeoutTimeUnit)) {
-            throw new TimeoutException("The request has timed out");
+        try {
+            channel.sendCommand(command);
+            if (!clientChannelSemaphore.tryAcquire(1, timeout, timeoutTimeUnit)) {
+                throw new TimeoutException("The request has timed out");
+            }
+            return responseCommand[0];
+        } finally {
+            channel.removeCommandListener(listener);
         }
-
-
-        return responseCommand[0];
     }
 }
