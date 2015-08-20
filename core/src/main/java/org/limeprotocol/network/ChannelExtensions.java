@@ -14,6 +14,7 @@ public class ChannelExtensions {
 
     /**
      * Sends the envelope using the appropriate method for its type.
+     *
      * @param channel
      * @param envelope
      * @throws IOException
@@ -25,15 +26,15 @@ public class ChannelExtensions {
         if (envelope == null) {
             throw new IllegalArgumentException("envelope");
         }
-        
+
         if (envelope instanceof Notification) {
-            channel.sendNotification((Notification)envelope);
+            channel.sendNotification((Notification) envelope);
         } else if (envelope instanceof Message) {
-            channel.sendMessage((Message)envelope);
+            channel.sendMessage((Message) envelope);
         } else if (envelope instanceof Command) {
-            channel.sendCommand((Command)envelope);
+            channel.sendCommand((Command) envelope);
         } else if (envelope instanceof Session) {
-            channel.sendSession((Session)envelope);
+            channel.sendSession((Session) envelope);
         } else {
             throw new IllegalArgumentException("Invalid or unknown envelope type");
         }
@@ -41,6 +42,7 @@ public class ChannelExtensions {
 
     /**
      * Composes a command envelope with a get method for the specified resource.
+     *
      * @param channel
      * @param limeUri
      * @param <TResource>
@@ -54,6 +56,7 @@ public class ChannelExtensions {
 
     /**
      * Composes a command envelope with a get method for the specified resource.
+     *
      * @param channel
      * @param limeUri
      * @param from
@@ -69,23 +72,24 @@ public class ChannelExtensions {
         if (limeUri == null) {
             throw new IllegalArgumentException("limeUri");
         }
-        
+
         final Command requestCommand = new Command(UUID.randomUUID()) {{
             setMethod(CommandMethod.GET);
             setFrom(from);
             setUri(limeUri);
         }};
-        
+
         Command responseCommand = processCommand(channel, requestCommand);
         if (responseCommand.getStatus() != Command.CommandStatus.SUCCESS) {
             throw new LimeException(responseCommand.getReason());
         }
-        
-        return (TResource)responseCommand.getResource();
+
+        return (TResource) responseCommand.getResource();
     }
 
     /**
      * Composes a command envelope with a set method for the specified resource.
+     *
      * @param channel
      * @param limeUri
      * @param resource
@@ -99,6 +103,7 @@ public class ChannelExtensions {
 
     /**
      * Composes a command envelope with a set method for the specified resource.
+     *
      * @param channel
      * @param limeUri
      * @param from
@@ -117,7 +122,7 @@ public class ChannelExtensions {
         if (resource == null) {
             throw new IllegalArgumentException("resource");
         }
-        
+
         final Command requestCommand = new Command(UUID.randomUUID()) {{
             setMethod(CommandMethod.SET);
             setResource(resource);
@@ -133,6 +138,7 @@ public class ChannelExtensions {
 
     /**
      * Composes a command envelope with a delete method for the specified resource.
+     *
      * @param channel
      * @param limeUri
      * @throws IOException
@@ -141,9 +147,10 @@ public class ChannelExtensions {
     public static void deleteResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
         deleteResource(channel, limeUri, null);
     }
-    
+
     /**
      * Composes a command envelope with a delete method for the specified resource.
+     *
      * @param channel
      * @param limeUri
      * @param from
@@ -169,10 +176,11 @@ public class ChannelExtensions {
             throw new LimeException(responseCommand.getReason());
         }
     }
-    
+
     /**
      * Sends a command request through the channel and awaits for the response.
      * This method synchronizes the channel calls to avoid multiple command processing.
+     *
      * @param channel
      * @param command
      * @return
@@ -186,6 +194,7 @@ public class ChannelExtensions {
     /**
      * Sends a command request through the channel and awaits for the response.
      * This method synchronizes the channel calls to avoid multiple command processing.
+     *
      * @param channel
      * @param command
      * @param timeout
@@ -202,13 +211,17 @@ public class ChannelExtensions {
         if (channel.getState() != Session.SessionState.ESTABLISHED) {
             throw new IllegalStateException("The channel state must be established");
         }
-        
+
         if (command == null) {
             throw new IllegalArgumentException("command");
         }
-        
+
+        if (command.getId() == null) {
+            throw new IllegalArgumentException("The command id is mandatory");
+        }
+
         if (command.getStatus() != null) {
-            throw new IllegalArgumentException("The command status must not be defined");
+            throw new IllegalArgumentException("The command status should not be defined");
         }
 
         final Command[] responseCommand = new Command[1];
@@ -218,7 +231,7 @@ public class ChannelExtensions {
         CommandChannel.CommandChannelListener listener = new CommandChannel.CommandChannelListener() {
             @Override
             public void onReceiveCommand(Command c) {
-                if (c.getId().equals(command.getId())) {
+                if (command.getId().equals(c.getId())) {
                     responseCommand[0] = c;
                     clientChannelSemaphore.release();
                 }
