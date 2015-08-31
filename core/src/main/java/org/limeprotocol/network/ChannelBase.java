@@ -407,7 +407,10 @@ public abstract class ChannelBase implements Channel {
     private static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
         List<T> result = new ArrayList<>();
         if (collection != null) {
-            result.addAll(collection);
+            Iterator<T> iterator = collection.iterator();
+            while (iterator.hasNext()) {
+                result.add(iterator.next());
+            }
         }
         if (queue != null) {
             while (!queue.isEmpty()) {

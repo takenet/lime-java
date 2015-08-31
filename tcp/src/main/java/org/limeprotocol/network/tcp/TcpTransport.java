@@ -206,7 +206,7 @@ public class TcpTransport extends TransportBase implements Transport {
 
         // final reference of the inputStream
         private final InputStream inputStream;
-        private byte[] buffer;
+        private final byte[] buffer;
         private int bufferCurPos;
         private int jsonStartPos;
         private int jsonCurPos;
@@ -217,7 +217,7 @@ public class TcpTransport extends TransportBase implements Transport {
         
         JsonListener() {
             this.inputStream = TcpTransport.this.inputStream;
-            buffer = new byte[bufferSize];
+            this.buffer = new byte[bufferSize];
         }
 
         @Override
@@ -229,8 +229,7 @@ public class TcpTransport extends TransportBase implements Transport {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
                         if (jsonBufferReadResult.isSuccess()) {
                             String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
-                            if (traceWriter != null &&
-                                    traceWriter.isEnabled()) {
+                            if (traceWriter != null && traceWriter.isEnabled()) {
                                 traceWriter.trace(jsonString, TraceWriter.DataOperation.RECEIVE);
                             }
                             envelope = envelopeSerializer.deserialize(jsonString);

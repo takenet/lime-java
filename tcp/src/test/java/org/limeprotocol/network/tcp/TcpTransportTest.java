@@ -630,7 +630,6 @@ public class TcpTransportTest {
             return currentBuffer.length;
         }
 
-
         public int getReadCount() {
             return readCount;
         }
