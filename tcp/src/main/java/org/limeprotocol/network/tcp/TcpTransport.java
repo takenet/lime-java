@@ -32,19 +32,19 @@ public class TcpTransport extends TransportBase implements Transport {
     public TcpTransport() {
         this(new JacksonEnvelopeSerializer(), new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer) {
         this(envelopeSerializer, new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
         this(envelopeSerializer, tcpClientFactory, null, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter) {
         this(envelopeSerializer, tcpClientFactory, traceWriter, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter, int bufferSize) {
         this.envelopeSerializer = envelopeSerializer;
         this.tcpClientFactory = tcpClientFactory;
@@ -64,12 +64,12 @@ public class TcpTransport extends TransportBase implements Transport {
         }
         ensureSocketOpen();
         String envelopeString = envelopeSerializer.serialize(envelope);
-        
+
         try {
             byte[] envelopeBytes = envelopeString.getBytes("UTF-8");
             outputStream.write(envelopeBytes);
             outputStream.flush();
-            
+
             if (traceWriter != null &&
                     traceWriter.isEnabled()) {
                 traceWriter.trace(envelopeString, TraceWriter.DataOperation.SEND);
@@ -89,12 +89,12 @@ public class TcpTransport extends TransportBase implements Transport {
         if (uri == null) {
             throw new IllegalArgumentException("uri");
         }
-        
+
         // TODO: This is the best scheme to use?
         if (!uri.getScheme().equals("net.tcp")) {
             throw new IllegalArgumentException("Invalid URI scheme. Expected is 'net.tcp'", null);
         }
-        
+
         if (tcpClient != null) {
             throw new IllegalStateException("The client is already open");
         }
@@ -133,7 +133,7 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        return new SessionEncryption[] { SessionEncryption.NONE, SessionEncryption.TLS };
+        return new SessionEncryption[]{SessionEncryption.NONE, SessionEncryption.TLS};
     }
 
     /**
@@ -166,7 +166,7 @@ public class TcpTransport extends TransportBase implements Transport {
     private boolean isSocketOpen() {
         return tcpClient != null;
     }
-    
+
     private void ensureSocketOpen() {
         if (tcpClient == null) {
             throw new IllegalStateException("The client is not open");
@@ -181,7 +181,7 @@ public class TcpTransport extends TransportBase implements Transport {
     private boolean isListening() {
         return jsonListener != null && !jsonListener.isStopping();
     }
-    
+
     private synchronized void startListenerThread() throws IOException {
         ensureSocketOpen();
         if (isListening()) {
@@ -192,7 +192,7 @@ public class TcpTransport extends TransportBase implements Transport {
         jsonListenerThread = new Thread(jsonListener);
         jsonListenerThread.start();
     }
-    
+
     private synchronized void stopListenerThread() {
         if (isListening()) {
             jsonListener.stop();
@@ -219,7 +219,7 @@ public class TcpTransport extends TransportBase implements Transport {
 
         volatile private boolean isStopping;
         private int id = globalId++;
-        
+
         JsonListener(InputStream inputStream, int bufferSize) {
             this.inputStream = inputStream;
             this.buffer = new byte[bufferSize];
@@ -252,53 +252,54 @@ public class TcpTransport extends TransportBase implements Transport {
             } catch (Exception e) {
                 raiseOnException(e);
             }
-            
+
             this.isStopping = true;
         }
 
         public boolean isStopping() {
             return this.isStopping || Thread.currentThread().isInterrupted();
         }
-        
+
         public void stop() {
             this.isStopping = true;
         }
-        
+
         private JsonBufferReadResult tryExtractJsonFromBuffer() {
             if (bufferCurPos > buffer.length) {
                 throw new IllegalArgumentException("Buffer current pos or length value is invalid", null);
             }
 
-            byte[] json = null;
             int jsonLength = 0;
             for (int i = jsonCurPos; i < bufferCurPos; i++) {
                 jsonCurPos = i + 1;
-
                 if (buffer[i] == '{') {
                     jsonStackedBrackets++;
                     if (!jsonStarted) {
                         jsonStartPos = i;
                         jsonStarted = true;
                     }
-                }
-                else if (buffer[i] == '}') {
+                } else if (buffer[i] == '}') {
                     jsonStackedBrackets--;
                 }
 
-                if (jsonStarted && 
-                        jsonStackedBrackets == 0) {
+                if (jsonStarted && jsonStackedBrackets == 0) {
                     jsonLength = i - jsonStartPos + 1;
                     break;
                 }
             }
 
             if (jsonLength > 1) {
-                json = new byte[jsonLength];
+                byte[] json = new byte[jsonLength];
                 System.arraycopy(buffer, jsonStartPos, json, 0, jsonLength);
 
                 // Shifts the buffer to the left
-                bufferCurPos -= (jsonLength + jsonStartPos);
-                System.arraycopy(buffer, jsonLength + jsonStartPos, buffer, 0, bufferCurPos);
+                bufferCurPos -= (jsonStartPos + jsonLength);
+                if (bufferCurPos < 0) {
+                    throw new BufferOverflowException(String.format("Error extracting JSON from buffer - bufferCurPos: %d, buffer lenght: %d, jsonStartPos: %d, jsonLength: %d",
+                            bufferCurPos, buffer.length, jsonStartPos, jsonLength));
+                }
+
+                System.arraycopy(buffer, jsonStartPos + jsonLength, buffer, 0, bufferCurPos);
                 jsonCurPos = 0;
                 jsonStartPos = 0;
                 jsonStarted = false;
@@ -308,11 +309,11 @@ public class TcpTransport extends TransportBase implements Transport {
 
             return new JsonBufferReadResult(false, null);
         }
-        
+
         class JsonBufferReadResult {
             private final boolean success;
             private final byte[] jsonBytes;
-            
+
             public JsonBufferReadResult(boolean success, byte[] jsonBytes) {
                 this.success = success;
                 this.jsonBytes = jsonBytes;
