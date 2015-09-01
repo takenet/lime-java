@@ -368,7 +368,7 @@ public abstract class ChannelBase implements Channel {
         transport.setEnvelopeListener(transportEnvelopeListener);
     }
 
-    private <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
+    private synchronized <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -383,10 +383,30 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private <TListener> void removeListener(TListener listener, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
+    private synchronized <TListener> void removeListener(TListener listener, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
         if (!listeners.remove(listener)) {
             singleReceiveListeners.remove(listener);
         }
+    }
+
+    /**
+     * Merges a queue and a collection, removing all items from the queue.
+     * @param queue
+     * @param collection
+     * @param <T>
+     * @return
+     */
+    private synchronized <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
+        List<T> result = new ArrayList<>();
+        if (collection != null) {
+            result.addAll(collection);
+        }
+        if (queue != null) {
+            while (!queue.isEmpty()) {
+                result.add(queue.remove());
+            }
+        }
+        return result;
     }
 
     private void send(Envelope envelope) throws IOException {
@@ -395,29 +415,6 @@ public abstract class ChannelBase implements Channel {
         }
 
         transport.send(envelope);
-    }
-    
-    /**
-     * Merges a queue and a collection, removing all items from the queue.
-     * @param queue
-     * @param collection
-     * @param <T>
-     * @return
-     */
-    private static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
-        List<T> result = new ArrayList<>();
-        if (collection != null) {
-            Iterator<T> iterator = collection.iterator();
-            while (iterator.hasNext()) {
-                result.add(iterator.next());
-            }
-        }
-        if (queue != null) {
-            while (!queue.isEmpty()) {
-                result.add(queue.remove());
-            }
-        }
-        return result;
     }
 
     private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
