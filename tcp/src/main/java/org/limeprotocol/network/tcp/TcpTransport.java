@@ -10,6 +10,7 @@ import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.charset.Charset;
 
@@ -239,16 +240,20 @@ public class TcpTransport extends TransportBase implements Transport {
                             envelope = envelopeSerializer.deserialize(jsonString);
                         }
                         if (envelope == null) {
-                            int read = this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
-                            if (read < 0) {
-                                // The stream reached EOF, raise closed event.
-                                TcpTransport.this.close();
-                                break;
-                            }
-                            bufferCurPos += read;
-                            if (bufferCurPos >= buffer.length) {
-                                TcpTransport.this.close();
-                                throw new BufferOverflowException("Maximum buffer size reached");
+                            try {
+                                int read = this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                                if (read < 0) {
+                                    // The stream reached EOF, raise closed event.
+                                    TcpTransport.this.close();
+                                    break;
+                                }
+                                bufferCurPos += read;
+                                if (bufferCurPos >= buffer.length) {
+                                    TcpTransport.this.close();
+                                    throw new BufferOverflowException("Maximum buffer size reached");
+                                }
+                            } catch (SocketTimeoutException e) {
+                                // Ignores the socket timeout exception
                             }
                         }
                     }

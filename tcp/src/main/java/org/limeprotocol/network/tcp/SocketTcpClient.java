@@ -11,9 +11,12 @@ import java.security.NoSuchAlgorithmException;
 
 public class SocketTcpClient implements TcpClient {
 
+    public final static int DEFAULT_SO_TIMEOUT = 5000;
+
     private final X509TrustManager trustManager;
     private final boolean socketTcpNoDelay;
     private final boolean socketKeepAlive;
+    private final int socketSoTimeout;
     private final Socket socket;
     private SSLSocket sslSocket;
     private SSLSocketFactory sslSocketFactory;
@@ -22,13 +25,14 @@ public class SocketTcpClient implements TcpClient {
         this(null);
     }
     public SocketTcpClient(X509TrustManager trustManager) {
-        this(trustManager, true, false);
+        this(trustManager, true, false, DEFAULT_SO_TIMEOUT);
     }
 
-    public SocketTcpClient(X509TrustManager trustManager, boolean socketTcpNoDelay, boolean socketKeepAlive) {
+    public SocketTcpClient(X509TrustManager trustManager, boolean socketTcpNoDelay, boolean socketKeepAlive, int socketSoTimeout) {
         this.trustManager = trustManager;
         this.socketTcpNoDelay = socketTcpNoDelay;
         this.socketKeepAlive = socketKeepAlive;
+        this.socketSoTimeout = socketSoTimeout;
         socket = new Socket();
     }
 
@@ -37,6 +41,7 @@ public class SocketTcpClient implements TcpClient {
         socket.connect(endpoint);
         socket.setTcpNoDelay(socketTcpNoDelay);
         socket.setKeepAlive(socketKeepAlive);
+        socket.setSoTimeout(socketSoTimeout);
     }
 
     @Override
