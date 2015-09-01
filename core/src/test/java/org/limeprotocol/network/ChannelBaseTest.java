@@ -762,10 +762,10 @@ public class ChannelBaseTest {
     @Test
     public void schedulePing_inactiveEstablishedChannel_sendPings() throws InterruptedException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 50, 300, null, null, UUID.randomUUID());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 600, null, null, UUID.randomUUID());
 
         // Act
-        Thread.sleep(170);
+        Thread.sleep(350);
 
         // Assert
         assertEquals(3, ((TestTransport) target.getTransport()).sentEnvelopes.size());
@@ -774,10 +774,10 @@ public class ChannelBaseTest {
     @Test
     public void schedulePing_inactiveEstablishedChannel_callsDisconnect() throws InterruptedException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 50, 170, null, null, UUID.randomUUID());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 350, null, null, UUID.randomUUID());
 
         // Act
-        Thread.sleep(170);
+        Thread.sleep(375);
 
         // Assert
         assertEquals(3, ((TestTransport)target.getTransport()).sentEnvelopes.size());
@@ -787,12 +787,12 @@ public class ChannelBaseTest {
     @Test
     public void schedulePing_sendEnvelopeAfterReceivingPing_doNotDisconnect() throws InterruptedException, IOException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 50, 100, null, null, UUID.randomUUID());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 300, null, null, UUID.randomUUID());
 
         // Act
-        Thread.sleep(80);
+        Thread.sleep(150);
         ((TestTransport)target.getTransport()).raiseOnReceive(Dummy.createCommand());
-        Thread.sleep(50);
+        Thread.sleep(100);
 
         // Assert
         assertEquals(1, ((TestTransport) target.getTransport()).sentEnvelopes.size());
