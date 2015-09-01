@@ -70,8 +70,7 @@ public class TcpTransport extends TransportBase implements Transport {
             outputStream.write(envelopeBytes);
             outputStream.flush();
 
-            if (traceWriter != null &&
-                    traceWriter.isEnabled()) {
+            if (traceWriter != null && traceWriter.isEnabled()) {
                 traceWriter.trace(envelopeString, TraceWriter.DataOperation.SEND);
             }
         } catch (UnsupportedEncodingException e) {
@@ -242,6 +241,7 @@ public class TcpTransport extends TransportBase implements Transport {
                         if (envelope == null) {
                             int read = this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
                             if (read < 0) {
+                                // The stream reached EOF, raise closed event.
                                 TcpTransport.this.close();
                                 break;
                             }
@@ -252,6 +252,7 @@ public class TcpTransport extends TransportBase implements Transport {
                             }
                         }
                     }
+                    // Check if the transport was closed
                     if (envelope == null) break;
                     raiseOnReceive(envelope);
                 }

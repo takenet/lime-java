@@ -2,6 +2,7 @@ package org.limeprotocol.network;
 
 import org.junit.Test;
 import org.limeprotocol.*;
+import org.limeprotocol.testHelpers.Dummy;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,13 +38,16 @@ public class ChannelBaseTest {
     }
     
     private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
+        return getTarget(state, fillEnvelopeRecipients, autoReplyPings, 0, 0, remoteNode, localNode, sessionId);
+    }
+
+    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, UUID sessionId) {
         transport = new TestTransport();
         sessionChannelListener = mock(SessionChannel.SessionChannelListener.class);
-        ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, autoReplyPings, remoteNode, localNode, sessionId);
+        ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval, remoteNode, localNode, sessionId);
         channelBase.enqueueSessionListener(sessionChannelListener);
         return channelBase;
     }
-
 
     @Test
     public void sendCommand_establishedState_callsTransport() throws IOException {
@@ -755,18 +759,76 @@ public class ChannelBaseTest {
         ((TestChannel)target).raiseOnReceiveNotification(notification);
     }
 
+    @Test
+    public void schedulePing_inactiveEstablishedChannel_sendPings() throws InterruptedException {
+        // Arrange
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 50, 300, null, null, UUID.randomUUID());
+
+        // Act
+        Thread.sleep(170);
+
+        // Assert
+        assertEquals(3, ((TestTransport) target.getTransport()).sentEnvelopes.size());
+    }
+
+    @Test
+    public void schedulePing_inactiveEstablishedChannel_callsDisconnect() throws InterruptedException {
+        // Arrange
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 50, 170, null, null, UUID.randomUUID());
+
+        // Act
+        Thread.sleep(170);
+
+        // Assert
+        assertEquals(3, ((TestTransport)target.getTransport()).sentEnvelopes.size());
+        assertTrue(((TestChannel) target).pingDisconnectionSemaphore.tryAcquire(100, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void schedulePing_sendEnvelopeAfterReceivingPing_doNotDisconnect() throws InterruptedException, IOException {
+        // Arrange
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 50, 100, null, null, UUID.randomUUID());
+
+        // Act
+        Thread.sleep(80);
+        ((TestTransport)target.getTransport()).raiseOnReceive(Dummy.createCommand());
+        Thread.sleep(50);
+
+        // Assert
+        assertEquals(1, ((TestTransport) target.getTransport()).sentEnvelopes.size());
+        assertEquals(0, ((TestChannel) target).pingDisconnectionSemaphore.availablePermits());
+    }
+
+
     private class TestChannel extends ChannelBase {
-        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
-            super(transport, fillEnvelopeRecipients, autoReplyPings);
+
+        public Semaphore pingDisconnectionSemaphore = new Semaphore(1);
+
+        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, UUID sessionId) {
+            super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
             setRemoteNode(remoteNode);
             setLocalNode(localNode);
             setState(state);
             setSessionId(sessionId);
+
         }
 
         @Override
         protected synchronized void setState(Session.SessionState state) {
             super.setState(state);
+            if (state == Session.SessionState.ESTABLISHED) {
+                try {
+                    pingDisconnectionSemaphore.acquire();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        @Override
+        protected void onPingDisconnection() throws IOException {
+            pingDisconnectionSemaphore.release();
+            transport.close();
         }
     }
 

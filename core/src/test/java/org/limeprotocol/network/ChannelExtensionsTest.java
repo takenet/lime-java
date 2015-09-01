@@ -71,7 +71,7 @@ public class ChannelExtensionsTest {
 
     private class TestChannel extends ChannelBase {
         protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
-            super(transport, fillEnvelopeRecipients, autoReplyPings);
+            super(transport, fillEnvelopeRecipients, autoReplyPings, 0, 0);
             setRemoteNode(remoteNode);
             setLocalNode(localNode);
             setState(state);
@@ -81,6 +81,11 @@ public class ChannelExtensionsTest {
         @Override
         protected synchronized void setState(Session.SessionState state) {
             super.setState(state);
+        }
+
+        @Override
+        protected void onPingDisconnection() throws IOException {
+
         }
     }
 

@@ -29,7 +29,12 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings,
                              boolean autoNotifyReceipt) {
-        super(transport, fillEnvelopeRecipients, autoReplyPings);
+        this(transport, fillEnvelopeRecipients, autoReplyPings, autoNotifyReceipt, 0, 0);
+    }
+
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings,
+                             boolean autoNotifyReceipt, long pingInterval, long pingDisconnectionInterval) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
 
         this.autoNotifyReceipt = autoNotifyReceipt;
     }
@@ -181,6 +186,11 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                 envelope.getPp().setDomain(this.getLocalNode().getDomain());
             }
         }
+    }
+
+    @Override
+    protected void onPingDisconnection() throws IOException {
+        sendFinishingSession();
     }
 
     @Override

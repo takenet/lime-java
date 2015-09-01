@@ -80,7 +80,7 @@ public class ClientSample {
         transport.open(serverUri);
 
         // Creates a new client channel
-        ClientChannel clientChannel = new ClientChannelImpl(transport, true, true, true);
+        ClientChannel clientChannel = new ClientChannelImpl(transport, true, true, true, 10000, 30000);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
 

@@ -5,7 +5,7 @@ import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 import static org.limeprotocol.Session.SessionState.*;
 
@@ -17,6 +17,8 @@ public abstract class ChannelBase implements Channel {
     private final Transport transport;
     private final boolean fillEnvelopeRecipients;
     private final boolean autoReplyPings;
+    private final long pingDisconnectionInterval;
+    private final long pingInterval;
     private Node remoteNode;
     private Node localNode;
     private UUID sessionId;
@@ -27,17 +29,22 @@ public abstract class ChannelBase implements Channel {
     private final Queue<CommandChannelListener> singleReceiveCommandListeners;
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
-    private Queue<SessionChannelListener> sessionChannelListeners;
+    private final Queue<SessionChannelListener> sessionChannelListeners;
     private final Transport.TransportEnvelopeListener transportEnvelopeListener;
+    private long lastReceivedEnvelope;
+    private ScheduledExecutorService executor;
+    private ScheduledFuture scheduledPing;
 
-    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
+    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval) {
         if (transport == null) {
             throw new IllegalArgumentException("transport");
         }
         this.transport = transport;
         this.fillEnvelopeRecipients = fillEnvelopeRecipients;
         this.autoReplyPings = autoReplyPings;
-        
+        this.pingInterval = pingInterval;
+        this.pingDisconnectionInterval = pingDisconnectionInterval;
+
         commandListeners = new HashSet<>();
         messageListeners = new HashSet<>();
         notificationListeners = new HashSet<>();
@@ -45,10 +52,13 @@ public abstract class ChannelBase implements Channel {
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         sessionChannelListeners = new LinkedBlockingQueue<>();
-
         transportEnvelopeListener = new ChannelTransportEnvelopeListener();
 
         setState(NEW);
+
+        if (pingInterval > 0) {
+            executor = Executors.newSingleThreadScheduledExecutor();
+        }
     }
 
     /**
@@ -119,6 +129,10 @@ public abstract class ChannelBase implements Channel {
             throw new IllegalArgumentException("state");
         }
         this.state = state;
+
+        if (pingInterval > 0 && state == ESTABLISHED) {
+            setLastReceivedEnvelope(System.currentTimeMillis());
+        }
     }
 
     /**
@@ -368,7 +382,7 @@ public abstract class ChannelBase implements Channel {
         transport.setEnvelopeListener(transportEnvelopeListener);
     }
 
-    private synchronized <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
+    private <TListener> void addListener(TListener listener, boolean removeAfterReceive, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
         if (listener == null) {
             throw new IllegalArgumentException("listener");
         }
@@ -383,10 +397,18 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private synchronized <TListener> void removeListener(TListener listener, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
+    private <TListener> void removeListener(TListener listener, Set<TListener> listeners, Queue<TListener> singleReceiveListeners) {
         if (!listeners.remove(listener)) {
             singleReceiveListeners.remove(listener);
         }
+    }
+
+    private void send(Envelope envelope) throws IOException {
+        if (fillEnvelopeRecipients) {
+            fillEnvelope(envelope, true);
+        }
+
+        transport.send(envelope);
     }
 
     /**
@@ -396,10 +418,13 @@ public abstract class ChannelBase implements Channel {
      * @param <T>
      * @return
      */
-    private synchronized <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
+    private synchronized static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
         List<T> result = new ArrayList<>();
         if (collection != null) {
-            result.addAll(collection);
+            Iterator<T> iterator = collection.iterator();
+            while (iterator.hasNext()) {
+                result.add(iterator.next());
+            }
         }
         if (queue != null) {
             while (!queue.isEmpty()) {
@@ -407,14 +432,6 @@ public abstract class ChannelBase implements Channel {
             }
         }
         return result;
-    }
-
-    private void send(Envelope envelope) throws IOException {
-        if (fillEnvelopeRecipients) {
-            fillEnvelope(envelope, true);
-        }
-
-        transport.send(envelope);
     }
 
     private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
@@ -426,6 +443,7 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onReceive(Envelope envelope) {
+            setLastReceivedEnvelope(System.currentTimeMillis());
             if (fillEnvelopeRecipients) {
                 fillEnvelope(envelope, false);
             }
@@ -437,6 +455,46 @@ public abstract class ChannelBase implements Channel {
                 raiseOnReceiveCommand((Command) envelope);
             } else if (envelope instanceof Session) {
                 raiseOnReceiveSession((Session) envelope);
+            }
+        }
+    }
+
+    private void setLastReceivedEnvelope(long time) {
+        this.lastReceivedEnvelope = time;
+        if (pingInterval > 0) {
+            if (scheduledPing != null) {
+                scheduledPing.cancel(false);
+            }
+            schedulePing();
+        }
+    }
+
+    private void schedulePing() {
+        if (getState() == ESTABLISHED && pingInterval > 0) {
+            scheduledPing = executor.schedule(new PingRunnable(), pingInterval, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    protected abstract void onPingDisconnection() throws IOException;
+
+    private class PingRunnable implements Runnable {
+        @Override
+        public void run() {
+            if (getState() == ESTABLISHED) {
+                try {
+                    if (System.currentTimeMillis() - lastReceivedEnvelope < pingDisconnectionInterval) {
+                        Command pingCommand = new Command(UUID.randomUUID());
+                        pingCommand.setMethod(Command.CommandMethod.GET);
+                        pingCommand.setUri(new LimeUri(PING_URI_TEMPLATE));
+                        sendCommand(pingCommand);
+
+                        schedulePing();
+                    } else {
+                        onPingDisconnection();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
