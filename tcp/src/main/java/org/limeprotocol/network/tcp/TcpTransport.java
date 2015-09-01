@@ -240,7 +240,12 @@ public class TcpTransport extends TransportBase implements Transport {
                             envelope = envelopeSerializer.deserialize(jsonString);
                         }
                         if (envelope == null) {
-                            bufferCurPos += this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                            int read = this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                            if (read < 0) {
+                                TcpTransport.this.close();
+                                break;
+                            }
+                            bufferCurPos += read;
                             if (bufferCurPos >= buffer.length) {
                                 TcpTransport.this.close();
                                 throw new BufferOverflowException("Maximum buffer size reached");
@@ -295,6 +300,7 @@ public class TcpTransport extends TransportBase implements Transport {
                 // Shifts the buffer to the left
                 bufferCurPos -= (jsonStartPos + jsonLength);
                 if (bufferCurPos < 0) {
+                    // This should never occur
                     throw new BufferOverflowException(String.format("Error extracting JSON from buffer - bufferCurPos: %d, buffer length: %d, jsonStartPos: %d, jsonLength: %d",
                             bufferCurPos, buffer.length, jsonStartPos, jsonLength));
                 }

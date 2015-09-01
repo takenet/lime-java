@@ -456,10 +456,14 @@ public class TcpTransportTest {
                 messageJson = Dummy.createMessageJson();
             } while (messageJsonQueue.contains(messageJson));
             messageJsonQueue.add(messageJson);
-            if (i % 3 == 0) messagesJsonBuilder.append("\r\n   ");
+            if (i != messagesCount - 1) {
+                if (i % 3 == 0) messagesJsonBuilder.append("\r\n   ");
+            }
             messagesJsonBuilder.append(messageJson);
-            if (i % 2 == 0) messagesJsonBuilder.append("\r\n");
-            if (i % 5 == 0) messagesJsonBuilder.append(" ");
+            if (i != messagesCount - 1) {
+                if (i % 2 == 0) messagesJsonBuilder.append("\r\n");
+                if (i % 5 == 0) messagesJsonBuilder.append(" ");
+            }
         }
         String messagesJson = messagesJsonBuilder.toString();
         byte[] messageBuffer = messagesJson.getBytes("UTF-8");
