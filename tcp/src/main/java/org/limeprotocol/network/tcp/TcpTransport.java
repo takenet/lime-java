@@ -27,7 +27,7 @@ public class TcpTransport extends TransportBase implements Transport {
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
     private JsonListener jsonListener;
-
+    private Thread jsonListenerThread;
 
     public TcpTransport() {
         this(new JacksonEnvelopeSerializer(), new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
@@ -188,20 +188,24 @@ public class TcpTransport extends TransportBase implements Transport {
             throw new IllegalStateException("The input listener is already started");
         }
 
-        jsonListener = new JsonListener();
-        Thread listenerThread = new Thread(jsonListener);
-        listenerThread.start();
+        jsonListener = new JsonListener(inputStream, bufferSize);
+        jsonListenerThread = new Thread(jsonListener);
+        jsonListenerThread.start();
     }
     
     private synchronized void stopListenerThread() {
         if (isListening()) {
             jsonListener.stop();
+            if (jsonListenerThread != null && jsonListenerThread.isAlive()) {
+                jsonListenerThread.interrupt();
+            }
             jsonListener = null;
+            jsonListenerThread = null;
         }
     }
 
     private static int globalId;
-    
+
     class JsonListener implements Runnable {
 
         // final reference of the inputStream
@@ -212,11 +216,12 @@ public class TcpTransport extends TransportBase implements Transport {
         private int jsonCurPos;
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
+
+        volatile private boolean isStopping;
         private int id = globalId++;
-        private boolean isStopping;
         
-        JsonListener() {
-            this.inputStream = TcpTransport.this.inputStream;
+        JsonListener(InputStream inputStream, int bufferSize) {
+            this.inputStream = inputStream;
             this.buffer = new byte[bufferSize];
         }
 
@@ -252,7 +257,7 @@ public class TcpTransport extends TransportBase implements Transport {
         }
 
         public boolean isStopping() {
-            return this.isStopping;
+            return this.isStopping || Thread.currentThread().isInterrupted();
         }
         
         public void stop() {
