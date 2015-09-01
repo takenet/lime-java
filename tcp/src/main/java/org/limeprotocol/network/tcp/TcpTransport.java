@@ -252,6 +252,7 @@ public class TcpTransport extends TransportBase implements Transport {
                             }
                         }
                     }
+                    if (envelope == null) break;
                     raiseOnReceive(envelope);
                 }
             } catch (Exception e) {
