@@ -204,11 +204,8 @@ public class TcpTransport extends TransportBase implements Transport {
         }
     }
 
-    private static int globalId;
-
     class JsonListener implements Runnable {
 
-        // final reference of the inputStream
         private final InputStream inputStream;
         private final byte[] buffer;
         private int bufferCurPos;
@@ -216,9 +213,7 @@ public class TcpTransport extends TransportBase implements Transport {
         private int jsonCurPos;
         private int jsonStackedBrackets;
         private boolean jsonStarted = false;
-
         volatile private boolean isStopping;
-        private int id = globalId++;
 
         JsonListener(InputStream inputStream, int bufferSize) {
             this.inputStream = inputStream;
@@ -228,7 +223,7 @@ public class TcpTransport extends TransportBase implements Transport {
         @Override
         public void run() {
             try {
-                while (getEnvelopeListener() != null && !isStopping()) {
+                while (getEnvelopeListener() != null && !isStopping() && !Thread.currentThread().isInterrupted()) {
                     Envelope envelope = null;
                     while (envelope == null) {
                         JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
@@ -241,8 +236,8 @@ public class TcpTransport extends TransportBase implements Transport {
                         }
                         if (envelope == null) {
                             try {
-                                int read = this.inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
-                                if (read < 0) {
+                                int read = inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                                if (read == -1) {
                                     // The stream reached EOF, raise closed event.
                                     TcpTransport.this.close();
                                     break;
@@ -269,7 +264,7 @@ public class TcpTransport extends TransportBase implements Transport {
         }
 
         public boolean isStopping() {
-            return this.isStopping || Thread.currentThread().isInterrupted();
+            return this.isStopping;
         }
 
         public void stop() {

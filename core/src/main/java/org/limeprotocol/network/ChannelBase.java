@@ -434,43 +434,16 @@ public abstract class ChannelBase implements Channel {
         return result;
     }
 
-    private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
-
-        /**
-         * Occurs when a envelope is received by the transport.
-         *
-         * @param envelope
-         */
-        @Override
-        public void onReceive(Envelope envelope) {
-            setLastReceivedEnvelope(System.currentTimeMillis());
-            if (fillEnvelopeRecipients) {
-                fillEnvelope(envelope, false);
-            }
-            if (envelope instanceof Notification) {
-                raiseOnReceiveNotification((Notification)envelope);
-            } else if (envelope instanceof Message) {
-                raiseOnReceiveMessage((Message)envelope);
-            } else if (envelope instanceof Command) {
-                raiseOnReceiveCommand((Command) envelope);
-            } else if (envelope instanceof Session) {
-                raiseOnReceiveSession((Session) envelope);
-            }
-        }
-    }
-
     private void setLastReceivedEnvelope(long time) {
         this.lastReceivedEnvelope = time;
-        if (pingInterval > 0) {
-            if (scheduledPing != null) {
-                scheduledPing.cancel(false);
-            }
-            schedulePing();
-        }
+        schedulePing();
     }
 
     private void schedulePing() {
         if (getState() == ESTABLISHED && pingInterval > 0) {
+            if (scheduledPing != null) {
+                scheduledPing.cancel(false);
+            }
             scheduledPing = executor.schedule(new PingRunnable(), pingInterval, TimeUnit.MILLISECONDS);
         }
     }
@@ -495,6 +468,31 @@ public abstract class ChannelBase implements Channel {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
+
+        /**
+         * Occurs when a envelope is received by the transport.
+         *
+         * @param envelope
+         */
+        @Override
+        public void onReceive(Envelope envelope) {
+            setLastReceivedEnvelope(System.currentTimeMillis());
+            if (fillEnvelopeRecipients) {
+                fillEnvelope(envelope, false);
+            }
+            if (envelope instanceof Notification) {
+                raiseOnReceiveNotification((Notification)envelope);
+            } else if (envelope instanceof Message) {
+                raiseOnReceiveMessage((Message)envelope);
+            } else if (envelope instanceof Command) {
+                raiseOnReceiveCommand((Command) envelope);
+            } else if (envelope instanceof Session) {
+                raiseOnReceiveSession((Session) envelope);
             }
         }
     }
