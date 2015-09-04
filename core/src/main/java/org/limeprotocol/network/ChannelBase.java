@@ -333,9 +333,12 @@ public abstract class ChannelBase implements Channel {
 
     protected synchronized void raiseOnReceiveSession(Session session) {
         if (getState() != ESTABLISHED) {
+            // Remove the envelope listener to signal the transport
+            // that we are not expecting another envelope for now.
             transport.setEnvelopeListener(null);
         }
 
+        // Remove the first listener of the queue
         SessionChannelListener listener = sessionChannelListeners.poll();
         if (listener != null) {
             listener.onReceiveSession(session);
@@ -486,9 +489,9 @@ public abstract class ChannelBase implements Channel {
                 fillEnvelope(envelope, false);
             }
             if (envelope instanceof Notification) {
-                raiseOnReceiveNotification((Notification)envelope);
+                raiseOnReceiveNotification((Notification) envelope);
             } else if (envelope instanceof Message) {
-                raiseOnReceiveMessage((Message)envelope);
+                raiseOnReceiveMessage((Message) envelope);
             } else if (envelope instanceof Command) {
                 raiseOnReceiveCommand((Command) envelope);
             } else if (envelope instanceof Session) {

@@ -147,9 +147,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
     @Override
     public void establishSession(SessionCompression compression, SessionEncryption encryption,
                                  Identity identity, Authentication authentication, String instance,
-                                 EstablishSessionListener listener)
-            throws IOException {
-
+                                 EstablishSessionListener listener) throws IOException {
         if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot establish a session in the '%s' state", getState()));
         }
@@ -201,8 +199,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (session.getState() == ESTABLISHED) {
             setLocalNode(session.getTo());
             setRemoteNode(session.getFrom());
-        } else if (session.getState() == FINISHED ||
-                session.getState() == FAILED) {
+        } else if (session.getState() == FINISHED || session.getState() == FAILED) {
             try {
                 getTransport().close();
             } catch (IOException e) {

@@ -4,13 +4,14 @@ import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 
 /**
  * Defines a network connection with a node.
  */
-public interface Transport {
+public interface Transport extends Closeable {
     
     /**
      * Sends an envelope to the remote node. 
@@ -35,11 +36,6 @@ public interface Transport {
      * @param uri
      */
     void open(URI uri) throws IOException;
-
-    /**
-     * Closes the connection.
-     */
-    void close() throws IOException;
 
     /**
      * Enumerates the supported compression options for the transport.

@@ -239,7 +239,7 @@ public class TcpTransport extends TransportBase implements Transport {
                                 int read = inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
                                 if (read == -1) {
                                     // The stream reached EOF, raise closed event.
-                                    TcpTransport.this.close();
+                                    close();
                                     break;
                                 }
                                 bufferCurPos += read;
