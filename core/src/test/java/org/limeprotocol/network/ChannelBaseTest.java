@@ -1,5 +1,6 @@
 package org.limeprotocol.network;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.testHelpers.Dummy;
@@ -785,6 +786,7 @@ public class ChannelBaseTest {
     }
 
     @Test
+    @Ignore
     public void schedulePing_sendEnvelopeAfterReceivingPing_doNotDisconnect() throws InterruptedException, IOException {
         // Arrange
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 300, null, null, UUID.randomUUID());
