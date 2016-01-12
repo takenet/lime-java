@@ -849,6 +849,11 @@ public class ChannelBaseTest {
             closeInvoked = true;
         }
 
+        @Override
+        protected void performOpen(URI uri) throws IOException {
+
+        }
+
         /**
          * Sends an envelope to the remote node.
          *
@@ -867,6 +872,11 @@ public class ChannelBaseTest {
         @Override
         public void open(URI uri) throws IOException {
             openUri = uri;
+        }
+
+        @Override
+        public boolean isConnected() {
+            return true;
         }
 
         @Override

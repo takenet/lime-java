@@ -38,6 +38,12 @@ public interface Transport extends Closeable {
     void open(URI uri) throws IOException;
 
     /**
+     * Checks if the client is connected.
+     * @return
+     * */
+    boolean isConnected();
+
+    /**
      * Enumerates the supported compression options for the transport.
      * @return
      */

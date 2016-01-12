@@ -5,6 +5,7 @@ import org.limeprotocol.SessionCompression;
 import org.limeprotocol.SessionEncryption;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.*;
 
 /**
@@ -82,11 +83,20 @@ public abstract class TransportBase implements Transport {
             closedInvoked = true;
         }
     }
-    
+
+    @Override
+    public void open(URI uri) throws IOException{
+        performOpen(uri);
+        closingInvoked = false;
+        closedInvoked = false;
+    }
+
     /**
      * Closes the transport.
      */
     protected abstract void performClose() throws IOException;
+
+    protected abstract void performOpen(URI uri) throws IOException;
 
     protected TransportEnvelopeListener getEnvelopeListener() {
         return transportEnvelopeListener;

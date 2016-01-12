@@ -29,6 +29,7 @@ public class TcpTransport extends TransportBase implements Transport {
     private BufferedInputStream inputStream;
     private JsonListener jsonListener;
     private Thread jsonListenerThread;
+    private boolean isConnected;
 
     public TcpTransport() {
         this(new JacksonEnvelopeSerializer(), new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
@@ -51,6 +52,15 @@ public class TcpTransport extends TransportBase implements Transport {
         this.tcpClientFactory = tcpClientFactory;
         this.traceWriter = traceWriter;
         this.bufferSize = bufferSize;
+        this.isConnected = false;
+    }
+
+    /**
+     * Checks if the client is connected based on the last read/write operation
+     * @returns
+     */
+    public boolean isConnected(){
+        return isConnected;
     }
 
     /**
@@ -76,6 +86,30 @@ public class TcpTransport extends TransportBase implements Transport {
             }
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException("Could not convert the serialized envelope to a UTF-8 byte array", e);
+        } catch (IOException e){
+            close();
+            throw e;
+        }
+    }
+
+    @Override
+    public void setEnvelopeListener(TransportEnvelopeListener listener) {
+        super.setEnvelopeListener(listener);
+        if (listener != null && isSocketOpen() && !isListening()) {
+            try {
+                startListenerThread();
+            } catch (IOException e) {
+                throw new RuntimeException("An error occurred while starting the listener task", e);
+            }
+        }
+    }
+
+    @Override
+    protected void performClose() throws IOException {
+        isConnected = false;
+        stopListenerThread();
+        if (tcpClient != null) {
+            tcpClient.close();
         }
     }
 
@@ -85,7 +119,7 @@ public class TcpTransport extends TransportBase implements Transport {
      * @param uri
      */
     @Override
-    public synchronized void open(URI uri) throws IOException {
+    protected void performOpen(URI uri) throws IOException {
         if (uri == null) {
             throw new IllegalArgumentException("uri");
         }
@@ -104,26 +138,7 @@ public class TcpTransport extends TransportBase implements Transport {
         if (getStateListener() != null) {
             startListenerThread();
         }
-    }
-
-    @Override
-    public void setEnvelopeListener(TransportEnvelopeListener listener) {
-        super.setEnvelopeListener(listener);
-        if (listener != null && isSocketOpen() && !isListening()) {
-            try {
-                startListenerThread();
-            } catch (IOException e) {
-                throw new RuntimeException("An error occurred while starting the listener task", e);
-            }
-        }
-    }
-
-    @Override
-    protected void performClose() throws IOException {
-        stopListenerThread();
-        if (tcpClient != null) {
-            tcpClient.close();
-        }
+        isConnected = true;
     }
 
     /**
@@ -249,6 +264,9 @@ public class TcpTransport extends TransportBase implements Transport {
                                 }
                             } catch (SocketTimeoutException e) {
                                 // Ignores the socket timeout exception
+                            } catch (IOException e){
+                                TcpTransport.this.close();
+                                throw e;
                             }
                         }
                     }
