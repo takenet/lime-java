@@ -2,6 +2,7 @@ package org.limeprotocol.network;
 
 import org.limeprotocol.*;
 import org.limeprotocol.network.modules.FillEnvelopeRecipientsChannelModule;
+import org.limeprotocol.network.modules.ReplyPingChannelModule;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
@@ -11,13 +12,11 @@ import java.util.concurrent.*;
 import static org.limeprotocol.Session.SessionState.*;
 
 public abstract class ChannelBase implements Channel {
-    
+
     private final static String PING_URI_TEMPLATE = "/ping";
-    private final static MediaType PING_MEDIA_TYPE = MediaType.parse("application/vnd.lime.ping+json");
-    
+
     private final Transport transport;
 
-    private final boolean autoReplyPings;
     private final long pingDisconnectionInterval;
     private final long pingInterval;
     private Node remoteNode;
@@ -47,7 +46,7 @@ public abstract class ChannelBase implements Channel {
         }
         this.transport = transport;
 
-        this.autoReplyPings = autoReplyPings;
+
         this.pingInterval = pingInterval;
         this.pingDisconnectionInterval = pingDisconnectionInterval;
         messageModules = new ArrayList<>();
@@ -69,6 +68,10 @@ public abstract class ChannelBase implements Channel {
 
         if (fillEnvelopeRecipients) {
             FillEnvelopeRecipientsChannelModule.createAndRegister(this);
+        }
+
+        if (autoReplyPings) {
+            commandModules.add(new ReplyPingChannelModule(this));
         }
     }
 
@@ -305,33 +308,14 @@ public abstract class ChannelBase implements Channel {
 
     protected synchronized void raiseOnReceiveCommand(Command command) {
         ensureSessionEstablished();
-        if (autoReplyPings &&
-                command.getId() != null &&
-                command.getMethod() == Command.CommandMethod.GET &&
-                command.getStatus() == null &&
-                command.getUri() != null &&
-                command.getUri().toString().equalsIgnoreCase(PING_URI_TEMPLATE)) {
-            Command pingCommandResponse = new Command(command.getId());
-            pingCommandResponse.setTo(command.getFrom());
-            pingCommandResponse.setMethod(Command.CommandMethod.GET);
-            pingCommandResponse.setStatus(Command.CommandStatus.SUCCESS);
-            pingCommandResponse.setResource(new JsonDocument(PING_MEDIA_TYPE));
-            try {
-                sendCommand(pingCommandResponse);
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException("Could not send a ping response to the remote node", e);
-            }
-        }
-        else {
-            command = invokeModulesOnReceiving(command, commandModules);
-            if (command != null) {
-                for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
-                    try {
-                        listener.onReceiveCommand(command);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+
+        command = invokeModulesOnReceiving(command, commandModules);
+        if (command != null) {
+            for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
+                try {
+                    listener.onReceiveCommand(command);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
