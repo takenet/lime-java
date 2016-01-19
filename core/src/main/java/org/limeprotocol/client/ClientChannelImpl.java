@@ -167,24 +167,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         startNewSession(establishingListener);
     }
 
-    /**
-     * Fills the envelope recipients
-     * using the session information
-     */
-    @Override
-    protected void fillEnvelope(Envelope envelope, boolean isSending) {
-        super.fillEnvelope(envelope, isSending);
-
-        if (isSending && this.getLocalNode() != null) {
-            if (envelope.getPp() == null) {
-                if (envelope.getFrom() != null && !envelope.getFrom().equals(this.getLocalNode())) {
-                    envelope.setPp(this.getLocalNode().copy());
-                }
-            } else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain())) {
-                envelope.getPp().setDomain(this.getLocalNode().getDomain());
-            }
-        }
-    }
 
     @Override
     protected void onPingDisconnection() throws IOException {

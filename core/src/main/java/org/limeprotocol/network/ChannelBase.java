@@ -1,6 +1,7 @@
 package org.limeprotocol.network;
 
 import org.limeprotocol.*;
+import org.limeprotocol.network.modules.FillEnvelopeRecipientsChannelModule;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ public abstract class ChannelBase implements Channel {
     private final static MediaType PING_MEDIA_TYPE = MediaType.parse("application/vnd.lime.ping+json");
     
     private final Transport transport;
-    private final boolean fillEnvelopeRecipients;
+
     private final boolean autoReplyPings;
     private final long pingDisconnectionInterval;
     private final long pingInterval;
@@ -45,7 +46,7 @@ public abstract class ChannelBase implements Channel {
             throw new IllegalArgumentException("transport");
         }
         this.transport = transport;
-        this.fillEnvelopeRecipients = fillEnvelopeRecipients;
+
         this.autoReplyPings = autoReplyPings;
         this.pingInterval = pingInterval;
         this.pingDisconnectionInterval = pingDisconnectionInterval;
@@ -63,7 +64,12 @@ public abstract class ChannelBase implements Channel {
         if (pingInterval > 0) {
             executor = Executors.newSingleThreadScheduledExecutor();
         }
+
         setState(NEW);
+
+        if (fillEnvelopeRecipients) {
+            FillEnvelopeRecipientsChannelModule.createAndRegister(this);
+        }
     }
 
     /**
@@ -369,35 +375,6 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    /**
-     * Fills the envelope recipients using the session information.
-     * @param envelope
-     * @param isSending
-     */
-    protected void fillEnvelope(Envelope envelope, boolean isSending) {
-        if (!isSending) {
-            Node from = getRemoteNode();
-            Node to = getLocalNode();
-
-            if (from != null) {
-                if (envelope.getFrom() == null) {
-                    envelope.setFrom(from.copy());
-                }
-                else if (StringUtils.isNullOrEmpty(envelope.getFrom().getDomain())) {
-                    envelope.getFrom().setDomain(from.getDomain());
-                }
-            }
-
-            if (to != null) {
-                if (envelope.getTo() == null) {
-                    envelope.setTo(to.copy());
-                }
-                else if (StringUtils.isNullOrEmpty(envelope.getTo().getDomain())) {
-                    envelope.getTo().setDomain(to.getDomain());
-                }
-            }
-        }
-    }
 
     private void ensureSessionEstablished() {
         if (getState() != ESTABLISHED) {
@@ -451,10 +428,6 @@ public abstract class ChannelBase implements Channel {
     private void send(Envelope envelope) throws IOException {
         if (!transport.isConnected()) {
             throw new IllegalStateException("The transport is not connected");
-        }
-
-        if (fillEnvelopeRecipients) {
-            fillEnvelope(envelope, true);
         }
 
         transport.send(envelope);
@@ -537,9 +510,7 @@ public abstract class ChannelBase implements Channel {
         @Override
         public void onReceive(Envelope envelope) {
             setLastReceivedEnvelope(System.currentTimeMillis());
-            if (fillEnvelopeRecipients) {
-                fillEnvelope(envelope, false);
-            }
+
             if (envelope instanceof Notification) {
                 raiseOnReceiveNotification((Notification) envelope);
             } else if (envelope instanceof Message) {
