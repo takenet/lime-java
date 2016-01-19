@@ -166,12 +166,6 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void sendCommand(Command command) throws IOException {
-        if (command == null) {
-            throw new IllegalArgumentException("command");
-        }
-        if (getState() != ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot send a command in the '%s' session state", state));
-        }
         send(command, commandModules);
     }
 
@@ -203,12 +197,6 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void sendMessage(Message message) throws IOException {
-        if (message == null) {
-            throw new IllegalArgumentException("message");
-        }
-        if (getState() != ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot send a message in the '%s' session state", state));
-        }
         send(message, messageModules);
     }
 
@@ -240,12 +228,6 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void sendNotification(Notification notification) throws IOException {
-        if (notification == null) {
-            throw new IllegalArgumentException("notification");
-        }
-        if (getState() != ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot send a notification in the '%s' session state", state));
-        }
         send(notification, notificationModules);
     }
 
@@ -303,11 +285,14 @@ public abstract class ChannelBase implements Channel {
     protected synchronized void raiseOnReceiveMessage(Message message) {
         ensureSessionEstablished();
 
-        for (MessageChannelListener listener : snapshot(singleReceiveMessageListeners, messageListeners)) {
-            try {
-                listener.onReceiveMessage(message);
-            } catch (Exception e) {
-                e.printStackTrace();
+        message = invokeModulesOnReceiving(message, messageModules);
+        if (message != null) {
+            for (MessageChannelListener listener : snapshot(singleReceiveMessageListeners, messageListeners)) {
+                try {
+                    listener.onReceiveMessage(message);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -333,11 +318,14 @@ public abstract class ChannelBase implements Channel {
             }
         }
         else {
-            for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
-                try {
-                    listener.onReceiveCommand(command);
-                } catch (Exception e) {
-                    e.printStackTrace();
+            command = invokeModulesOnReceiving(command, commandModules);
+            if (command != null) {
+                for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
+                    try {
+                        listener.onReceiveCommand(command);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -346,13 +334,25 @@ public abstract class ChannelBase implements Channel {
     protected synchronized void raiseOnReceiveNotification(Notification notification) {
         ensureSessionEstablished();
 
-        for (NotificationChannelListener listener : snapshot(singleReceiveNotificationListeners, notificationListeners)) {
-            try {
-                listener.onReceiveNotification(notification);
-            } catch (Exception e) {
-                e.printStackTrace();
+        notification = invokeModulesOnReceiving(notification, notificationModules);
+        if (notification != null) {
+            for (NotificationChannelListener listener : snapshot(singleReceiveNotificationListeners, notificationListeners)) {
+                try {
+                    listener.onReceiveNotification(notification);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
+    }
+
+    private <T extends Envelope> T invokeModulesOnReceiving(T envelope, Collection<ChannelModule<T>> modules) {
+        for (ChannelModule<T> module : new ArrayList<>(modules)) {
+            if (envelope == null) break;
+            envelope = module.onReceiving(envelope);
+        }
+
+        return envelope;
     }
 
     protected synchronized void raiseOnReceiveSession(Session session) {
@@ -431,6 +431,13 @@ public abstract class ChannelBase implements Channel {
     }
 
     private <T extends Envelope> void send(T envelope, Collection<ChannelModule<T>> modules) throws IOException {
+        if (envelope == null) {
+            throw new IllegalArgumentException("envelope");
+        }
+        if (getState() != ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot send in the '%s' session state", state));
+        }
+
         for (ChannelModule<T> module : new ArrayList<>(modules)) {
             if (envelope == null) break;
             envelope = module.onSending(envelope);
