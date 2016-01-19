@@ -23,6 +23,11 @@ public abstract class ChannelBase implements Channel {
     private Node localNode;
     private UUID sessionId;
     private Session.SessionState state;
+
+    private final Collection<ChannelModule<Message>> messageModules;
+    private final Collection<ChannelModule<Notification>> notificationModules;
+    private final Collection<ChannelModule<Command>> commandModules;
+
     private final Set<CommandChannelListener> commandListeners;
     private final Set<MessageChannelListener> messageListeners;
     private final Set<NotificationChannelListener> notificationListeners;
@@ -44,7 +49,9 @@ public abstract class ChannelBase implements Channel {
         this.autoReplyPings = autoReplyPings;
         this.pingInterval = pingInterval;
         this.pingDisconnectionInterval = pingDisconnectionInterval;
-
+        messageModules = new ArrayList<>();
+        notificationModules = new ArrayList<>();
+        commandModules = new ArrayList<>();
         commandListeners = new HashSet<>();
         messageListeners = new HashSet<>();
         notificationListeners = new HashSet<>();
@@ -53,12 +60,10 @@ public abstract class ChannelBase implements Channel {
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         sessionChannelListeners = new LinkedBlockingQueue<>();
         transportEnvelopeListener = new ChannelTransportEnvelopeListener();
-
-        setState(NEW);
-
         if (pingInterval > 0) {
             executor = Executors.newSingleThreadScheduledExecutor();
         }
+        setState(NEW);
     }
 
     /**
@@ -130,9 +135,28 @@ public abstract class ChannelBase implements Channel {
         }
         this.state = state;
 
+        onStateChanged(messageModules, state);
+        onStateChanged(notificationModules, state);
+        onStateChanged(commandModules, state);
+
         if (pingInterval > 0 && state == ESTABLISHED) {
             setLastReceivedEnvelope(System.currentTimeMillis());
         }
+    }
+
+    @Override
+    public Collection<ChannelModule<Message>> getMessageModules() {
+        return messageModules;
+    }
+
+    @Override
+    public Collection<ChannelModule<Notification>> getNotificationModules() {
+        return notificationModules;
+    }
+
+    @Override
+    public Collection<ChannelModule<Command>> getCommandModules() {
+        return commandModules;
     }
 
     /**
@@ -148,7 +172,7 @@ public abstract class ChannelBase implements Channel {
         if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a command in the '%s' session state", state));
         }
-        send(command);
+        send(command, commandModules);
     }
 
     /**
@@ -185,7 +209,7 @@ public abstract class ChannelBase implements Channel {
         if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a message in the '%s' session state", state));
         }
-        send(message);
+        send(message, messageModules);
     }
 
     /**
@@ -222,7 +246,7 @@ public abstract class ChannelBase implements Channel {
         if (getState() != ESTABLISHED) {
             throw new IllegalStateException(String.format("Cannot send a notification in the '%s' session state", state));
         }
-        send(notification);
+        send(notification, notificationModules);
     }
 
     /**
@@ -406,7 +430,22 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
+    private <T extends Envelope> void send(T envelope, Collection<ChannelModule<T>> modules) throws IOException {
+        for (ChannelModule<T> module : new ArrayList<>(modules)) {
+            if (envelope == null) break;
+            envelope = module.onSending(envelope);
+        }
+
+        if (envelope != null) {
+            send(envelope);
+        }
+    }
+
     private void send(Envelope envelope) throws IOException {
+        if (!transport.isConnected()) {
+            throw new IllegalStateException("The transport is not connected");
+        }
+
         if (fillEnvelopeRecipients) {
             fillEnvelope(envelope, true);
         }
@@ -435,6 +474,12 @@ public abstract class ChannelBase implements Channel {
             }
         }
         return result;
+    }
+
+    private static <T extends Envelope> void onStateChanged(Collection<ChannelModule<T>> modules, Session.SessionState state) {
+        for (ChannelModule<T> module: new ArrayList<>(modules)) {
+            module.onStateChanged(state);
+        }
     }
 
     private void setLastReceivedEnvelope(long time) {

@@ -1,8 +1,9 @@
 package org.limeprotocol.network;
 
-import org.limeprotocol.Node;
-import org.limeprotocol.Session;
+import org.limeprotocol.*;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -38,4 +39,22 @@ public interface Channel extends MessageChannel, CommandChannel, NotificationCha
      * @return
      */
     Session.SessionState getState();
+
+    /**
+     * Gets the message modules for processing sent and received messages.
+     * @return
+     */
+    Collection<ChannelModule<Message>> getMessageModules();
+
+    /**
+     * Gets the message modules for processing sent and received notifications.
+     * @return
+     */
+    Collection<ChannelModule<Notification>> getNotificationModules();
+
+    /**
+     * Gets the message modules for processing sent and received commands.
+     * @return
+     */
+    Collection<ChannelModule<Command>> getCommandModules();
 }
