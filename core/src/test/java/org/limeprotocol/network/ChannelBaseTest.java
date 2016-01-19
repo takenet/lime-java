@@ -100,6 +100,7 @@ public class ChannelBaseTest {
         // Assert
         assertEquals(1, transport.sentEnvelopes.size());
         assertEquals(moduleCommand, transport.sentEnvelopes.remove());
+        verify(module, times(1)).onSending(command);
     }
 
     @Test
@@ -226,7 +227,75 @@ public class ChannelBaseTest {
         assertNotNull(sentCommand.getType());
         assertEquals("application/vnd.lime.ping+json", sentCommand.getType().toString());
     }
-    
+
+    @Test
+    public void onReceiveCommand_moduleReturnsCommand_receivesModuleCommand() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        Command moduleCommand = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, true);
+        ChannelModule<Command> module = mock(ChannelModule.class);
+        when(module.onReceiving(command)).thenReturn(moduleCommand);
+        target.getCommandModules().add(module);
+
+        // Act
+        transport.raiseOnReceive(command);
+
+        // Assert
+        verify(module, times(1)).onReceiving(command);
+        verify(listener, times(1)).onReceiveCommand(moduleCommand);
+    }
+
+    @Test
+    public void onReceiveCommand_moduleReturnsNull_ignoresCommand()  {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command1 = createCommand(createPlainDocument());
+        Command command2 = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, true);
+        ChannelModule<Command> module = mock(ChannelModule.class);
+        when(module.onReceiving(command1)).thenReturn(null);
+        when(module.onReceiving(command2)).thenReturn(command2);
+        target.getCommandModules().add(module);
+
+        // Act
+        transport.raiseOnReceive(command1);
+        transport.raiseOnReceive(command2);
+
+        // Assert
+        verify(module, times(1)).onReceiving(command1);
+        verify(module, times(1)).onReceiving(command2);
+        verify(listener, never()).onReceiveCommand(command1);
+        verify(listener, times(1)).onReceiveCommand(command2);
+    }
+
+    @Test
+    public void onReceiveCommand_multipleRegisteredModules_callsEachModuleOnce() {
+        // Arrange
+        CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addCommandListener(listener, true);
+        int modulesCount = createRandomInt(10) + 1;
+        for (int i = 0; i < modulesCount; i++) {
+            ChannelModule<Command> module = mock(ChannelModule.class);
+            when(module.onReceiving(command)).thenReturn(command);
+            target.getCommandModules().add(module);
+        }
+
+        // Act
+        transport.raiseOnReceive(command);
+
+        // Assert
+        verify(listener, times(1)).onReceiveCommand(command);
+        for (ChannelModule<Command> module : target.getCommandModules()) {
+            verify(module, times(1)).onReceiving(command);
+        }
+    }
+
     @Test
     public void sendMessage_establishedState_callsTransport() throws IOException {
         // Arrange
@@ -440,7 +509,75 @@ public class ChannelBaseTest {
         assertEquals(remoteNode.toIdentity(), actual.get(0).getFrom().toIdentity());
         assertNull(actual.get(0).getPp());
     }
-    
+
+    @Test
+    public void onReceiveMessage_moduleReturnsMessage_receivesModuleMessage() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        Message moduleMessage = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, true);
+        ChannelModule<Message> module = mock(ChannelModule.class);
+        when(module.onReceiving(message)).thenReturn(moduleMessage);
+        target.getMessageModules().add(module);
+
+        // Act
+        transport.raiseOnReceive(message);
+
+        // Assert
+        verify(module, times(1)).onReceiving(message);
+        verify(listener, times(1)).onReceiveMessage(moduleMessage);
+    }
+
+    @Test
+    public void onReceiveMessage_moduleReturnsNull_ignoresMessage()  {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message1 = createMessage(createPlainDocument());
+        Message message2 = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, true);
+        ChannelModule<Message> module = mock(ChannelModule.class);
+        when(module.onReceiving(message1)).thenReturn(null);
+        when(module.onReceiving(message2)).thenReturn(message2);
+        target.getMessageModules().add(module);
+
+        // Act
+        transport.raiseOnReceive(message1);
+        transport.raiseOnReceive(message2);
+
+        // Assert
+        verify(module, times(1)).onReceiving(message1);
+        verify(module, times(1)).onReceiving(message2);
+        verify(listener, never()).onReceiveMessage(message1);
+        verify(listener, times(1)).onReceiveMessage(message2);
+    }
+
+    @Test
+    public void onReceiveMessage_multipleRegisteredModules_callsEachModuleOnce() {
+        // Arrange
+        MessageChannel.MessageChannelListener listener = mock(MessageChannel.MessageChannelListener.class);
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addMessageListener(listener, true);
+        int modulesCount = createRandomInt(10) + 1;
+        for (int i = 0; i < modulesCount; i++) {
+            ChannelModule<Message> module = mock(ChannelModule.class);
+            when(module.onReceiving(message)).thenReturn(message);
+            target.getMessageModules().add(module);
+        }
+
+        // Act
+        transport.raiseOnReceive(message);
+
+        // Assert
+        verify(listener, times(1)).onReceiveMessage(message);
+        for (ChannelModule<Message> module : target.getMessageModules()) {
+            verify(module, times(1)).onReceiving(message);
+        }
+    }
+
     @Test
     public void sendNotification_establishedState_callsTransport() throws IOException {
         // Arrange
@@ -575,7 +712,75 @@ public class ChannelBaseTest {
             verify(listeners.get(i), times(notificationCount)).onReceiveNotification(notification);
         }
     }
-    
+
+    @Test
+    public void onReceiveNotification_moduleReturnsNotification_receivesModuleNotification() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.AUTHORIZED);
+        Notification moduleNotification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, true);
+        ChannelModule<Notification> module = mock(ChannelModule.class);
+        when(module.onReceiving(notification)).thenReturn(moduleNotification);
+        target.getNotificationModules().add(module);
+
+        // Act
+        transport.raiseOnReceive(notification);
+
+        // Assert
+        verify(module, times(1)).onReceiving(notification);
+        verify(listener, times(1)).onReceiveNotification(moduleNotification);
+    }
+
+    @Test
+    public void onReceiveNotification_moduleReturnsNull_ignoresNotification()  {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification1 = createNotification(Notification.Event.AUTHORIZED);
+        Notification notification2 = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, true);
+        ChannelModule<Notification> module = mock(ChannelModule.class);
+        when(module.onReceiving(notification1)).thenReturn(null);
+        when(module.onReceiving(notification2)).thenReturn(notification2);
+        target.getNotificationModules().add(module);
+
+        // Act
+        transport.raiseOnReceive(notification1);
+        transport.raiseOnReceive(notification2);
+
+        // Assert
+        verify(module, times(1)).onReceiving(notification1);
+        verify(module, times(1)).onReceiving(notification2);
+        verify(listener, never()).onReceiveNotification(notification1);
+        verify(listener, times(1)).onReceiveNotification(notification2);
+    }
+
+    @Test
+    public void onReceiveNotification_multipleRegisteredModules_callsEachModuleOnce() {
+        // Arrange
+        NotificationChannel.NotificationChannelListener listener = mock(NotificationChannel.NotificationChannelListener.class);
+        Notification notification = createNotification(Notification.Event.AUTHORIZED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        target.addNotificationListener(listener, true);
+        int modulesCount = createRandomInt(10) + 1;
+        for (int i = 0; i < modulesCount; i++) {
+            ChannelModule<Notification> module = mock(ChannelModule.class);
+            when(module.onReceiving(notification)).thenReturn(notification);
+            target.getNotificationModules().add(module);
+        }
+
+        // Act
+        transport.raiseOnReceive(notification);
+
+        // Assert
+        verify(listener, times(1)).onReceiveNotification(notification);
+        for (ChannelModule<Notification> module : target.getNotificationModules()) {
+            verify(module, times(1)).onReceiving(notification);
+        }
+    }
+
     @Test
     public void sendSession_establishedState_callsTransport() throws IOException {
         // Arrange
