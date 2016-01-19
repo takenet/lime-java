@@ -14,8 +14,6 @@ import static org.limeprotocol.Session.SessionState.*;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
-
-
     public ClientChannelImpl(Transport transport) {
         this(transport, false);
     }
@@ -168,12 +166,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                 authentication, instance, listener);
 
         startNewSession(establishingListener);
-    }
-
-
-    @Override
-    protected void onPingDisconnection() throws IOException {
-        sendFinishingSession();
     }
 
     @Override

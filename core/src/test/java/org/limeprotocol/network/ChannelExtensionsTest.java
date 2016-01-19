@@ -82,11 +82,6 @@ public class ChannelExtensionsTest {
         protected synchronized void setState(Session.SessionState state) {
             super.setState(state);
         }
-
-        @Override
-        protected void onPingDisconnection() throws IOException {
-
-        }
     }
 
     private class TestTransport extends TransportBase implements Transport {

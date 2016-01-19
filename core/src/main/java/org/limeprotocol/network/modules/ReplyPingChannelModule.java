@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * Defines a channel module that automatically replies to ping request commands.
  */
-public class ReplyPingChannelModule extends ChannelModuleBase<Command> {
+public final class ReplyPingChannelModule extends ChannelModuleBase<Command> {
 
     private final static String PING_URI_TEMPLATE = "/ping";
     private final static MediaType PING_MEDIA_TYPE = MediaType.parse("application/vnd.lime.ping+json");

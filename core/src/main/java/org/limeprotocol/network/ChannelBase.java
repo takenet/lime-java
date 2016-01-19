@@ -2,6 +2,7 @@ package org.limeprotocol.network;
 
 import org.limeprotocol.*;
 import org.limeprotocol.network.modules.FillEnvelopeRecipientsChannelModule;
+import org.limeprotocol.network.modules.RemotePingChannelModule;
 import org.limeprotocol.network.modules.ReplyPingChannelModule;
 import org.limeprotocol.util.StringUtils;
 
@@ -13,12 +14,9 @@ import static org.limeprotocol.Session.SessionState.*;
 
 public abstract class ChannelBase implements Channel {
 
-    private final static String PING_URI_TEMPLATE = "/ping";
 
     private final Transport transport;
 
-    private final long pingDisconnectionInterval;
-    private final long pingInterval;
     private Node remoteNode;
     private Node localNode;
     private UUID sessionId;
@@ -36,9 +34,6 @@ public abstract class ChannelBase implements Channel {
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
     private final Queue<SessionChannelListener> sessionChannelListeners;
     private final Transport.TransportEnvelopeListener transportEnvelopeListener;
-    private long lastReceivedEnvelope;
-    private ScheduledExecutorService executor;
-    private ScheduledFuture scheduledPing;
 
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval) {
         if (transport == null) {
@@ -46,9 +41,6 @@ public abstract class ChannelBase implements Channel {
         }
         this.transport = transport;
 
-
-        this.pingInterval = pingInterval;
-        this.pingDisconnectionInterval = pingDisconnectionInterval;
         messageModules = new ArrayList<>();
         notificationModules = new ArrayList<>();
         commandModules = new ArrayList<>();
@@ -60,9 +52,6 @@ public abstract class ChannelBase implements Channel {
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         sessionChannelListeners = new LinkedBlockingQueue<>();
         transportEnvelopeListener = new ChannelTransportEnvelopeListener();
-        if (pingInterval > 0) {
-            executor = Executors.newSingleThreadScheduledExecutor();
-        }
 
         setState(NEW);
 
@@ -72,6 +61,10 @@ public abstract class ChannelBase implements Channel {
 
         if (autoReplyPings) {
             commandModules.add(new ReplyPingChannelModule(this));
+        }
+
+        if (pingInterval > 0) {
+            RemotePingChannelModule.createAndRegister(this, pingInterval, pingDisconnectionInterval);
         }
     }
 
@@ -147,10 +140,6 @@ public abstract class ChannelBase implements Channel {
         onStateChanged(messageModules, state);
         onStateChanged(notificationModules, state);
         onStateChanged(commandModules, state);
-
-        if (pingInterval > 0 && state == ESTABLISHED) {
-            setLastReceivedEnvelope(System.currentTimeMillis());
-        }
     }
 
     @Override
@@ -446,44 +435,6 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
-    private void setLastReceivedEnvelope(long time) {
-        this.lastReceivedEnvelope = time;
-        schedulePing();
-    }
-
-    private void schedulePing() {
-        if (getState() == ESTABLISHED && pingInterval > 0) {
-            if (scheduledPing != null) {
-                scheduledPing.cancel(false);
-            }
-            scheduledPing = executor.schedule(new PingRunnable(), pingInterval, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    protected abstract void onPingDisconnection() throws IOException;
-
-    private class PingRunnable implements Runnable {
-        @Override
-        public void run() {
-            if (getState() == ESTABLISHED) {
-                try {
-                    if (System.currentTimeMillis() - lastReceivedEnvelope < pingDisconnectionInterval) {
-                        Command pingCommand = new Command(UUID.randomUUID());
-                        pingCommand.setMethod(Command.CommandMethod.GET);
-                        pingCommand.setUri(new LimeUri(PING_URI_TEMPLATE));
-                        sendCommand(pingCommand);
-
-                        schedulePing();
-                    } else {
-                        onPingDisconnection();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
 
         /**
@@ -493,8 +444,6 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onReceive(Envelope envelope) {
-            setLastReceivedEnvelope(System.currentTimeMillis());
-
             if (envelope instanceof Notification) {
                 raiseOnReceiveNotification((Notification) envelope);
             } else if (envelope instanceof Message) {

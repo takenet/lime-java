@@ -106,11 +106,11 @@ public class TcpTransport extends TransportBase implements Transport {
 
     @Override
     protected void performClose() throws IOException {
-        isConnected = false;
         stopListenerThread();
         if (tcpClient != null) {
             tcpClient.close();
         }
+        isConnected = false;
     }
 
     /**
@@ -162,10 +162,15 @@ public class TcpTransport extends TransportBase implements Transport {
             case TLS:
                 if (!tcpClient.isTlsStarted()) {
                     stopListenerThread();
-                    tcpClient.startTls();
-                    initializeStreams();
-                    if (getStateListener() != null) {
-                        startListenerThread();
+                    try {
+                        tcpClient.startTls();
+                        initializeStreams();
+                        if (getStateListener() != null) {
+                            startListenerThread();
+                        }
+                    } catch (IOException e) {
+                        close();
+                        throw e;
                     }
                 }
                 break;
