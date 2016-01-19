@@ -32,7 +32,7 @@ public class RemotePingChannelModuleTest {
     private ArgumentCaptor<Command> commandCaptor;
 
     @Before
-    public void setUp() throws Exception {
+    public void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
         when(transport.isConnected()).thenReturn(true);
         when(channel.getTransport()).thenReturn(transport);
