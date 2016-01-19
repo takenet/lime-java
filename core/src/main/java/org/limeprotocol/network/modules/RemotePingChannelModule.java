@@ -28,13 +28,13 @@ public final class RemotePingChannelModule implements ChannelModule {
     private long lastReceivedEnvelope;
 
 
-    private RemotePingChannelModule(Channel channel, long pingInterval, long pingDisconnectionInterval) {
+    private RemotePingChannelModule(Channel channel, long pingInterval, long pingDisconnectionInterval, ScheduledExecutorService executor) {
         if (pingInterval < 0) throw new IllegalArgumentException("Invalid ping interval");
         this.channel = channel;
         this.pingInterval = pingInterval;
         this.pingDisconnectionInterval = pingDisconnectionInterval;
+        this.executor =  executor;
         this.pingRunnable = new PingRunnable();
-        this.executor = Executors.newSingleThreadScheduledExecutor();
     }
 
     @Override
@@ -58,7 +58,11 @@ public final class RemotePingChannelModule implements ChannelModule {
     }
 
     public static RemotePingChannelModule createAndRegister(Channel channel, long pingInterval, long pingDisconnectionInterval) {
-        RemotePingChannelModule module = new RemotePingChannelModule(channel, pingInterval, pingDisconnectionInterval);
+        return createAndRegister(channel, pingInterval, pingDisconnectionInterval, Executors.newSingleThreadScheduledExecutor());
+    }
+
+    public static RemotePingChannelModule createAndRegister(Channel channel, long pingInterval, long pingDisconnectionInterval, ScheduledExecutorService executor) {
+        RemotePingChannelModule module = new RemotePingChannelModule(channel, pingInterval, pingDisconnectionInterval, executor);
         channel.getMessageModules().add(module);
         channel.getNotificationModules().add(module);
         channel.getCommandModules().add(module);
