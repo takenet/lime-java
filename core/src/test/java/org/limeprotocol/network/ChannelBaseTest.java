@@ -104,6 +104,7 @@ public class ChannelBaseTest {
 
     @Test
     public void sendCommand_moduleReturnsNull_doNotCallTransport() throws IOException {
+
         // Arrange
         Command command = createCommand(createPlainDocument());
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
@@ -116,6 +117,29 @@ public class ChannelBaseTest {
 
         // Assert
         assertEquals(0, transport.sentEnvelopes.size());
+    }
+
+    @Test
+    public void sendCommand_multipleRegisteredModules_callsEachModuleOnce() throws IOException {
+        // Arrange
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        int modulesCount = createRandomInt(10) + 1;
+        for (int i = 0; i < modulesCount; i++) {
+            ChannelModule<Command> module = mock(ChannelModule.class);
+            when(module.onSending(command)).thenReturn(command);
+            target.getCommandModules().add(module);
+        }
+
+        // Act
+        target.sendCommand(command);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(command, transport.sentEnvelopes.remove());
+        for (ChannelModule<Command> module : target.getCommandModules()) {
+            verify(module, times(1)).onSending(command);
+        }
     }
 
     @Test
@@ -269,6 +293,29 @@ public class ChannelBaseTest {
 
         // Assert
         assertEquals(0, transport.sentEnvelopes.size());
+    }
+
+    @Test
+    public void sendMessage_multipleRegisteredModules_callsEachModuleOnce() throws IOException {
+        // Arrange
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        int modulesCount = createRandomInt(10) + 1;
+        for (int i = 0; i < modulesCount; i++) {
+            ChannelModule<Message> module = mock(ChannelModule.class);
+            when(module.onSending(message)).thenReturn(message);
+            target.getMessageModules().add(module);
+        }
+
+        // Act
+        target.sendMessage(message);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(message, transport.sentEnvelopes.remove());
+        for (ChannelModule<Message> module : target.getMessageModules()) {
+            verify(module, times(1)).onSending(message);
+        }
     }
 
     @Test
@@ -460,6 +507,29 @@ public class ChannelBaseTest {
 
         // Assert
         assertEquals(0, transport.sentEnvelopes.size());
+    }
+
+    @Test
+    public void sendNotification_multipleRegisteredModules_callsEachModuleOnce() throws IOException {
+        // Arrange
+        Notification notification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        int modulesCount = createRandomInt(10) + 1;
+        for (int i = 0; i < modulesCount; i++) {
+            ChannelModule<Notification> module = mock(ChannelModule.class);
+            when(module.onSending(notification)).thenReturn(notification);
+            target.getNotificationModules().add(module);
+        }
+
+        // Act
+        target.sendNotification(notification);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(notification, transport.sentEnvelopes.remove());
+        for (ChannelModule<Notification> module : target.getNotificationModules()) {
+            verify(module, times(1)).onSending(notification);
+        }
     }
 
     @Test
@@ -875,6 +945,7 @@ public class ChannelBaseTest {
     }
 
     @Test
+    @Ignore
     public void schedulePing_inactiveEstablishedChannel_callsDisconnect() throws InterruptedException {
         // Arrange
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 350, null, null, UUID.randomUUID());
@@ -902,8 +973,6 @@ public class ChannelBaseTest {
         assertEquals(1, ((TestTransport) target.getTransport()).sentEnvelopes.size());
         assertEquals(0, ((TestChannel) target).pingDisconnectionSemaphore.availablePermits());
     }
-
-
 
     private class TestChannel extends ChannelBase {
 
