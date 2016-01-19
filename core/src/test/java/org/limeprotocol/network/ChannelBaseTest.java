@@ -85,6 +85,40 @@ public class ChannelBaseTest {
     }
 
     @Test
+    public void sendCommand_moduleReturnsCommand_sendsModuleCommand() throws IOException {
+        // Arrange
+        Command command = createCommand(createPlainDocument());
+        Command moduleCommand = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        ChannelModule<Command> module = mock(ChannelModule.class);
+        when(module.onSending(command)).thenReturn(moduleCommand);
+        target.getCommandModules().add(module);
+
+        // Act
+        target.sendCommand(command);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(moduleCommand, transport.sentEnvelopes.remove());
+    }
+
+    @Test
+    public void sendCommand_moduleReturnsNull_doNotCallTransport() throws IOException {
+        // Arrange
+        Command command = createCommand(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        ChannelModule<Command> module = mock(ChannelModule.class);
+        when(module.onSending(command)).thenReturn(null);
+        target.getCommandModules().add(module);
+
+        // Act
+        target.sendCommand(command);
+
+        // Assert
+        assertEquals(0, transport.sentEnvelopes.size());
+    }
+
+    @Test
     public void addCommandListener_callsTwiceForSameInstance_registerOnce() {
         // Arrange
         CommandChannel.CommandChannelListener listener = mock(CommandChannel.CommandChannelListener.class);
@@ -201,6 +235,40 @@ public class ChannelBaseTest {
 
         // Act
         target.sendMessage(message);
+    }
+
+    @Test
+    public void sendMessage_moduleReturnsMessage_sendsModuleMessage() throws IOException {
+        // Arrange
+        Message message = createMessage(createPlainDocument());
+        Message moduleMessage = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        ChannelModule<Message> module = mock(ChannelModule.class);
+        when(module.onSending(message)).thenReturn(moduleMessage);
+        target.getMessageModules().add(module);
+
+        // Act
+        target.sendMessage(message);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(moduleMessage, transport.sentEnvelopes.remove());
+    }
+
+    @Test
+    public void sendMessage_moduleReturnsNull_doNotCallTransport() throws IOException {
+        // Arrange
+        Message message = createMessage(createPlainDocument());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        ChannelModule<Message> module = mock(ChannelModule.class);
+        when(module.onSending(message)).thenReturn(null);
+        target.getMessageModules().add(module);
+
+        // Act
+        target.sendMessage(message);
+
+        // Assert
+        assertEquals(0, transport.sentEnvelopes.size());
     }
 
     @Test
@@ -358,6 +426,40 @@ public class ChannelBaseTest {
 
         // Act
         target.sendNotification(notification);
+    }
+
+    @Test
+    public void sendNotification_moduleReturnsNotification_sendsModuleNotification() throws IOException {
+        // Arrange
+        Notification notification = createNotification(Notification.Event.AUTHORIZED);
+        Notification moduleNotification = createNotification(Notification.Event.RECEIVED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        ChannelModule<Notification> module = mock(ChannelModule.class);
+        when(module.onSending(notification)).thenReturn(moduleNotification);
+        target.getNotificationModules().add(module);
+
+        // Act
+        target.sendNotification(notification);
+
+        // Assert
+        assertEquals(1, transport.sentEnvelopes.size());
+        assertEquals(moduleNotification, transport.sentEnvelopes.remove());
+    }
+
+    @Test
+    public void sendNotification_moduleReturnsNull_doNotCallTransport() throws IOException {
+        // Arrange
+        Notification notification = createNotification(Notification.Event.AUTHORIZED);
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
+        ChannelModule<Notification> module = mock(ChannelModule.class);
+        when(module.onSending(notification)).thenReturn(null);
+        target.getNotificationModules().add(module);
+
+        // Act
+        target.sendNotification(notification);
+
+        // Assert
+        assertEquals(0, transport.sentEnvelopes.size());
     }
 
     @Test
@@ -800,6 +902,7 @@ public class ChannelBaseTest {
         assertEquals(1, ((TestTransport) target.getTransport()).sentEnvelopes.size());
         assertEquals(0, ((TestChannel) target).pingDisconnectionSemaphore.availablePermits());
     }
+
 
 
     private class TestChannel extends ChannelBase {
