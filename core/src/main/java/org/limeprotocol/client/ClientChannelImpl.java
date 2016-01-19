@@ -3,6 +3,7 @@ package org.limeprotocol.client;
 import org.limeprotocol.*;
 import org.limeprotocol.network.ChannelBase;
 import org.limeprotocol.network.Transport;
+import org.limeprotocol.network.modules.NotifyReceiptChannelModule;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.util.StringUtils;
 
@@ -13,7 +14,7 @@ import static org.limeprotocol.Session.SessionState.*;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
-    private boolean autoNotifyReceipt;
+
 
     public ClientChannelImpl(Transport transport) {
         this(transport, false);
@@ -36,7 +37,9 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
                              boolean autoNotifyReceipt, long pingInterval, long pingDisconnectionInterval) {
         super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
 
-        this.autoNotifyReceipt = autoNotifyReceipt;
+        if (autoNotifyReceipt) {
+            getMessageModules().add(new NotifyReceiptChannelModule(this));
+        }
     }
 
     /**
@@ -189,21 +192,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             }
         }
         super.raiseOnReceiveSession(session);
-    }
-
-    @Override
-    protected synchronized void raiseOnReceiveMessage(Message message) {
-        super.raiseOnReceiveMessage(message);
-
-        if (autoNotifyReceipt &&
-                message.getId() != null &&
-                message.getFrom() != null) {
-            try {
-                sendReceivedNotification(message.getId(), message.getFrom());
-            } catch (IOException e) {
-                throw new RuntimeException("An error occurred while sending a message receipt", e);
-            }
-        }
     }
 
     private static class SessionEstablishing implements SessionChannelListener {
