@@ -86,32 +86,4 @@ public class RemotePingChannelModuleTest {
         // Assert
         verify(channel, never()).sendCommand(any(Command.class));
     }
-
-//    @Test
-//    public void schedulePing_inactiveEstablishedChannel_callsDisconnect() throws InterruptedException {
-//        // Arrange
-//        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 350, null, null, UUID.randomUUID());
-//
-//        // Act
-//        Thread.sleep(390);
-//
-//        // Assert
-//        assertEquals(3, ((TestTransport)target.getTransport()).sentEnvelopes.size());
-//        assertTrue(((TestTransport) target.getTransport()).closeInvoked);
-//    }
-//
-//    @Test
-//    public void schedulePing_sendEnvelopeAfterReceivingPing_doNotDisconnect() throws InterruptedException, IOException {
-//        // Arrange
-//        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 300, null, null, UUID.randomUUID());
-//
-//        // Act
-//        Thread.sleep(150);
-//        ((TestTransport)target.getTransport()).raiseOnReceive(Dummy.createCommand());
-//        Thread.sleep(100);
-//
-//        // Assert
-//        assertEquals(1, ((TestTransport) target.getTransport()).sentEnvelopes.size());
-//        assertFalse(((TestTransport) target.getTransport()).closeInvoked);
-//    }
 }
