@@ -4,18 +4,17 @@ import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelModule;
-import org.limeprotocol.network.SessionChannel;
 
-import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static org.limeprotocol.Session.SessionState.ESTABLISHED;
+import static org.limeprotocol.Session.SessionState.FAILED;
+import static org.limeprotocol.Session.SessionState.FINISHED;
 
-
+/**
+ * Defines a module that pings the remote party after a period of inactivity.
+ */
 public final class RemotePingChannelModule implements ChannelModule {
 
     private final static String PING_URI_TEMPLATE = "/ping";
@@ -23,22 +22,27 @@ public final class RemotePingChannelModule implements ChannelModule {
     private final Channel channel;
     private final long pingInterval;
     private final long pingDisconnectionInterval;
-    private ScheduledExecutorService executor;
+    private final PingRunnable pingRunnable;
+    private final ScheduledExecutorService executor;
     private ScheduledFuture scheduledPing;
     private long lastReceivedEnvelope;
+
 
     private RemotePingChannelModule(Channel channel, long pingInterval, long pingDisconnectionInterval) {
         if (pingInterval < 0) throw new IllegalArgumentException("Invalid ping interval");
         this.channel = channel;
         this.pingInterval = pingInterval;
         this.pingDisconnectionInterval = pingDisconnectionInterval;
+        this.pingRunnable = new PingRunnable();
         this.executor = Executors.newSingleThreadScheduledExecutor();
     }
 
     @Override
-    public void onStateChanged(Session.SessionState state) {
+    public synchronized void onStateChanged(Session.SessionState state) {
         if (state == ESTABLISHED) {
             setLastReceivedEnvelope(System.currentTimeMillis());
+        } else if (state == FINISHED || state == FAILED) {
+            cancelScheduledPing();
         }
     }
 
@@ -67,12 +71,18 @@ public final class RemotePingChannelModule implements ChannelModule {
     }
 
     private synchronized void schedulePing() {
-        if (scheduledPing != null) {
-            scheduledPing.cancel(false);
-            scheduledPing = null;
-        }
+        cancelScheduledPing();
         if (channel.getState() == ESTABLISHED && channel.getTransport().isConnected()) {
-            scheduledPing = executor.schedule(new PingRunnable(), pingInterval, TimeUnit.MILLISECONDS);
+            scheduledPing = executor.schedule(pingRunnable, pingInterval, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private synchronized void cancelScheduledPing() {
+        if (scheduledPing != null) {
+            if (!scheduledPing.isCancelled() && !scheduledPing.isDone()) {
+                scheduledPing.cancel(false);
+            }
+            scheduledPing = null;
         }
     }
 
@@ -90,11 +100,7 @@ public final class RemotePingChannelModule implements ChannelModule {
                         schedulePing();
                     } else if (channel instanceof ClientChannel) {
                         ((ClientChannel) channel).sendFinishingSession();
-                    } else {
-                        // TODO: Check if is ServerChannel instead of this
-                        channel.getTransport().close();
                     }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
