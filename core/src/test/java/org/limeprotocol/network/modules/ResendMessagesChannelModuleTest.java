@@ -25,6 +25,8 @@ import static org.limeprotocol.testHelpers.Dummy.*;
 import static org.mockito.Mockito.*;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
@@ -55,15 +57,21 @@ public class ResendMessagesChannelModuleTest {
     }
 
     private ResendMessagesChannelModule getTarget() throws IOException {
-        final ResendMessagesChannelModule module = ResendMessagesChannelModule.createAndRegister(channel, resendMessageTryCount, resendMessageInterval);
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-                module.onSending((Message)invocationOnMock.getArguments()[0]);
-                return null;
-            }
-        }).when(channel).sendMessage(any(Message.class));
+        return getTarget(true);
+    }
 
+    private ResendMessagesChannelModule getTarget(boolean bindToChannel) throws IOException {
+        final ResendMessagesChannelModule module = new ResendMessagesChannelModule(resendMessageTryCount, resendMessageInterval);
+        if (bindToChannel) {
+            module.bind(channel, true);
+            doAnswer(new Answer<Void>() {
+                @Override
+                public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+                    module.onSending((Message) invocationOnMock.getArguments()[0]);
+                    return null;
+                }
+            }).when(channel).sendMessage(any(Message.class));
+        }
         return module;
     }
 
@@ -72,6 +80,7 @@ public class ResendMessagesChannelModuleTest {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
         message.setId(UUID.randomUUID());
+        resendMessageTryCount = 1;
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -81,6 +90,34 @@ public class ResendMessagesChannelModuleTest {
         // Assert
         assertEquals(message, actual);
         verify(channel, times(1)).sendMessage(message);
+    }
+
+    @Test
+    public void onSending_multipleMessagesWithoutNotification_shouldResendAfterInterval() throws InterruptedException, IOException {
+        // Arrange
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
+            Message message = Dummy.createMessage(Dummy.createTextContent());
+            message.setId(UUID.randomUUID());
+            messages.add(message);
+        }
+        resendMessageTryCount = 1;
+        ResendMessagesChannelModule target = getTarget();
+
+        // Act
+        List<Message> actuals = new ArrayList<>();
+        for (Message message: messages) {
+            Message actual = (Message)target.onSending(message);
+            actuals.add(actual);
+        }
+
+        Thread.sleep(resendMessageIntervalWithSafeMargin);
+
+        // Assert
+        for (Message message: messages) {
+            assertTrue(actuals.contains(message));
+            verify(channel, times(1)).sendMessage(message);
+        }
     }
 
     @Test
@@ -97,6 +134,32 @@ public class ResendMessagesChannelModuleTest {
         // Assert
         assertEquals(message, actual);
         verify(channel, times(resendMessageTryCount)).sendMessage(message);
+    }
+
+    @Test
+    public void onSending_multipleMessagesWithoutNotification_shouldResendUntilLimit() throws InterruptedException, IOException {
+        // Arrange
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
+            Message message = Dummy.createMessage(Dummy.createTextContent());
+            message.setId(UUID.randomUUID());
+            messages.add(message);
+        }
+        ResendMessagesChannelModule target = getTarget();
+
+        // Act
+        List<Message> actuals = new ArrayList<>();
+        for (Message message: messages) {
+            Message actual = (Message)target.onSending(message);
+            actuals.add(actual);
+        }
+        Thread.sleep(resendMessageIntervalWithSafeMargin * (resendMessageTryCount + 1));
+
+        // Assert
+        for (Message message: messages) {
+            assertTrue(actuals.contains(message));
+            verify(channel, times(resendMessageTryCount)).sendMessage(message);
+        }
     }
 
     @Test
@@ -233,4 +296,91 @@ public class ResendMessagesChannelModuleTest {
         assertEquals(message, actual);
         verify(channel, times(2)).sendMessage(message);
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void bind_alreadyBound_throwIllegalStateException() throws InterruptedException, IOException {
+        // Arrange
+        ResendMessagesChannelModule target = getTarget();
+        Channel channel2 = mock(Channel.class);
+
+        // Act
+        target.bind(channel2, true);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void unbind_notBound_throwIllegalStateException() throws InterruptedException, IOException {
+        // Arrange
+        ResendMessagesChannelModule target = getTarget(false);
+
+        // Act
+        target.unbind();
+    }
+
+    @Test
+    public void unbind_pendingMessage_shouldNotResend() throws InterruptedException, IOException {
+        // Arrange
+        Message message = Dummy.createMessage(Dummy.createTextContent());
+        message.setId(UUID.randomUUID());
+        ResendMessagesChannelModule target = getTarget();
+
+        // Act
+        Message actual = (Message)target.onSending(message);
+        target.unbind();
+        Thread.sleep(resendMessageIntervalWithSafeMargin);
+
+        // Assert
+        assertEquals(message, actual);
+        verify(channel, never()).sendMessage(message);
+    }
+
+    @Test
+    public void unbind_multiplePendingMessage_shouldNotResend() throws InterruptedException, IOException {
+        // Arrange
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
+            Message message = Dummy.createMessage(Dummy.createTextContent());
+            message.setId(UUID.randomUUID());
+            messages.add(message);
+        }
+        resendMessageTryCount = 1;
+        ResendMessagesChannelModule target = getTarget();
+
+        // Act
+        List<Message> actuals = new ArrayList<>();
+        for (Message message: messages) {
+            Message actual = (Message)target.onSending(message);
+            actuals.add(actual);
+        }
+        target.unbind();
+        Thread.sleep(resendMessageIntervalWithSafeMargin);
+
+        // Assert
+        for (Message message: messages) {
+            assertTrue(actuals.contains(message));
+            verify(channel, never()).sendMessage(message);
+        }
+    }
+
+    @Test
+    public void unbind_pendingMessageAndBoundToNewChannel_sendsToBoundChannel() throws InterruptedException, IOException {
+        // Arrange
+        Message message = Dummy.createMessage(Dummy.createTextContent());
+        message.setId(UUID.randomUUID());
+        ResendMessagesChannelModule target = getTarget();
+        ClientChannel channel2 = mock(ClientChannel.class);
+        when(channel2.getTransport()).thenReturn(transport);
+        when(channel2.getState()).thenReturn(Session.SessionState.ESTABLISHED);
+
+        // Act
+        Message actual = (Message)target.onSending(message);
+        target.unbind();
+        target.bind(channel2, true);
+        Thread.sleep(resendMessageIntervalWithSafeMargin);
+
+        // Assert
+        assertEquals(message, actual);
+        verify(channel, never()).sendMessage(message);
+        verify(channel2, times(1)).sendMessage(message);
+    }
+
 }

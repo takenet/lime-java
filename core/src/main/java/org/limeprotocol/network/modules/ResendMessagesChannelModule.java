@@ -6,53 +6,91 @@ import org.limeprotocol.Notification;
 import org.limeprotocol.Session;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelModule;
+import sun.util.resources.CalendarData_sr_Latn_BA;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.limeprotocol.Session.SessionState.ESTABLISHED;
-import static org.limeprotocol.Session.SessionState.FAILED;
-import static org.limeprotocol.Session.SessionState.FINISHED;
+import static org.limeprotocol.Session.SessionState.*;
 
 /**
  * Defines a module that resend messages that doesn't have received receipts from the destination.
  */
 public final class ResendMessagesChannelModule implements ChannelModule {
 
-    private final static String SENT_COUNT_KEY = "#sentCount";
+    private final static String RESENT_COUNT_KEY = "#resentCount";
 
-    private final Channel channel;
+
     private final int resendMessageTryCount;
     private final long resendMessageInterval;
     private final ConcurrentMap<UUID, CancellationToken> messageCancellationTokenMap;
-    private final ScheduledExecutorService executor;
 
-    private ResendMessagesChannelModule(Channel channel, int resendMessageTryCount, long resendMessageInterval, ScheduledExecutorService executor) {
-        if (channel == null) throw new IllegalArgumentException("channel");
-        this.channel = channel;
+    private Channel channel;
+    private boolean unbindWhenClosed;
+    private ScheduledExecutorService executor;
+    private List<Runnable> pendingTasks;
+
+    public ResendMessagesChannelModule(int resendMessageTryCount, long resendMessageInterval) {
         this.resendMessageTryCount = resendMessageTryCount;
         this.resendMessageInterval = resendMessageInterval;
         this.messageCancellationTokenMap = new ConcurrentHashMap<>();
-        this.executor = executor;
+    }
+
+    public boolean isBound() {
+        return channel != null;
+    }
+
+    public synchronized void bind(Channel channel, boolean unbindWhenClosed) {
+        if (channel == null) throw new IllegalArgumentException("Invalid channel");
+        if (channel.getState() == FINISHED || channel.getState() == FAILED) throw new IllegalArgumentException("The channel has an invalid state");
+        if (isBound()) throw new IllegalStateException("The module is already bound to a channel. Call Unbind first.");
+
+        this.channel = channel;
+        this.unbindWhenClosed = unbindWhenClosed;
+        channel.getMessageModules().add(this);
+        channel.getNotificationModules().add(this);
+        if (channel.getState() != NEW) {
+            onStateChanged(channel.getState());
+        }
+    }
+
+    public synchronized void unbind() {
+        if (!isBound()) throw new IllegalStateException("The module is not bound to a channel");
+
+        this.channel.getMessageModules().remove(this);
+        this.channel.getNotificationModules().remove(this);
+        this.pendingTasks = executor.shutdownNow();
+        this.channel = null;
+        this.executor = null;
     }
 
     @Override
     public synchronized void onStateChanged(Session.SessionState state) {
-        if (state == FINISHED || state == FAILED) {
-            for (CancellationToken cancellationToken :  messageCancellationTokenMap.values()) {
-                cancellationToken.cancel(false);
+        if (state == ESTABLISHED) {
+            this.executor = Executors.newSingleThreadScheduledExecutor();
+            // Reschedule pending tasks, if any
+            if (pendingTasks != null) {
+                for (Runnable runnable : pendingTasks) {
+                    RunnableScheduledFuture scheduledFuture = (RunnableScheduledFuture)runnable;
+//
+//
+//                    long scheduleDelay = resendMessageInterval - (System.currentTimeMillis() - resentMessageRunnable.getLastSentTimeMillis());
+//                    if (scheduleDelay < 0) scheduleDelay = 0;
+//                    executor.schedule(runnable, scheduleDelay, TimeUnit.MILLISECONDS);
+                }
             }
-            messageCancellationTokenMap.clear();
+        } else if (unbindWhenClosed && (state == FINISHED || state == FAILED)) {
+            unbind();
         }
     }
 
     @Override
     public Envelope onSending(Envelope envelope) {
-        if (envelope instanceof Message && envelope.getId() != null) {
+        if (envelope instanceof Message && envelope.getId() != null && executor != null) {
             int resentCount = 0;
-            if (envelope.getMetadata() != null && envelope.getMetadata().containsKey(SENT_COUNT_KEY)) {
-                resentCount = Integer.parseInt(envelope.getMetadata().get(SENT_COUNT_KEY));
+            if (envelope.getMetadata() != null && envelope.getMetadata().containsKey(RESENT_COUNT_KEY)) {
+                resentCount = Integer.parseInt(envelope.getMetadata().get(RESENT_COUNT_KEY));
             }
 
             if (resentCount < resendMessageTryCount) {
@@ -92,21 +130,11 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
         return envelope;
     }
-    public static ResendMessagesChannelModule createAndRegister(Channel channel, int resendMessageTryCount, long resendMessageInterval) {
-        return createAndRegister(channel, resendMessageTryCount, resendMessageInterval, Executors.newSingleThreadScheduledExecutor());
-    }
-
-    public static ResendMessagesChannelModule createAndRegister(Channel channel, int resendMessageTryCount, long resendMessageInterval, ScheduledExecutorService executor) {
-        ResendMessagesChannelModule module = new ResendMessagesChannelModule(channel, resendMessageTryCount, resendMessageInterval, executor);
-        channel.getMessageModules().add(module);
-        channel.getNotificationModules().add(module);
-        return module;
-    }
 
     private class ResentMessageRunnable implements Runnable {
 
         private final Message message;
-        private int resentCount;
+        private final int resentCount;
 
         public ResentMessageRunnable(Message message, int resentCount) {
             this.message = message;
@@ -120,14 +148,14 @@ public final class ResendMessagesChannelModule implements ChannelModule {
                     if (message.getMetadata() == null) {
                         message.setMetadata(new HashMap<String, String>());
                     }
-                    resentCount++;
-                    message.getMetadata().put(SENT_COUNT_KEY, String.valueOf(resentCount));
+                    message.getMetadata().put(RESENT_COUNT_KEY, String.valueOf(resentCount + 1));
                     channel.sendMessage(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
+
     }
 
     private final class CancellationToken {
