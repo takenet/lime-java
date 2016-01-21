@@ -6,7 +6,6 @@ import org.limeprotocol.Notification;
 import org.limeprotocol.Session;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.ChannelModule;
-import sun.util.resources.CalendarData_sr_Latn_BA;
 
 import java.io.IOException;
 import java.util.*;
@@ -177,13 +176,13 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
     private final class QueueConsumer implements Runnable {
 
-        private static final long POLL_INTERVAL = 1000;
+        private static final long POLL_TIMEOUT = 1000;
 
         @Override
         public void run() {
             while (isBound()) {
                 try {
-                    SentMessage sentMessage = sentMessageQueue.poll(POLL_INTERVAL, TimeUnit.MILLISECONDS);
+                    SentMessage sentMessage = sentMessageQueue.poll(POLL_TIMEOUT, TimeUnit.MILLISECONDS);
                     if (sentMessage == null) continue;
                     if (sentMessage.waitForResent(resendMessageInterval)) {
                         Channel channel = ResendMessagesChannelModule.this.channel;
