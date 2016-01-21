@@ -21,20 +21,20 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
     private final static String RESENT_COUNT_KEY = "#resentCount";
 
-
     private final int resendMessageTryCount;
     private final long resendMessageInterval;
-    private final ConcurrentMap<UUID, CancellationToken> messageCancellationTokenMap;
+    private final ConcurrentMap<UUID, SentMessage> sentMessageMap;
+    private final BlockingQueue<SentMessage> sentMessageQueue;
 
     private Channel channel;
     private boolean unbindWhenClosed;
-    private ScheduledExecutorService executor;
-    private List<Runnable> pendingTasks;
+    private Thread consumerThread;
 
     public ResendMessagesChannelModule(int resendMessageTryCount, long resendMessageInterval) {
         this.resendMessageTryCount = resendMessageTryCount;
         this.resendMessageInterval = resendMessageInterval;
-        this.messageCancellationTokenMap = new ConcurrentHashMap<>();
+        this.sentMessageMap = new ConcurrentHashMap<>();
+        this.sentMessageQueue = new ArrayBlockingQueue<>(100);
     }
 
     public boolean isBound() {
@@ -60,26 +60,23 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
         this.channel.getMessageModules().remove(this);
         this.channel.getNotificationModules().remove(this);
-        this.pendingTasks = executor.shutdownNow();
         this.channel = null;
-        this.executor = null;
+        if (this.consumerThread != null && this.consumerThread.isAlive()) {
+            try {
+                this.consumerThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public synchronized void onStateChanged(Session.SessionState state) {
         if (state == ESTABLISHED) {
-            this.executor = Executors.newSingleThreadScheduledExecutor();
-            // Reschedule pending tasks, if any
-            if (pendingTasks != null) {
-                for (Runnable runnable : pendingTasks) {
-                    RunnableScheduledFuture scheduledFuture = (RunnableScheduledFuture)runnable;
-//
-//
-//                    long scheduleDelay = resendMessageInterval - (System.currentTimeMillis() - resentMessageRunnable.getLastSentTimeMillis());
-//                    if (scheduleDelay < 0) scheduleDelay = 0;
-//                    executor.schedule(runnable, scheduleDelay, TimeUnit.MILLISECONDS);
-                }
-            }
+            consumerThread = new Thread(
+                new QueueConsumer()
+            );
+            consumerThread.start();
         } else if (unbindWhenClosed && (state == FINISHED || state == FAILED)) {
             unbind();
         }
@@ -87,43 +84,35 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
     @Override
     public Envelope onSending(Envelope envelope) {
-        if (envelope instanceof Message && envelope.getId() != null && executor != null) {
-            int resentCount = 0;
-            if (envelope.getMetadata() != null && envelope.getMetadata().containsKey(RESENT_COUNT_KEY)) {
-                resentCount = Integer.parseInt(envelope.getMetadata().get(RESENT_COUNT_KEY));
+        if (envelope instanceof Message && envelope.getId() != null) {
+            SentMessage sentMessage = sentMessageMap.get(envelope.getId());
+            if (sentMessage != null) {
+                sentMessage.incrementResentCount();
+            } else {
+                sentMessage = new SentMessage((Message) envelope);
+                sentMessageMap.put(envelope.getId(), sentMessage);
             }
 
-            if (resentCount < resendMessageTryCount) {
-                CancellationToken cancellationToken;
-                if (resentCount > 0) {
-                    cancellationToken = messageCancellationTokenMap.get(envelope.getId());
-                } else {
-                    cancellationToken = new CancellationToken();
-                    messageCancellationTokenMap.put(envelope.getId(), cancellationToken);
-                }
-
-                if (cancellationToken != null) {
-                    Message message = (Message) envelope;
-                    ResentMessageRunnable runnable = new ResentMessageRunnable(message, resentCount);
-                    ScheduledFuture scheduledFuture = executor.schedule(runnable, resendMessageInterval, TimeUnit.MILLISECONDS);
-                    cancellationToken.addFuture(scheduledFuture);
-                }
+            if (sentMessage.getResentCount() <= resendMessageTryCount) {
+                sentMessageQueue.add(sentMessage);
             } else {
-                messageCancellationTokenMap.remove(envelope.getId());
+                sentMessage = sentMessageMap.remove(envelope.getId());
+                if (sentMessage != null) {
+                    sentMessage.cancelResent();
+                }
             }
         }
-
         return envelope;
     }
 
     @Override
     public Envelope onReceiving(Envelope envelope) {
-        if (envelope instanceof Notification) {
+        if (envelope instanceof Notification && envelope.getId() != null) {
             Notification notification = (Notification)envelope;
             if (notification.getEvent() == Notification.Event.RECEIVED || notification.getEvent() == Notification.Event.FAILED) {
-                CancellationToken cancellationToken = messageCancellationTokenMap.get(envelope.getId());
-                if (cancellationToken != null) {
-                    cancellationToken.cancel(false);
+                SentMessage sentMessage = sentMessageMap.remove(envelope.getId());
+                if (sentMessage != null) {
+                    sentMessage.cancelResent();
                 }
             }
         }
@@ -131,62 +120,81 @@ public final class ResendMessagesChannelModule implements ChannelModule {
         return envelope;
     }
 
-    private class ResentMessageRunnable implements Runnable {
-
+    private final class SentMessage {
         private final Message message;
-        private final int resentCount;
+        private final Semaphore semaphore;
 
-        public ResentMessageRunnable(Message message, int resentCount) {
+        private long lastSentTime;
+        private int resentCount;
+
+        private SentMessage(Message message) {
             this.message = message;
-            this.resentCount = resentCount;
+            this.lastSentTime = System.currentTimeMillis();
+            this.semaphore = new Semaphore(0);
+            this.resentCount = 1;
         }
 
+        public Message getMessage() {
+            if (message.getMetadata() == null) {
+                message.setMetadata(new HashMap<String, String>());
+            }
+            message.getMetadata().put(RESENT_COUNT_KEY, String.valueOf(resentCount));
+            return message;
+        }
+
+        public long getLastSentTime() {
+            return lastSentTime;
+        }
+
+        public int getResentCount() {
+            return resentCount;
+        }
+
+        public void incrementResentCount() {
+            resentCount++;
+            this.lastSentTime = System.currentTimeMillis();
+        }
+
+        public boolean waitForResent(long resentInterval) throws InterruptedException {
+            if (this.semaphore.availablePermits() > 0) {
+                return false;
+            }
+
+            long now = System.currentTimeMillis();
+            long resendTime = lastSentTime + resentInterval;
+
+            if (resendTime > now) {
+                long waitInterval = resendTime - now;
+                return !this.semaphore.tryAcquire(1, waitInterval, TimeUnit.MILLISECONDS);
+            }
+
+            return this.semaphore.availablePermits() == 0;
+        }
+
+        public void cancelResent() {
+            this.semaphore.release(1);
+        }
+    }
+
+    private final class QueueConsumer implements Runnable {
         @Override
         public void run() {
-            if (channel.getState() == ESTABLISHED && channel.getTransport().isConnected()) {
+            while (isBound()) {
                 try {
-                    if (message.getMetadata() == null) {
-                        message.setMetadata(new HashMap<String, String>());
+                    SentMessage sentMessage = sentMessageQueue.poll(resendMessageInterval, TimeUnit.MILLISECONDS);
+                    if (sentMessage == null) continue;
+                    if (sentMessage.waitForResent(resendMessageInterval)) {
+                        Channel channel = ResendMessagesChannelModule.this.channel;
+                        if (channel == null) {
+                            sentMessageQueue.add(sentMessage);
+                            continue;
+                        }
+                        channel.sendMessage(sentMessage.getMessage());
                     }
-                    message.getMetadata().put(RESENT_COUNT_KEY, String.valueOf(resentCount + 1));
-                    channel.sendMessage(message);
-                } catch (IOException e) {
+                } catch (InterruptedException | IOException e) {
                     e.printStackTrace();
                 }
             }
-        }
-
-    }
-
-    private final class CancellationToken {
-        private final List<ScheduledFuture> futures;
-
-        private CancellationToken() {
-            futures = new ArrayList<>();
-        }
-
-        public void addFuture(ScheduledFuture future) {
-            futures.add(future);
-            removeComplete();
-        }
-
-        private void removeComplete() {
-            Iterator<ScheduledFuture> iterator = futures.iterator();
-            while (iterator.hasNext()) {
-                ScheduledFuture future = iterator.next();
-                if (future.isDone() || future.isCancelled()) {
-                    iterator.remove();
-                }
-            }
-        }
-
-        public void cancel(boolean mayInterruptIfRunning) {
-            for (ScheduledFuture future : futures) {
-                if (!future.isDone() && !future.isCancelled()) {
-                    future.cancel(mayInterruptIfRunning);
-                }
-            }
-            futures.clear();
         }
     }
 }
