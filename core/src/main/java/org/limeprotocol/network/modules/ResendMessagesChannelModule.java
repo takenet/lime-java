@@ -58,12 +58,12 @@ public final class ResendMessagesChannelModule implements ChannelModule {
     public synchronized void unbind() {
         if (!isBound()) throw new IllegalStateException("The module is not bound to a channel");
 
-        this.channel.getMessageModules().remove(this);
-        this.channel.getNotificationModules().remove(this);
-        this.channel = null;
-        if (this.consumerThread != null && this.consumerThread.isAlive()) {
+        channel.getMessageModules().remove(this);
+        channel.getNotificationModules().remove(this);
+        channel = null;
+        if (consumerThread != null && consumerThread.isAlive()) {
             try {
-                this.consumerThread.join();
+                consumerThread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -121,9 +121,9 @@ public final class ResendMessagesChannelModule implements ChannelModule {
     }
 
     private final class SentMessage {
+
         private final Message message;
         private final Semaphore semaphore;
-
         private long lastSentTime;
         private int resentCount;
 
@@ -162,7 +162,6 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
             long now = System.currentTimeMillis();
             long resendTime = lastSentTime + resentInterval;
-
             if (resendTime > now) {
                 long waitInterval = resendTime - now;
                 return !this.semaphore.tryAcquire(1, waitInterval, TimeUnit.MILLISECONDS);
@@ -177,11 +176,14 @@ public final class ResendMessagesChannelModule implements ChannelModule {
     }
 
     private final class QueueConsumer implements Runnable {
+
+        private static final long POLL_INTERVAL = 1000;
+
         @Override
         public void run() {
             while (isBound()) {
                 try {
-                    SentMessage sentMessage = sentMessageQueue.poll(resendMessageInterval, TimeUnit.MILLISECONDS);
+                    SentMessage sentMessage = sentMessageQueue.poll(POLL_INTERVAL, TimeUnit.MILLISECONDS);
                     if (sentMessage == null) continue;
                     if (sentMessage.waitForResent(resendMessageInterval)) {
                         Channel channel = ResendMessagesChannelModule.this.channel;
