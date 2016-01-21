@@ -383,4 +383,35 @@ public class ResendMessagesChannelModuleTest {
         verify(channel2, times(1)).sendMessage(message);
     }
 
+    @Test
+    public void unbind_multiplePendingMessagesAndBoundToNewChannel_sendsToBoundChannel() throws InterruptedException, IOException {
+        // Arrange
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
+            Message message = Dummy.createMessage(Dummy.createTextContent());
+            message.setId(UUID.randomUUID());
+            messages.add(message);
+        }
+        ResendMessagesChannelModule target = getTarget();
+        ClientChannel channel2 = mock(ClientChannel.class);
+        when(channel2.getTransport()).thenReturn(transport);
+        when(channel2.getState()).thenReturn(Session.SessionState.ESTABLISHED);
+
+        // Act
+        List<Message> actuals = new ArrayList<>();
+        for (Message message: messages) {
+            Message actual = (Message)target.onSending(message);
+            actuals.add(actual);
+        }
+        target.unbind();
+        target.bind(channel2, true);
+        Thread.sleep(resendMessageIntervalWithSafeMargin);
+
+        // Assert
+        for (Message message: messages) {
+            assertTrue(actuals.contains(message));
+            verify(channel, never()).sendMessage(message);
+            verify(channel2, times(1)).sendMessage(message);
+        }
+    }
 }
