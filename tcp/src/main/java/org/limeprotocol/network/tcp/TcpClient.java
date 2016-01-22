@@ -21,4 +21,8 @@ public interface TcpClient extends Closeable {
     boolean isTlsStarted();
     
     void startTls() throws IOException;
+
+    boolean isInputShutdown();
+
+    boolean isOutputShutdown();
 }

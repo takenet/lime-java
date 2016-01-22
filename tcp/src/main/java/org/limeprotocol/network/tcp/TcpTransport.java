@@ -60,7 +60,7 @@ public class TcpTransport extends TransportBase implements Transport {
      * @returns
      */
     public boolean isConnected(){
-        return isConnected;
+        return isConnected && tcpClient != null && !tcpClient.isInputShutdown() && !tcpClient.isOutputShutdown();
     }
 
     /**
@@ -204,9 +204,13 @@ public class TcpTransport extends TransportBase implements Transport {
 
     private synchronized void startListenerThread() throws IOException {
         ensureSocketOpen();
+        if(!isConnected()){
+            throw new IllegalStateException("Transport is not connected");
+        }
         if (isListening()) {
             throw new IllegalStateException("The input listener is already started");
         }
+
 
         jsonListener = new JsonListener(inputStream, bufferSize);
         jsonListenerThread = new Thread(jsonListener);
@@ -268,7 +272,9 @@ public class TcpTransport extends TransportBase implements Transport {
                                     throw new BufferOverflowException("Maximum buffer size reached");
                                 }
                             } catch (SocketTimeoutException e) {
-                                // Ignores the socket timeout exception
+                                if(!isConnected()){
+                                    stop();
+                                }
                             } catch (IOException e){
                                 TcpTransport.this.close();
                                 throw e;
@@ -281,6 +287,14 @@ public class TcpTransport extends TransportBase implements Transport {
                 }
             } catch (Exception e) {
                 raiseOnException(e);
+            }finally {
+                if (traceWriter != null && traceWriter.isEnabled()) {
+                    int bytesAvailable = -1;
+                    try {
+                        bytesAvailable = this.inputStream.available();
+                    }catch(Exception e) {}
+                    traceWriter.trace(String.format("TcpTransport JsonListener thread aborted with %d bytes in internal Buffer and %d bytes in input Stream", this.buffer.length, bytesAvailable), TraceWriter.DataOperation.RECEIVE);
+                }
             }
 
             this.isStopping = true;

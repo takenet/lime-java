@@ -85,6 +85,16 @@ public class SocketTcpClient implements TcpClient {
     }
 
     @Override
+    public boolean isInputShutdown() {
+        return socket.isInputShutdown();
+    }
+
+    @Override
+    public boolean isOutputShutdown(){
+        return socket.isOutputShutdown();
+    }
+
+    @Override
     public void close() throws IOException {
         if (isTlsStarted()) {
             sslSocket.close();
