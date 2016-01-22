@@ -134,11 +134,13 @@ public class TcpTransport extends TransportBase implements Transport {
         }
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        isConnected = true;
+
         initializeStreams();
+
         if (getStateListener() != null) {
             startListenerThread();
         }
-        isConnected = true;
     }
 
     /**
@@ -205,13 +207,11 @@ public class TcpTransport extends TransportBase implements Transport {
     private synchronized void startListenerThread() throws IOException {
         ensureSocketOpen();
         if(!isConnected()){
-            throw new IllegalStateException("Transport is not connected");
+            throw new IllegalStateException("The transport is not connected");
         }
         if (isListening()) {
             throw new IllegalStateException("The input listener is already started");
         }
-
-
         jsonListener = new JsonListener(inputStream, bufferSize);
         jsonListenerThread = new Thread(jsonListener);
         jsonListenerThread.start();

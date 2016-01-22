@@ -58,6 +58,8 @@ public class TcpTransportTest {
         tcpClient = mock(TcpClient.class);
         when(tcpClient.getOutputStream()).thenReturn(outputStream);
         when(tcpClient.getInputStream()).thenReturn(inputStream);
+        when(tcpClient.isOutputShutdown()).thenReturn(false);
+        when(tcpClient.isInputShutdown()).thenReturn(false);
         traceWriter = mock(TraceWriter.class);
         return new TcpTransport(envelopeSerializer, new MockTcpClientFactory(), traceWriter, bufferSize);
     }
