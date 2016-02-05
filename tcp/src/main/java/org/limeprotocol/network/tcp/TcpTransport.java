@@ -144,26 +144,6 @@ public class TcpTransport extends TransportBase implements Transport {
         }
     }
 
-    @Override
-    public void setEnvelopeListener(TransportEnvelopeListener listener) {
-        super.setEnvelopeListener(listener);
-        if (listener != null && isSocketOpen() && !isListening()) {
-            try {
-                startListenerThread();
-            } catch (IOException e) {
-                throw new RuntimeException("An error occurred while starting the listener task", e);
-            }
-        }
-    }
-
-    @Override
-    protected void performClose() throws IOException {
-        stopListenerThread();
-        if (tcpClient != null) {
-            tcpClient.close();
-        }
-    }
-
     /**
      * Enumerates the supported encryption options for the transport.
      *
@@ -309,7 +289,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     try {
                         bytesAvailable = this.inputStream.available();
                     }catch(Exception e) {}
-                    traceWriter.trace(String.format("TcpTransport JsonListener thread aborted with %d bytes in internal Buffer and %d bytes in input Stream", this.buffer.length, bytesAvailable), TraceWriter.DataOperation.RECEIVE);
+                    traceWriter.trace(String.format("TcpTransport JsonListener thread aborted with %d bytes in internal Buffer and %d bytes in input Stream", jsonBuffer.getBuffer().length, bytesAvailable), TraceWriter.DataOperation.RECEIVE);
                 }
             }
 
