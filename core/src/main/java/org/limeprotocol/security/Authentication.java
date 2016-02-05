@@ -38,7 +38,11 @@ public abstract class Authentication {
         /**
          *Transport layer authentication.
          */
-        TRANSPORT
+        TRANSPORT,
+        /**
+         * Key authentication.
+         */
+        KEY
     }
 }
 

@@ -11,6 +11,7 @@ import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.charset.Charset;
 
@@ -28,29 +29,39 @@ public class TcpTransport extends TransportBase implements Transport {
     private BufferedOutputStream outputStream;
     private BufferedInputStream inputStream;
     private JsonListener jsonListener;
-
+    private Thread jsonListenerThread;
+    private boolean isConnected;
 
     public TcpTransport() {
         this(new JacksonEnvelopeSerializer(), new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer) {
         this(envelopeSerializer, new SocketTcpClientFactory(), null, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory) {
         this(envelopeSerializer, tcpClientFactory, null, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter) {
         this(envelopeSerializer, tcpClientFactory, traceWriter, DEFAULT_BUFFER_SIZE);
     }
-    
+
     public TcpTransport(EnvelopeSerializer envelopeSerializer, TcpClientFactory tcpClientFactory, TraceWriter traceWriter, int bufferSize) {
         this.envelopeSerializer = envelopeSerializer;
         this.tcpClientFactory = tcpClientFactory;
         this.traceWriter = traceWriter;
         this.bufferSize = bufferSize;
+        this.isConnected = false;
+    }
+
+    /**
+     * Checks if the client is connected based on the last read/write operation
+     * @returns
+     */
+    public boolean isConnected(){
+        return isConnected && tcpClient != null && !tcpClient.isInputShutdown() && !tcpClient.isOutputShutdown();
     }
 
     /**
@@ -65,19 +76,42 @@ public class TcpTransport extends TransportBase implements Transport {
         }
         ensureSocketOpen();
         String envelopeString = envelopeSerializer.serialize(envelope);
-        
+
         try {
             byte[] envelopeBytes = envelopeString.getBytes("UTF-8");
             outputStream.write(envelopeBytes);
             outputStream.flush();
-            
-            if (traceWriter != null &&
-                    traceWriter.isEnabled()) {
+
+            if (traceWriter != null && traceWriter.isEnabled()) {
                 traceWriter.trace(envelopeString, TraceWriter.DataOperation.SEND);
             }
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException("Could not convert the serialized envelope to a UTF-8 byte array", e);
+        } catch (IOException e){
+            close();
+            throw e;
         }
+    }
+
+    @Override
+    public void setEnvelopeListener(TransportEnvelopeListener listener) {
+        super.setEnvelopeListener(listener);
+        if (listener != null && isSocketOpen() && !isListening()) {
+            try {
+                startListenerThread();
+            } catch (IOException e) {
+                throw new RuntimeException("An error occurred while starting the listener task", e);
+            }
+        }
+    }
+
+    @Override
+    protected void performClose() throws IOException {
+        stopListenerThread();
+        if (tcpClient != null) {
+            tcpClient.close();
+        }
+        isConnected = false;
     }
 
     /**
@@ -86,22 +120,25 @@ public class TcpTransport extends TransportBase implements Transport {
      * @param uri
      */
     @Override
-    public synchronized void open(URI uri) throws IOException {
+    protected void performOpen(URI uri) throws IOException {
         if (uri == null) {
             throw new IllegalArgumentException("uri");
         }
-        
+
         // TODO: This is the best scheme to use?
         if (!uri.getScheme().equals("net.tcp")) {
             throw new IllegalArgumentException("Invalid URI scheme. Expected is 'net.tcp'", null);
         }
-        
+
         if (tcpClient != null) {
             throw new IllegalStateException("The client is already open");
         }
         tcpClient = tcpClientFactory.create();
         tcpClient.connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
+        isConnected = true;
+
         initializeStreams();
+
         if (getStateListener() != null) {
             startListenerThread();
         }
@@ -134,7 +171,7 @@ public class TcpTransport extends TransportBase implements Transport {
      */
     @Override
     public SessionEncryption[] getSupportedEncryption() {
-        return new SessionEncryption[] { SessionEncryption.NONE, SessionEncryption.TLS };
+        return new SessionEncryption[]{SessionEncryption.NONE, SessionEncryption.TLS};
     }
 
     /**
@@ -148,10 +185,15 @@ public class TcpTransport extends TransportBase implements Transport {
             case TLS:
                 if (!tcpClient.isTlsStarted()) {
                     stopListenerThread();
-                    tcpClient.startTls();
-                    initializeStreams();
-                    if (getStateListener() != null) {
-                        startListenerThread();
+                    try {
+                        tcpClient.startTls();
+                        initializeStreams();
+                        if (getStateListener() != null) {
+                            startListenerThread();
+                        }
+                    } catch (IOException e) {
+                        close();
+                        throw e;
                     }
                 }
                 break;
@@ -167,7 +209,7 @@ public class TcpTransport extends TransportBase implements Transport {
     private boolean isSocketOpen() {
         return tcpClient != null;
     }
-    
+
     private void ensureSocketOpen() {
         if (tcpClient == null) {
             throw new IllegalStateException("The client is not open");
@@ -182,77 +224,102 @@ public class TcpTransport extends TransportBase implements Transport {
     private boolean isListening() {
         return jsonListener != null && !jsonListener.isStopping();
     }
-    
+
     private synchronized void startListenerThread() throws IOException {
         ensureSocketOpen();
+        if(!isConnected()){
+            throw new IllegalStateException("The transport is not connected");
+        }
         if (isListening()) {
             throw new IllegalStateException("The input listener is already started");
         }
-
-        jsonListener = new JsonListener();
-        Thread listenerThread = new Thread(jsonListener);
-        listenerThread.start();
+        jsonListener = new JsonListener(inputStream, bufferSize);
+        jsonListenerThread = new Thread(jsonListener);
+        jsonListenerThread.start();
     }
-    
+
     private synchronized void stopListenerThread() {
         if (isListening()) {
             jsonListener.stop();
+            if (jsonListenerThread != null && jsonListenerThread.isAlive()) {
+                jsonListenerThread.interrupt();
+            }
             jsonListener = null;
+            jsonListenerThread = null;
         }
     }
 
-    private static int globalId;
-    
     class JsonListener implements Runnable {
 
-        // final reference of the inputStream
         private final InputStream inputStream;
-        private int id = globalId++;
-        private boolean isStopping;
         private JsonBuffer jsonBuffer;
-        
-        JsonListener() {
-            this.inputStream = TcpTransport.this.inputStream;
+        volatile private boolean isStopping;
+
+        JsonListener(InputStream inputStream, int bufferSize) {
+            this.inputStream = inputStream;
             jsonBuffer = new JsonBuffer(bufferSize);
         }
 
         @Override
         public void run() {
             try {
-                while (getEnvelopeListener() != null && !isStopping()) {
+                while (getEnvelopeListener() != null && !isStopping() && !Thread.currentThread().isInterrupted()) {
                     Envelope envelope = null;
                     while (envelope == null) {
                         JsonBuffer.JsonBufferReadResult jsonBufferReadResult = jsonBuffer.tryExtractJsonFromBuffer();
                         if (jsonBufferReadResult.isSuccess()) {
                             String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
-                            if (traceWriter != null &&
-                                    traceWriter.isEnabled()) {
+                            if (traceWriter != null && traceWriter.isEnabled()) {
                                 traceWriter.trace(jsonString, TraceWriter.DataOperation.RECEIVE);
                             }
                             envelope = envelopeSerializer.deserialize(jsonString);
                         }
                         if (envelope == null) {
-                            int read = this.inputStream.read(jsonBuffer.getBuffer(), jsonBuffer.getBufferCurPos(), jsonBuffer.getBuffer().length - jsonBuffer.getBufferCurPos());
-                            jsonBuffer.increaseBufferCurPos(read);
-                            if (jsonBuffer.getBufferCurPos() >= jsonBuffer.getBuffer().length) {
+                            try {
+                                int read = this.inputStream.read(jsonBuffer.getBuffer(), jsonBuffer.getBufferCurPos(), jsonBuffer.getBuffer().length - jsonBuffer.getBufferCurPos());
+                                if (read == -1) {
+                                    // The stream reached EOF, raise closed event.
+                                    close();
+                                    break;
+                                }
+                                jsonBuffer.increaseBufferCurPos(read);
+                                if (jsonBuffer.getBufferCurPos() >= jsonBuffer.getBuffer().length) {
+                                    TcpTransport.this.close();
+                                    throw new BufferOverflowException("Maximum buffer size reached");
+                                }
+                            } catch (SocketTimeoutException e) {
+                                if(!isConnected()){
+                                    stop();
+                                }
+                            } catch (IOException e){
                                 TcpTransport.this.close();
-                                throw new BufferOverflowException("Maximum buffer size reached");
+                                throw e;
                             }
                         }
                     }
+                    // Check if the transport was closed
+                    if (envelope == null) break;
                     raiseOnReceive(envelope);
                 }
             } catch (Exception e) {
                 raiseOnException(e);
+            }finally {
+                if (traceWriter != null && traceWriter.isEnabled()) {
+                    int bytesAvailable = -1;
+                    try {
+                        bytesAvailable = this.inputStream.available();
+                    }catch(Exception e) {}
+                    traceWriter.trace(String.format("TcpTransport JsonListener thread aborted with %d bytes in internal Buffer and %d bytes in input Stream", this.buffer.length, bytesAvailable), TraceWriter.DataOperation.RECEIVE);
+                }
             }
-            
+
             this.isStopping = true;
         }
 
         public boolean isStopping() {
             return this.isStopping;
         }
-        
+
         public void stop() {
             this.isStopping = true;
         }

@@ -71,7 +71,7 @@ public class ChannelExtensionsTest {
 
     private class TestChannel extends ChannelBase {
         protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
-            super(transport, fillEnvelopeRecipients, autoReplyPings);
+            super(transport, fillEnvelopeRecipients, autoReplyPings, 0, 0);
             setRemoteNode(remoteNode);
             setLocalNode(localNode);
             setState(state);
@@ -101,6 +101,11 @@ public class ChannelExtensionsTest {
             closeInvoked = true;
         }
 
+        @Override
+        protected void performOpen(URI uri) throws IOException {
+
+        }
+
         /**
          * Sends an envelope to the remote node.
          *
@@ -127,6 +132,11 @@ public class ChannelExtensionsTest {
         @Override
         public void open(URI uri) throws IOException {
             openUri = uri;
+        }
+
+        @Override
+        public boolean isConnected() {
+            return true;
         }
 
         @Override

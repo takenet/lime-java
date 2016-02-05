@@ -11,6 +11,7 @@ import org.limeprotocol.network.*;
 import org.limeprotocol.network.tcp.CustomTrustManager;
 import org.limeprotocol.network.tcp.SocketTcpClientFactory;
 import org.limeprotocol.network.tcp.TcpTransport;
+import org.limeprotocol.security.Authentication;
 import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 
@@ -42,11 +43,25 @@ public class ClientSample {
             portNumber = 55321;
         }
 
+        Identity identity;
+        out.print("Identity (name@domain): ");
+        try {
+            identity = Identity.parse(inScanner.nextLine());
+        } catch (Exception e)  {
+            identity = new Identity("samples", "take.io");
+        }
+
+        out.print("Password: ");
+        String password = inScanner.nextLine();
+        if (password.isEmpty()) {
+            password = "123456";
+        }
+
         // Creates a new transport and connect to the server
         URI serverUri = new URI(String.format("net.tcp://%s:%d", hostName, portNumber));
         TcpTransport transport = new TcpTransport(
                 new JacksonEnvelopeSerializer(),
-                new SocketTcpClientFactory(new CustomTrustManager(null)),
+                new SocketTcpClientFactory(new CustomTrustManager(null), true, true, 5000),
                 new TraceWriter() {
                     @Override
                     public void trace(String data, DataOperation operation) {
@@ -80,18 +95,18 @@ public class ClientSample {
         transport.open(serverUri);
 
         // Creates a new client channel
-        ClientChannel clientChannel = new ClientChannelImpl(transport, true, true, true);
+        ClientChannel clientChannel = new ClientChannelImpl(transport, true, true, true, 10000, 30000);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
+        PlainAuthentication authentication = new PlainAuthentication();
+        authentication.setToBase64Password(password);
 
         clientChannel.establishSession(
                 SessionCompression.NONE,
                 SessionEncryption.TLS,
-                new Identity("samples", "take.io"),
-                new PlainAuthentication() {{
-                    setToBase64Password("take1234");
-                }},
-                "default",
+                identity,
+                authentication,
+                InetAddress.getLocalHost().getHostName(),
                 new ClientChannel.EstablishSessionListener() {
                     @Override
                     public void onFailure(Exception exception) {

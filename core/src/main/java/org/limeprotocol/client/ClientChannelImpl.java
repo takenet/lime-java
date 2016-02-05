@@ -3,6 +3,7 @@ package org.limeprotocol.client;
 import org.limeprotocol.*;
 import org.limeprotocol.network.ChannelBase;
 import org.limeprotocol.network.Transport;
+import org.limeprotocol.network.modules.NotifyReceiptChannelModule;
 import org.limeprotocol.security.Authentication;
 import org.limeprotocol.util.StringUtils;
 
@@ -12,8 +13,6 @@ import java.util.UUID;
 import static org.limeprotocol.Session.SessionState.*;
 
 public class ClientChannelImpl extends ChannelBase implements ClientChannel {
-
-    private boolean autoNotifyReceipt;
 
     public ClientChannelImpl(Transport transport) {
         this(transport, false);
@@ -29,9 +28,16 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings,
                              boolean autoNotifyReceipt) {
-        super(transport, fillEnvelopeRecipients, autoReplyPings);
+        this(transport, fillEnvelopeRecipients, autoReplyPings, autoNotifyReceipt, 0, 0);
+    }
 
-        this.autoNotifyReceipt = autoNotifyReceipt;
+    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings,
+                             boolean autoNotifyReceipt, long pingInterval, long pingDisconnectionInterval) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
+
+        if (autoNotifyReceipt) {
+            getMessageModules().add(new NotifyReceiptChannelModule(this));
+        }
     }
 
     /**
@@ -142,9 +148,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
     @Override
     public void establishSession(SessionCompression compression, SessionEncryption encryption,
                                  Identity identity, Authentication authentication, String instance,
-                                 EstablishSessionListener listener)
-            throws IOException {
-
+                                 EstablishSessionListener listener) throws IOException {
         if (getState() != NEW) {
             throw new IllegalStateException(String.format("Cannot establish a session in the '%s' state", getState()));
         }
@@ -164,25 +168,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         startNewSession(establishingListener);
     }
 
-    /**
-     * Fills the envelope recipients
-     * using the session information
-     */
-    @Override
-    protected void fillEnvelope(Envelope envelope, boolean isSending) {
-        super.fillEnvelope(envelope, isSending);
-
-        if (isSending && this.getLocalNode() != null) {
-            if (envelope.getPp() == null) {
-                if (envelope.getFrom() != null && !envelope.getFrom().equals(this.getLocalNode())) {
-                    envelope.setPp(this.getLocalNode().copy());
-                }
-            } else if (StringUtils.isNullOrWhiteSpace(envelope.getPp().getDomain())) {
-                envelope.getPp().setDomain(this.getLocalNode().getDomain());
-            }
-        }
-    }
-
     @Override
     protected synchronized void raiseOnReceiveSession(Session session) {
         setSessionId(session.getId());
@@ -191,8 +176,7 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         if (session.getState() == ESTABLISHED) {
             setLocalNode(session.getTo());
             setRemoteNode(session.getFrom());
-        } else if (session.getState() == FINISHED ||
-                session.getState() == FAILED) {
+        } else if (session.getState() == FINISHED || session.getState() == FAILED) {
             try {
                 getTransport().close();
             } catch (IOException e) {
@@ -200,21 +184,6 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
             }
         }
         super.raiseOnReceiveSession(session);
-    }
-
-    @Override
-    protected synchronized void raiseOnReceiveMessage(Message message) {
-        super.raiseOnReceiveMessage(message);
-
-        if (autoNotifyReceipt &&
-                message.getId() != null &&
-                message.getFrom() != null) {
-            try {
-                sendReceivedNotification(message.getId(), message.getFrom());
-            } catch (IOException e) {
-                throw new RuntimeException("An error occurred while sending a message receipt", e);
-            }
-        }
     }
 
     private static class SessionEstablishing implements SessionChannelListener {

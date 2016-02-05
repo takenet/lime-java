@@ -110,13 +110,20 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 
     private static Document deserializeDocument(ObjectMapper mapper, ObjectNode node, String documentName) {
         JsonNode typeNode = node.get("type");
-        if (typeNode == null) {
-            return null;
-        }
+        if (typeNode == null) return null;
 
         MediaType mediaType = mapper.convertValue(typeNode, MediaType.class);
+        if (mediaType == null) return null;
 
         JsonNode documentNode = node.get(documentName);
+        if (documentNode == null) {
+            if (mediaType.isJson()) {
+                return new JsonDocument(mediaType);
+            } else {
+                return new PlainDocument(mediaType);
+            }
+        }
+
         node.remove(documentName);
         node.remove("type");
 

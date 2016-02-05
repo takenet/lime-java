@@ -109,6 +109,11 @@ public class Account extends DocumentBase {
      */
     private Identity alternativeAccount;
 
+    /**
+     * Indicates if the account info should be published to the domain directory.
+     */
+    private Boolean publishToDirectory;
+
     public Boolean getAllowAnonymousSender() {
         return allowAnonymousSender;
     }
@@ -235,5 +240,13 @@ public class Account extends DocumentBase {
 
     public void setAlternativeAccount(Identity alternativeAccount) {
         this.alternativeAccount = alternativeAccount;
+    }
+
+    public Boolean getPublishToDirectory() {
+        return publishToDirectory;
+    }
+
+    public void setPublishToDirectory(Boolean publishToDirectory) {
+        this.publishToDirectory = publishToDirectory;
     }
 }

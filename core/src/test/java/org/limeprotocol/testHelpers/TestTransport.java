@@ -27,6 +27,11 @@ public class TestTransport extends TransportBase {
     }
 
     @Override
+    protected void performOpen(URI uri) throws IOException {
+
+    }
+
+    @Override
     public void send(Envelope envelope) throws IOException {
         sentEnvelopes.add(envelope);
         if (outgoingEnvelopes.size() != 0) {
@@ -37,6 +42,11 @@ public class TestTransport extends TransportBase {
     @Override
     public void open(URI uri) throws IOException {
 
+    }
+
+    @Override
+    public boolean isConnected() {
+        return true;
     }
 
     @Override

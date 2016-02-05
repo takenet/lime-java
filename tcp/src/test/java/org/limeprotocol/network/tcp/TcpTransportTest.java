@@ -30,13 +30,13 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class TcpTransportTest {
-    
+
     private EnvelopeSerializer envelopeSerializer;
     private TcpClient tcpClient;
     private TraceWriter traceWriter;
 
     private boolean outputStreamFlushed;
-    
+
     private class MockTcpClientFactory implements TcpClientFactory {
 
         @Override
@@ -58,28 +58,31 @@ public class TcpTransportTest {
         tcpClient = mock(TcpClient.class);
         when(tcpClient.getOutputStream()).thenReturn(outputStream);
         when(tcpClient.getInputStream()).thenReturn(inputStream);
+        when(tcpClient.isOutputShutdown()).thenReturn(false);
+        when(tcpClient.isInputShutdown()).thenReturn(false);
         traceWriter = mock(TraceWriter.class);
         return new TcpTransport(envelopeSerializer, new MockTcpClientFactory(), traceWriter, bufferSize);
     }
-    
+
     private TcpTransport getAndOpenTarget() throws IOException, URISyntaxException {
         return getAndOpenTarget(mock(InputStream.class), mock(OutputStream.class));
     }
+
     private TcpTransport getAndOpenTarget(InputStream inputStream, OutputStream outputStream) throws IOException, URISyntaxException {
         TcpTransport target = getTarget(inputStream, outputStream);
         target.open(Dummy.createUri());
         return target;
     }
-     
+
     @Test
     public void open_notConnectedValidUri_callsConnectsAndGetStreams() throws URISyntaxException, IOException {
         // Arrange
         URI uri = Dummy.createUri();
         TcpTransport target = getTarget();
-        
+
         // Act
         target.open(uri);
-        
+
         // Assert
         verify(tcpClient, times(1)).connect(new InetSocketAddress(uri.getHost(), uri.getPort()));
         verify(tcpClient, times(1)).getInputStream();
@@ -91,7 +94,7 @@ public class TcpTransportTest {
         // Arrange
         URI uri = Dummy.createUri("http", 55321);
         TcpTransport target = getTarget();
-        
+
         // Act
         target.open(uri);
     }
@@ -101,7 +104,7 @@ public class TcpTransportTest {
         // Arrange
         URI uri = Dummy.createUri("net.tcp", 55321);
         TcpTransport target = getAndOpenTarget();
-        
+
         // Act
         target.open(uri);
     }
@@ -126,7 +129,7 @@ public class TcpTransportTest {
 
         // Act
         target.send(envelope);
-        
+
         // Assert
         assertEquals(serializedEnvelope, outputStream.toString());
         assertTrue(outputStreamFlushed[0]);
@@ -152,7 +155,7 @@ public class TcpTransportTest {
         // Act
         target.send(envelope);
     }
-    
+
     @Test
     @Ignore
     public void send_realTcpClient_receivesEnvelope() throws URISyntaxException, IOException, InterruptedException {
@@ -173,7 +176,7 @@ public class TcpTransportTest {
                 });
 
         transport.open(new URI("net.tcp://takenet-iris.cloudapp.net:55321"));
-        
+
         ClientChannel clientChannel = new ClientChannelImpl(transport, true);
         final Semaphore semaphore = new Semaphore(1);
         semaphore.acquire();
@@ -276,7 +279,7 @@ public class TcpTransportTest {
     public void onReceive_oneRead_readEnvelopeJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
         String messageJson = Dummy.createMessageJson();
-        TestInputStream inputStream = new TestInputStream(new byte[][] { messageJson.getBytes("UTF-8") });
+        TestInputStream inputStream = new TestInputStream(new byte[][]{messageJson.getBytes("UTF-8")});
         TcpTransport target = getTarget(inputStream, new ByteArrayOutputStream());
         Envelope envelope = mock(Envelope.class);
         when(envelopeSerializer.deserialize(messageJson)).thenReturn(envelope);
@@ -288,7 +291,7 @@ public class TcpTransportTest {
         // Act
         target.open(Dummy.createUri());
         Thread.sleep(100);
-        
+
         // Assert
         verify(transportEnvelopeListener, times(1)).onReceive(envelope);
         verify(transportStateListener, never()).onException(any(Exception.class));
@@ -320,11 +323,6 @@ public class TcpTransportTest {
         assertEquals(messageBufferParts.length, inputStream.getReadCount());
     }
 
-    public void open_notConnectedValidUri_connectsClientAndCallsGetStream() {
-        
-        
-    }
-    
     @Test
     public void onReceive_multipleReadsMultipleEnvelopes_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
@@ -363,6 +361,7 @@ public class TcpTransportTest {
         semaphore.acquire();
         doAnswer(new Answer() {
             int receivedMessages = 0;
+
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 receivedMessages++;
@@ -374,13 +373,13 @@ public class TcpTransportTest {
                 return null;
             }
         }).when(transportEnvelopeListener).onReceive(any(Envelope.class));
-        
+
         // Act
         target.open(Dummy.createUri());
         synchronized (semaphore) {
             semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
         }
-        
+
         // Assert
         verify(transportEnvelopeListener, times(messagesCount)).onReceive(any(Envelope.class));
         verify(transportStateListener, never()).onException(any(Exception.class));
@@ -445,7 +444,7 @@ public class TcpTransportTest {
         verify(transportStateListener, never()).onException(any(Exception.class));
         assertEquals(messagesCount - 1, messageJsonQueue.size());
     }
-    
+
     @Test
     public void onReceive_multipleReadsMultipleEnvelopesWithInvalidCharsBetween_readEnvelopesJsonFromStream() throws IOException, URISyntaxException, InterruptedException {
         // Arrange
@@ -459,8 +458,14 @@ public class TcpTransportTest {
                 messageJson = Dummy.createMessageJson();
             } while (messageJsonQueue.contains(messageJson));
             messageJsonQueue.add(messageJson);
+            if (i != messagesCount - 1) {
+                if (i % 3 == 0) messagesJsonBuilder.append("\r\n   ");
+            }
             messagesJsonBuilder.append(messageJson);
-            messagesJsonBuilder.append("\r\n   ");
+            if (i != messagesCount - 1) {
+                if (i % 2 == 0) messagesJsonBuilder.append("\r\n");
+                if (i % 5 == 0) messagesJsonBuilder.append(" ");
+            }
         }
         String messagesJson = messagesJsonBuilder.toString();
         byte[] messageBuffer = messagesJson.getBytes("UTF-8");
@@ -486,6 +491,7 @@ public class TcpTransportTest {
         semaphore.acquire();
         doAnswer(new Answer() {
             int receivedMessages = 0;
+
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 receivedMessages++;
@@ -503,7 +509,7 @@ public class TcpTransportTest {
         synchronized (semaphore) {
             semaphore.tryAcquire(1, 1000, TimeUnit.MILLISECONDS);
         }
-        
+
         // Assert
         verify(transportEnvelopeListener, times(messagesCount)).onReceive(any(Envelope.class));
         verify(transportStateListener, never()).onException(any(Exception.class));
@@ -543,10 +549,10 @@ public class TcpTransportTest {
         target.setEnvelopeListener(transportEnvelopeListener);
         Transport.TransportStateListener transportStateListener = mock(Transport.TransportStateListener.class);
         target.setStateListener(transportStateListener);
-        
+
         // Act
         target.close();
-        
+
         // Assert
         verify(tcpClient, times(1)).close();
         verify(transportStateListener, never()).onException(any(Exception.class));
@@ -558,46 +564,45 @@ public class TcpTransportTest {
     public void getSupportedEncryption_default_returnsNoneAndTLS() throws IOException {
         // Arrange
         TcpTransport target = getTarget();
-        
+
         // Act
         SessionEncryption[] actual = target.getSupportedEncryption();
-        
+
         // Assert
         assertEquals(2, actual.length);
         assertTrue(Arrays.asList(actual).contains(SessionEncryption.NONE));
         assertTrue(Arrays.asList(actual).contains(SessionEncryption.TLS));
     }
-    
+
     @Test
     public void setEncryption_setTls_callsStartTls() throws IOException, URISyntaxException {
         // Arrange
         TcpTransport target = getAndOpenTarget();
-    
+
         // Act
         target.setEncryption(SessionEncryption.TLS);
-        
+
         // Assert
         verify(tcpClient, times(1)).startTls();
     }
-    
-    
+
+
     private byte[][] splitBuffer(byte[] messageBuffer) {
-        int bufferParts = Dummy.createRandomInt(10) + 1;
+        int bufferParts = Dummy.createRandomInt(25) + 1;
 
         byte[][] messageBufferParts = new byte[bufferParts][];
         int bufferPartSize = messageBuffer.length / bufferParts;
         for (int i = 0; i < bufferParts; i++) {
             if (i + 1 == bufferParts) {
                 messageBufferParts[i] = new byte[messageBuffer.length - i * bufferPartSize];
-            }
-            else {
+            } else {
                 messageBufferParts[i] = new byte[bufferPartSize];
             }
             System.arraycopy(messageBuffer, i * bufferPartSize, messageBufferParts[i], 0, messageBufferParts[i].length);
         }
         return messageBufferParts;
     }
-    
+
     private class TestInputStream extends InputStream {
 
         private final byte[][] buffers;
@@ -608,7 +613,7 @@ public class TcpTransportTest {
         public TestInputStream(byte[][] buffers) {
             this.buffers = buffers;
         }
-        
+
         @Override
         public int read() throws IOException {
             return currentBuffer[position++];
@@ -619,8 +624,9 @@ public class TcpTransportTest {
             if (readCount >= buffers.length) {
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException e) { }
-                return  0;
+                } catch (InterruptedException e) {
+                }
+                return 0;
             }
             currentBuffer = buffers[readCount];
             readCount++;
@@ -629,7 +635,6 @@ public class TcpTransportTest {
             position += currentBuffer.length;
             return currentBuffer.length;
         }
-
 
         public int getReadCount() {
             return readCount;

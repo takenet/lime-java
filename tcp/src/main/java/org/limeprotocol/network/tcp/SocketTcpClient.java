@@ -1,6 +1,7 @@
 package org.limeprotocol.network.tcp;
 
 import javax.net.ssl.*;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,11 +9,15 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 public class SocketTcpClient implements TcpClient {
 
+    public final static int DEFAULT_SO_TIMEOUT = 5000;
+
     private final X509TrustManager trustManager;
+    private final boolean socketTcpNoDelay;
+    private final boolean socketKeepAlive;
+    private final int socketSoTimeout;
     private final Socket socket;
     private SSLSocket sslSocket;
     private SSLSocketFactory sslSocketFactory;
@@ -21,13 +26,23 @@ public class SocketTcpClient implements TcpClient {
         this(null);
     }
     public SocketTcpClient(X509TrustManager trustManager) {
+        this(trustManager, true, false, DEFAULT_SO_TIMEOUT);
+    }
+
+    public SocketTcpClient(X509TrustManager trustManager, boolean socketTcpNoDelay, boolean socketKeepAlive, int socketSoTimeout) {
         this.trustManager = trustManager;
+        this.socketTcpNoDelay = socketTcpNoDelay;
+        this.socketKeepAlive = socketKeepAlive;
+        this.socketSoTimeout = socketSoTimeout;
         socket = new Socket();
     }
 
     @Override
     public void connect(SocketAddress endpoint) throws IOException {
         socket.connect(endpoint);
+        socket.setTcpNoDelay(socketTcpNoDelay);
+        socket.setKeepAlive(socketKeepAlive);
+        socket.setSoTimeout(socketSoTimeout);
     }
 
     @Override
@@ -67,6 +82,16 @@ public class SocketTcpClient implements TcpClient {
         sslSocket.setEnabledCipherSuites(cypherSuites);
         
         sslSocket.startHandshake();
+    }
+
+    @Override
+    public boolean isInputShutdown() {
+        return socket.isInputShutdown();
+    }
+
+    @Override
+    public boolean isOutputShutdown(){
+        return socket.isOutputShutdown();
     }
 
     @Override

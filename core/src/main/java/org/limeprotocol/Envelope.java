@@ -55,4 +55,9 @@ public abstract class Envelope {
     public void setMetadata(Map<String, String> metadata) {
         this.metadata = metadata;
     }
+
+    public Node getSender() {
+        if (pp != null) return pp;
+        return from;
+    }
 }

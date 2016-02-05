@@ -1,43 +1,49 @@
 package org.limeprotocol.network;
 
 import org.limeprotocol.*;
+import org.limeprotocol.network.modules.FillEnvelopeRecipientsChannelModule;
+import org.limeprotocol.network.modules.RemotePingChannelModule;
+import org.limeprotocol.network.modules.ReplyPingChannelModule;
 import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 import static org.limeprotocol.Session.SessionState.*;
 
 public abstract class ChannelBase implements Channel {
-    
-    private final static String PING_URI_TEMPLATE = "/ping";
-    private final static MediaType PING_MEDIA_TYPE = MediaType.parse("application/vnd.lime.ping+json");
-    
+
+
     private final Transport transport;
-    private final boolean fillEnvelopeRecipients;
-    private final boolean autoReplyPings;
+
     private Node remoteNode;
     private Node localNode;
     private UUID sessionId;
     private Session.SessionState state;
+
+    private final Collection<ChannelModule<Message>> messageModules;
+    private final Collection<ChannelModule<Notification>> notificationModules;
+    private final Collection<ChannelModule<Command>> commandModules;
+
     private final Set<CommandChannelListener> commandListeners;
     private final Set<MessageChannelListener> messageListeners;
     private final Set<NotificationChannelListener> notificationListeners;
     private final Queue<CommandChannelListener> singleReceiveCommandListeners;
     private final Queue<NotificationChannelListener> singleReceiveNotificationListeners;
     private final Queue<MessageChannelListener> singleReceiveMessageListeners;
-    private Queue<SessionChannelListener> sessionChannelListeners;
+    private final Queue<SessionChannelListener> sessionChannelListeners;
     private final Transport.TransportEnvelopeListener transportEnvelopeListener;
 
-    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings) {
+    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval) {
         if (transport == null) {
             throw new IllegalArgumentException("transport");
         }
         this.transport = transport;
-        this.fillEnvelopeRecipients = fillEnvelopeRecipients;
-        this.autoReplyPings = autoReplyPings;
-        
+
+        messageModules = new ArrayList<>();
+        notificationModules = new ArrayList<>();
+        commandModules = new ArrayList<>();
         commandListeners = new HashSet<>();
         messageListeners = new HashSet<>();
         notificationListeners = new HashSet<>();
@@ -45,10 +51,21 @@ public abstract class ChannelBase implements Channel {
         singleReceiveNotificationListeners = new LinkedBlockingQueue<>();
         singleReceiveMessageListeners = new LinkedBlockingQueue<>();
         sessionChannelListeners = new LinkedBlockingQueue<>();
-
         transportEnvelopeListener = new ChannelTransportEnvelopeListener();
 
         setState(NEW);
+
+        if (fillEnvelopeRecipients) {
+            FillEnvelopeRecipientsChannelModule.createAndRegister(this);
+        }
+
+        if (autoReplyPings) {
+            commandModules.add(new ReplyPingChannelModule(this));
+        }
+
+        if (pingInterval > 0) {
+            RemotePingChannelModule.createAndRegister(this, pingInterval, pingDisconnectionInterval);
+        }
     }
 
     /**
@@ -119,6 +136,25 @@ public abstract class ChannelBase implements Channel {
             throw new IllegalArgumentException("state");
         }
         this.state = state;
+
+        onStateChanged(messageModules, state);
+        onStateChanged(notificationModules, state);
+        onStateChanged(commandModules, state);
+    }
+
+    @Override
+    public Collection<ChannelModule<Message>> getMessageModules() {
+        return messageModules;
+    }
+
+    @Override
+    public Collection<ChannelModule<Notification>> getNotificationModules() {
+        return notificationModules;
+    }
+
+    @Override
+    public Collection<ChannelModule<Command>> getCommandModules() {
+        return commandModules;
     }
 
     /**
@@ -128,13 +164,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void sendCommand(Command command) throws IOException {
-        if (command == null) {
-            throw new IllegalArgumentException("command");
-        }
-        if (getState() != ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot send a command in the '%s' session state", state));
-        }
-        send(command);
+        send(command, commandModules);
     }
 
     /**
@@ -165,13 +195,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void sendMessage(Message message) throws IOException {
-        if (message == null) {
-            throw new IllegalArgumentException("message");
-        }
-        if (getState() != ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot send a message in the '%s' session state", state));
-        }
-        send(message);
+        send(message, messageModules);
     }
 
     /**
@@ -202,13 +226,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public void sendNotification(Notification notification) throws IOException {
-        if (notification == null) {
-            throw new IllegalArgumentException("notification");
-        }
-        if (getState() != ESTABLISHED) {
-            throw new IllegalStateException(String.format("Cannot send a notification in the '%s' session state", state));
-        }
-        send(notification);
+        send(notification, notificationModules);
     }
 
     /**
@@ -265,36 +283,23 @@ public abstract class ChannelBase implements Channel {
     protected synchronized void raiseOnReceiveMessage(Message message) {
         ensureSessionEstablished();
 
-        for (MessageChannelListener listener : snapshot(singleReceiveMessageListeners, messageListeners)) {
-            try {
-                listener.onReceiveMessage(message);
-            } catch (Exception e) {
-                e.printStackTrace();
+        message = invokeModulesOnReceiving(message, messageModules);
+        if (message != null) {
+            for (MessageChannelListener listener : snapshot(singleReceiveMessageListeners, messageListeners)) {
+                try {
+                    listener.onReceiveMessage(message);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
     protected synchronized void raiseOnReceiveCommand(Command command) {
         ensureSessionEstablished();
-        if (autoReplyPings &&
-                command.getId() != null &&
-                command.getMethod() == Command.CommandMethod.GET &&
-                command.getStatus() == null &&
-                command.getUri() != null &&
-                command.getUri().toString().equalsIgnoreCase(PING_URI_TEMPLATE)) {
-            Command pingCommandResponse = new Command(command.getId());
-            pingCommandResponse.setTo(command.getFrom());
-            pingCommandResponse.setMethod(Command.CommandMethod.GET);
-            pingCommandResponse.setStatus(Command.CommandStatus.SUCCESS);
-            pingCommandResponse.setResource(new JsonDocument(PING_MEDIA_TYPE));
-            try {
-                sendCommand(pingCommandResponse);
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException("Could not send a ping response to the remote node", e);
-            }
-        }
-        else {
+
+        command = invokeModulesOnReceiving(command, commandModules);
+        if (command != null) {
             for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
                 try {
                     listener.onReceiveCommand(command);
@@ -308,55 +313,41 @@ public abstract class ChannelBase implements Channel {
     protected synchronized void raiseOnReceiveNotification(Notification notification) {
         ensureSessionEstablished();
 
-        for (NotificationChannelListener listener : snapshot(singleReceiveNotificationListeners, notificationListeners)) {
-            try {
-                listener.onReceiveNotification(notification);
-            } catch (Exception e) {
-                e.printStackTrace();
+        notification = invokeModulesOnReceiving(notification, notificationModules);
+        if (notification != null) {
+            for (NotificationChannelListener listener : snapshot(singleReceiveNotificationListeners, notificationListeners)) {
+                try {
+                    listener.onReceiveNotification(notification);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
+    private <T extends Envelope> T invokeModulesOnReceiving(T envelope, Collection<ChannelModule<T>> modules) {
+        for (ChannelModule<T> module : new ArrayList<>(modules)) {
+            if (envelope == null) break;
+            envelope = module.onReceiving(envelope);
+        }
+
+        return envelope;
+    }
+
     protected synchronized void raiseOnReceiveSession(Session session) {
         if (getState() != ESTABLISHED) {
+            // Remove the envelope listener to signal the transport
+            // that we are not expecting another envelope for now.
             transport.setEnvelopeListener(null);
         }
 
+        // Remove the first listener of the queue
         SessionChannelListener listener = sessionChannelListeners.poll();
         if (listener != null) {
             listener.onReceiveSession(session);
         }
     }
 
-    /**
-     * Fills the envelope recipients using the session information.
-     * @param envelope
-     * @param isSending
-     */
-    protected void fillEnvelope(Envelope envelope, boolean isSending) {
-        if (!isSending) {
-            Node from = getRemoteNode();
-            Node to = getLocalNode();
-
-            if (from != null) {
-                if (envelope.getFrom() == null) {
-                    envelope.setFrom(from.copy());
-                }
-                else if (StringUtils.isNullOrEmpty(envelope.getFrom().getDomain())) {
-                    envelope.getFrom().setDomain(from.getDomain());
-                }
-            }
-
-            if (to != null) {
-                if (envelope.getTo() == null) {
-                    envelope.setTo(to.copy());
-                }
-                else if (StringUtils.isNullOrEmpty(envelope.getTo().getDomain())) {
-                    envelope.getTo().setDomain(to.getDomain());
-                }
-            }
-        }
-    }
 
     private void ensureSessionEstablished() {
         if (getState() != ESTABLISHED) {
@@ -389,14 +380,32 @@ public abstract class ChannelBase implements Channel {
         }
     }
 
+    private <T extends Envelope> void send(T envelope, Collection<ChannelModule<T>> modules) throws IOException {
+        if (envelope == null) {
+            throw new IllegalArgumentException("envelope");
+        }
+        if (getState() != ESTABLISHED) {
+            throw new IllegalStateException(String.format("Cannot send in the '%s' session state", state));
+        }
+
+        for (ChannelModule<T> module : new ArrayList<>(modules)) {
+            if (envelope == null) break;
+            envelope = module.onSending(envelope);
+        }
+
+        if (envelope != null) {
+            send(envelope);
+        }
+    }
+
     private void send(Envelope envelope) throws IOException {
-        if (fillEnvelopeRecipients) {
-            fillEnvelope(envelope, true);
+        if (!transport.isConnected()) {
+            throw new IllegalStateException("The transport is not connected");
         }
 
         transport.send(envelope);
     }
-    
+
     /**
      * Merges a queue and a collection, removing all items from the queue.
      * @param queue
@@ -404,10 +413,13 @@ public abstract class ChannelBase implements Channel {
      * @param <T>
      * @return
      */
-    private static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
+    private synchronized static <T> Iterable<T> snapshot(Queue<T> queue, Collection<T> collection) {
         List<T> result = new ArrayList<>();
         if (collection != null) {
-            result.addAll(collection);
+            Iterator<T> iterator = collection.iterator();
+            while (iterator.hasNext()) {
+                result.add(iterator.next());
+            }
         }
         if (queue != null) {
             while (!queue.isEmpty()) {
@@ -415,6 +427,12 @@ public abstract class ChannelBase implements Channel {
             }
         }
         return result;
+    }
+
+    private static <T extends Envelope> void onStateChanged(Collection<ChannelModule<T>> modules, Session.SessionState state) {
+        for (ChannelModule<T> module: new ArrayList<>(modules)) {
+            module.onStateChanged(state);
+        }
     }
 
     private class ChannelTransportEnvelopeListener implements Transport.TransportEnvelopeListener {
@@ -426,13 +444,10 @@ public abstract class ChannelBase implements Channel {
          */
         @Override
         public void onReceive(Envelope envelope) {
-            if (fillEnvelopeRecipients) {
-                fillEnvelope(envelope, false);
-            }
             if (envelope instanceof Notification) {
-                raiseOnReceiveNotification((Notification)envelope);
+                raiseOnReceiveNotification((Notification) envelope);
             } else if (envelope instanceof Message) {
-                raiseOnReceiveMessage((Message)envelope);
+                raiseOnReceiveMessage((Message) envelope);
             } else if (envelope instanceof Command) {
                 raiseOnReceiveCommand((Command) envelope);
             } else if (envelope instanceof Session) {

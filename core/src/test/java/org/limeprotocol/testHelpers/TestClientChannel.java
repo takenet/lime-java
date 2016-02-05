@@ -23,4 +23,9 @@ public class TestClientChannel extends ClientChannelImpl {
     public void setState(SessionState state) {
         super.setState(state);
     }
+
+    @Override
+    public synchronized void raiseOnReceiveMessage(Message message) {
+        super.raiseOnReceiveMessage(message);
+    }
 }

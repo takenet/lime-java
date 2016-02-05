@@ -24,7 +24,7 @@ public interface SessionChannel {
     /**
      * Defines a session channel listener.
      */
-    public interface SessionChannelListener {
+    interface SessionChannelListener {
         /**
          * Occurs when a session is received by the channel.
          * @param session
