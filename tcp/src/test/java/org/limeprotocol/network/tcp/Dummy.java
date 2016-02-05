@@ -74,7 +74,7 @@ public class Dummy {
         String randomString1 = Dummy.createRandomString(Dummy.createRandomInt(50));
         String randomString2 = Dummy.createRandomString(Dummy.createRandomInt(50));
 
-        String text = Dummy.createRandomString(Dummy.createRandomInt(50));
+        String text = Dummy.createRandomString(Dummy.createRandomInt(50))+"} {\\\"}";
 
         return String.format(
                 "{{\"type\":\"text/plain\",\"content\":\"%s\",\"id\":\"%s\",\"from\":\"%s\",\"pp\":\"%s\",\"to\":\"%s\",\"metadata\":{{\"%s\":\"%s\",\"%s\":\"%s\"}}}}",

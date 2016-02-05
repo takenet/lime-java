@@ -5,6 +5,8 @@ public class JsonBuffer {
     private int jsonCurPos;
     private int jsonStackedBrackets;
     private boolean jsonStarted = false;
+    private boolean insideQuotes;
+    private boolean isEscaping;
     private byte[] buffer;
     private int bufferCurPos;
 
@@ -34,21 +36,37 @@ public class JsonBuffer {
         for (int i = jsonCurPos; i < bufferCurPos; i++) {
             jsonCurPos = i + 1;
 
-            if (buffer[i] == '{') {
-                jsonStackedBrackets++;
-                if (!jsonStarted) {
-                    jsonStartPos = i;
-                    jsonStarted = true;
-                }
-            }
-            else if (buffer[i] == '}') {
-                jsonStackedBrackets--;
+            if (buffer[i] == '"' && !isEscaping)
+            {
+                insideQuotes = !insideQuotes;
             }
 
-            if (jsonStarted &&
-                    jsonStackedBrackets == 0) {
-                jsonLength = i - jsonStartPos + 1;
-                break;
+            if (!insideQuotes) {
+
+                if (buffer[i] == '{') {
+                    jsonStackedBrackets++;
+                    if (!jsonStarted) {
+                        jsonStartPos = i;
+                        jsonStarted = true;
+                    }
+                } else if (buffer[i] == '}') {
+                    jsonStackedBrackets--;
+                }
+
+                if (jsonStarted &&
+                        jsonStackedBrackets == 0) {
+                    jsonLength = i - jsonStartPos + 1;
+                    break;
+                }
+            } else {
+                if (isEscaping)
+                {
+                    isEscaping = false;
+                }
+                else if (buffer[i] == '\\')
+                {
+                    isEscaping = true;
+                }
             }
         }
 
@@ -62,6 +80,8 @@ public class JsonBuffer {
             jsonCurPos = 0;
             jsonStartPos = 0;
             jsonStarted = false;
+            insideQuotes = false;
+            isEscaping = false;
 
             return new JsonBufferReadResult(true, json);
         }
