@@ -2,6 +2,7 @@ package org.limeprotocol.network.tcp;
 
 import org.limeprotocol.Envelope;
 import org.limeprotocol.SessionEncryption;
+import org.limeprotocol.network.JsonBuffer;
 import org.limeprotocol.network.TraceWriter;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.TransportBase;
@@ -231,17 +232,12 @@ public class TcpTransport extends TransportBase implements Transport {
     class JsonListener implements Runnable {
 
         private final InputStream inputStream;
-        private final byte[] buffer;
-        private int bufferCurPos;
-        private int jsonStartPos;
-        private int jsonCurPos;
-        private int jsonStackedBrackets;
-        private boolean jsonStarted = false;
+        private JsonBuffer jsonBuffer;
         volatile private boolean isStopping;
 
         JsonListener(InputStream inputStream, int bufferSize) {
             this.inputStream = inputStream;
-            this.buffer = new byte[bufferSize];
+            jsonBuffer = new JsonBuffer(bufferSize);
         }
 
         @Override
@@ -250,7 +246,7 @@ public class TcpTransport extends TransportBase implements Transport {
                 while (getEnvelopeListener() != null && !isStopping() && !Thread.currentThread().isInterrupted()) {
                     Envelope envelope = null;
                     while (envelope == null) {
-                        JsonBufferReadResult jsonBufferReadResult = tryExtractJsonFromBuffer();
+                        JsonBuffer.JsonBufferReadResult jsonBufferReadResult = jsonBuffer.tryExtractJsonFromBuffer();
                         if (jsonBufferReadResult.isSuccess()) {
                             String jsonString = new String(jsonBufferReadResult.getJsonBytes(), Charset.forName("UTF8"));
                             if (traceWriter != null && traceWriter.isEnabled()) {
@@ -260,14 +256,14 @@ public class TcpTransport extends TransportBase implements Transport {
                         }
                         if (envelope == null) {
                             try {
-                                int read = inputStream.read(buffer, bufferCurPos, buffer.length - bufferCurPos);
+                                int read = this.inputStream.read(jsonBuffer.getBuffer(), jsonBuffer.getBufferCurPos(), jsonBuffer.getBuffer().length - jsonBuffer.getBufferCurPos());
                                 if (read == -1) {
                                     // The stream reached EOF, raise closed event.
                                     close();
                                     break;
                                 }
-                                bufferCurPos += read;
-                                if (bufferCurPos >= buffer.length) {
+                                jsonBuffer.increaseBufferCurPos(read);
+                                if (jsonBuffer.getBufferCurPos() >= jsonBuffer.getBuffer().length) {
                                     TcpTransport.this.close();
                                     throw new BufferOverflowException("Maximum buffer size reached");
                                 }
@@ -293,7 +289,7 @@ public class TcpTransport extends TransportBase implements Transport {
                     try {
                         bytesAvailable = this.inputStream.available();
                     }catch(Exception e) {}
-                    traceWriter.trace(String.format("TcpTransport JsonListener thread aborted with %d bytes in internal Buffer and %d bytes in input Stream", this.buffer.length, bytesAvailable), TraceWriter.DataOperation.RECEIVE);
+                    traceWriter.trace(String.format("TcpTransport JsonListener thread aborted with %d bytes in internal Buffer and %d bytes in input Stream", jsonBuffer.getBuffer().length, bytesAvailable), TraceWriter.DataOperation.RECEIVE);
                 }
             }
 
@@ -307,70 +303,6 @@ public class TcpTransport extends TransportBase implements Transport {
         public void stop() {
             this.isStopping = true;
         }
-
-        private JsonBufferReadResult tryExtractJsonFromBuffer() {
-            if (bufferCurPos > buffer.length) {
-                throw new IllegalArgumentException("Buffer current pos or length value is invalid", null);
-            }
-
-            int jsonLength = 0;
-            for (int i = jsonCurPos; i < bufferCurPos; i++) {
-                jsonCurPos = i + 1;
-                if (buffer[i] == '{') {
-                    jsonStackedBrackets++;
-                    if (!jsonStarted) {
-                        jsonStartPos = i;
-                        jsonStarted = true;
-                    }
-                } else if (buffer[i] == '}') {
-                    jsonStackedBrackets--;
-                }
-
-                if (jsonStarted && jsonStackedBrackets == 0) {
-                    jsonLength = i - jsonStartPos + 1;
-                    break;
-                }
-            }
-
-            if (jsonLength > 1) {
-                byte[] json = new byte[jsonLength];
-                System.arraycopy(buffer, jsonStartPos, json, 0, jsonLength);
-
-                // Shifts the buffer to the left
-                bufferCurPos -= (jsonStartPos + jsonLength);
-                if (bufferCurPos < 0) {
-                    // This should never occur
-                    throw new BufferOverflowException(String.format("Error extracting JSON from buffer - bufferCurPos: %d, buffer length: %d, jsonStartPos: %d, jsonLength: %d",
-                            bufferCurPos, buffer.length, jsonStartPos, jsonLength));
-                }
-
-                System.arraycopy(buffer, jsonStartPos + jsonLength, buffer, 0, bufferCurPos);
-                jsonCurPos = 0;
-                jsonStartPos = 0;
-                jsonStarted = false;
-
-                return new JsonBufferReadResult(true, json);
-            }
-
-            return new JsonBufferReadResult(false, null);
-        }
-
-        class JsonBufferReadResult {
-            private final boolean success;
-            private final byte[] jsonBytes;
-
-            public JsonBufferReadResult(boolean success, byte[] jsonBytes) {
-                this.success = success;
-                this.jsonBytes = jsonBytes;
-            }
-
-            public boolean isSuccess() {
-                return success;
-            }
-
-            public byte[] getJsonBytes() {
-                return jsonBytes;
-            }
-        }
+        
     }
 }
