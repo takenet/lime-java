@@ -192,7 +192,7 @@ public final class ResendMessagesChannelModule implements ChannelModule {
                         }
                         channel.sendMessage(sentMessage.getMessage());
                     }
-                } catch (InterruptedException | IOException e) {
+                } catch (InterruptedException | IOException | IllegalStateException e) {
                     e.printStackTrace();
                 }
             }
