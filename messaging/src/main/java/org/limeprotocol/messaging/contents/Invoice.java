@@ -16,8 +16,7 @@ public class Invoice extends DocumentBase {
     private String number;
     private Date created;
     private Date dueTo;
-    private String terms;
-    private String account;
+    private PaymentMethod[] methods;
     private String currency;
     private BigDecimal taxes;
     private BigDecimal total;
@@ -76,35 +75,19 @@ public class Invoice extends DocumentBase {
     }
 
     /**
-     * Gets the invoice payment terms description.
+     * Gets the seller supported methods for payment of the invoice.
      * @return
      */
-    public String getTerms() {
-        return terms;
+    public PaymentMethod[] getMethods() {
+        return methods;
     }
 
     /**
-     * Sets the invoice payment terms description.
-     * @param terms
+     * Sets the seller supported methods for payment of the invoice.
+     * @param methods
      */
-    public void setTerms(String terms) {
-        this.terms = terms;
-    }
-
-    /**
-     * Gets the account information for the payment of the invoice.
-     * @return
-     */
-    public String getAccount() {
-        return account;
-    }
-
-    /**
-     * Sets the account information for the payment of the invoice.
-     * @param account
-     */
-    public void setAccount(String account) {
-        this.account = account;
+    public void setMethods(PaymentMethod[] methods) {
+        this.methods = methods;
     }
 
     /**
@@ -276,6 +259,47 @@ public class Invoice extends DocumentBase {
          */
         public void setTotal(BigDecimal total) {
             this.total = total;
+        }
+    }
+
+    /**
+     * Defines a payment method.
+     */
+    public class PaymentMethod {
+
+        private String name;
+        private String account;
+
+        /**
+         * Gets the payment method name.
+         * @return
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Sets the payment method name.
+         * @param name
+         */
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        /**
+         * Gets the payment method account information of the seller.
+         * @return
+         */
+        public String getAccount() {
+            return account;
+        }
+
+        /**
+         * Sets the payment method account information of the seller.
+         * @param account
+         */
+        public void setAccount(String account) {
+            this.account = account;
         }
     }
 }
