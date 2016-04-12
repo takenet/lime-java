@@ -11,7 +11,7 @@ import java.util.Map;
  * Utility methods used in the serialization process.
  */
 public class SerializationUtil {
-    private static Map<MediaType, Class<? extends Document>> documentTypesMap = new HashMap<>();
+    private static final Map<MediaType, Class<? extends Document>> documentTypesMap = new HashMap<>();
 
     /**
      * Registers a document type for deserialization support.

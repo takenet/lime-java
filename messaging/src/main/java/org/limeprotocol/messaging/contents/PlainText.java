@@ -29,8 +29,7 @@ public class PlainText extends DocumentBase {
     }
 
     /**
-     * Parses the string to a
-       PlainText instance.
+     * Parses the string to a PlainText instance.
      * @param value
      * @return parsed PlainText
      */

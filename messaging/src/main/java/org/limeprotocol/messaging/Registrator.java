@@ -15,7 +15,12 @@ public class Registrator {
      */
     public static void registerDocuments() {
         SerializationUtil.registerDocumentClass(ChatState.class);
+        SerializationUtil.registerDocumentClass(Invoice.class);
+        SerializationUtil.registerDocumentClass(Location.class);
+        SerializationUtil.registerDocumentClass(MediaLink.class);
+        SerializationUtil.registerDocumentClass(PaymentReceipt.class);
         SerializationUtil.registerDocumentClass(PlainText.class);
+        SerializationUtil.registerDocumentClass(Select.class);
         SerializationUtil.registerDocumentClass(DocumentCollection.class);
         SerializationUtil.registerDocumentClass(Account.class);
         SerializationUtil.registerDocumentClass(Capability.class);
