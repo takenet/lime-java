@@ -16,35 +16,28 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCollection> {
-    private final JsonDeserializer<Object> deserializer;
 
-    public DocumentCollectionDeserializer(JsonDeserializer<Object> deserializer) {
-
-        this.deserializer = deserializer;
-    }
 
     @Override
     public DocumentCollection deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
-        ObjectCodec oc = jsonParser.getCodec();
-        ObjectNode node = oc.readTree(jsonParser);
-
+        ObjectCodec objectCodec = jsonParser.getCodec();
+        ObjectNode objectNode = objectCodec.readTree(jsonParser);
         DocumentCollection collection = new DocumentCollection();
 
         int total = 0;
-        if (node.has("total")) {
-            total = node.get("total").asInt();
+        if (objectNode.has("total")) {
+            total = objectNode.get("total").asInt();
         }
         Document[] items = new Document[total];
-        MediaType itemType = MediaType.parse(node.get("itemType").asText());
-
-        ArrayNode documentsNode = (ArrayNode) node.get("items");
+        MediaType itemType = MediaType.parse(objectNode.get("itemType").asText());
+        ArrayNode documentsNode = (ArrayNode) objectNode.get("items");
 
         Class<?> documentClass = SerializationUtil.findDocumentClassFor(itemType);
         if (documentClass != null) {
             int i = 0;
             for (Iterator iterator = documentsNode.elements(); iterator.hasNext(); i++) {
                 ObjectNode documentNode = (ObjectNode) iterator.next();
-                Document document = (Document)oc.readValue(documentNode.traverse(), documentClass);
+                Document document = (Document)objectCodec.readValue(documentNode.traverse(), documentClass);
                 items[i] = document;
             }
         }
