@@ -71,7 +71,7 @@ public class CustomSerializerModule extends SimpleModule {
                             for (Method setDocumentMethod : documentContainerClass.getMethods()) {
                                 String methodName = setDocumentMethod.getName();
                                 if (methodName.startsWith("set") &&
-                                        setDocumentMethod.getParameterCount() == 1 &&
+                                        setDocumentMethod.getParameterTypes().length == 1 &&
                                         setDocumentMethod.getParameterTypes()[0] == Document.class) {
 
                                     String documentNodeName = methodName.substring(3, methodName.length()).toLowerCase();
