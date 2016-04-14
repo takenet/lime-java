@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
+import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.serialization.SerializationUtil;
 
 import java.io.IOException;
@@ -17,6 +18,10 @@ import java.util.Iterator;
 
 public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCollection> {
 
+
+    public DocumentCollectionDeserializer() {
+
+    }
 
     @Override
     public DocumentCollection deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
@@ -32,14 +37,11 @@ public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCol
         MediaType itemType = MediaType.parse(objectNode.get("itemType").asText());
         ArrayNode documentsNode = (ArrayNode) objectNode.get("items");
 
-        Class<?> documentClass = SerializationUtil.findDocumentClassFor(itemType);
-        if (documentClass != null) {
-            int i = 0;
-            for (Iterator iterator = documentsNode.elements(); iterator.hasNext(); i++) {
-                ObjectNode documentNode = (ObjectNode) iterator.next();
-                Document document = (Document)objectCodec.readValue(documentNode.traverse(), documentClass);
-                items[i] = document;
-            }
+        int i = 0;
+        for (Iterator iterator = documentsNode.elements(); iterator.hasNext(); i++) {
+            ObjectNode documentNode = (ObjectNode) iterator.next();
+            Document document = DocumentContainerDeserializer.getDocument(documentNode, itemType, JacksonEnvelopeSerializer.getObjectMapper());
+            items[i] = document;
         }
 
         collection.setTotal(total);

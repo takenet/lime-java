@@ -1,7 +1,6 @@
 package org.limeprotocol.serialization;
 
 import net.javacrumbs.jsonunit.fluent.JsonFluentAssert;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
@@ -11,31 +10,21 @@ import org.limeprotocol.security.PlainAuthentication;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.*;
-import static org.limeprotocol.Command.*;
-import static org.limeprotocol.Command.CommandMethod.*;
+import static org.limeprotocol.Command.CommandMethod;
+import static org.limeprotocol.Command.CommandMethod.GET;
+import static org.limeprotocol.Command.CommandMethod.SET;
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
+import static org.limeprotocol.testHelpers.Dummy.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.FROM_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.ID_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.METADATA_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.PP_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.TO_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Envelope.getMetadataKeyFromRoot;
-import static org.limeprotocol.testHelpers.JsonConstants.Notification.CODE_FROM_REASON_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Notification.DESCRIPTION_FROM_REASON_KEY;
-import static org.limeprotocol.testHelpers.JsonConstants.Notification.EVENT_KEY;
+import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
+import static org.limeprotocol.testHelpers.JsonConstants.Notification.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Session.AUTHENTICATION_KEY;
 import static org.limeprotocol.testHelpers.JsonConstants.Session.STATE_KEY;
-import static org.limeprotocol.testHelpers.Dummy.*;
 
 
 public class JacksonEnvelopeSerializerTest {
@@ -182,16 +171,15 @@ public class JacksonEnvelopeSerializerTest {
         PlainDocument content = createPlainDocument();
         Message message = createMessage(content);
         message.setPp(createNode());
-
         message.setMetadata(createRandomMetadata());
 
         String resultString = target.serialize(message);
 
         assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY, PP_KEY, METADATA_KEY);
-
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(message.getContent().toString());
     }
+
 
     //endregion Message
 

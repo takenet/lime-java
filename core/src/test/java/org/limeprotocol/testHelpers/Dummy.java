@@ -1,9 +1,8 @@
 package org.limeprotocol.testHelpers;
 
 import org.limeprotocol.*;
-import org.limeprotocol.Session.*;
+import org.limeprotocol.Session.SessionState;
 import org.limeprotocol.security.PlainAuthentication;
-import org.limeprotocol.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -225,5 +224,4 @@ public class Dummy {
         documentCollection.setItems(documents);
         return documentCollection;
     }
-
 }

@@ -18,7 +18,7 @@ public class DocumentContainer extends DocumentBase {
      * Gets the media type of the contained document.
      * @return
      */
-    private MediaType getType() {
+    public MediaType getType() {
         if (value != null) return value.getMediaType();
         return null;
     }

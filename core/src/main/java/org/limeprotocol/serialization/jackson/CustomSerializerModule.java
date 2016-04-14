@@ -41,7 +41,6 @@ public class CustomSerializerModule extends SimpleModule {
         addDeserializer(MediaType.class, new MediaTypeDeserializer());
         addDeserializer(LimeUri.class, new LimeUriDeserializer());
         addDeserializer(DocumentCollection.class, new DocumentCollectionDeserializer());
-        addDeserializer(Document.class, new DocumentDeserializer());
     }
 
     @Override

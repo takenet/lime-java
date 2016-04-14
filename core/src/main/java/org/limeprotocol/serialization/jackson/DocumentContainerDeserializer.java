@@ -8,12 +8,12 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.sun.xml.internal.ws.util.StringUtils;
 import org.limeprotocol.Document;
 import org.limeprotocol.JsonDocument;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.PlainDocument;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
+import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -42,13 +42,12 @@ public class DocumentContainerDeserializer<T> extends JsonDeserializer<T> {
         ObjectNode objectNode = objectCodec.readTree(jsonParser);
 
         ObjectMapper mapper = getObjectMapper();
-        Document document = deserializeDocument(objectNode, mapper);
+        Document document = deserializeDocument(objectNode, documentNodeName, mapper);
         T value = mapper.convertValue(objectNode, type);
 
         if (document != null) {
-
             try {
-                Method method = type.getMethod("set" + StringUtils.capitalize(documentNodeName), Document.class);
+                Method method = type.getMethod("set" + StringUtils.toProperCase(documentNodeName), Document.class);
                 method.invoke(value, document);
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
@@ -70,7 +69,7 @@ public class DocumentContainerDeserializer<T> extends JsonDeserializer<T> {
                 if (mapper == null) {
                     // Creates a new mapper that excludes the current type in the custom serialization registration
                     // to avoid stackoverflow exceptions in the convertValue call bellow.
-                    mapper = JacksonEnvelopeSerializer.getBaseMapper().registerModule(new CustomSerializerModule(type));
+                    mapper = JacksonEnvelopeSerializer.createObjectMapper().registerModule(new CustomSerializerModule(type));
                     documentContainerObjectMapperMap.put(type, mapper);
                 }
             }
@@ -78,7 +77,7 @@ public class DocumentContainerDeserializer<T> extends JsonDeserializer<T> {
         return mapper;
     }
 
-    private Document deserializeDocument(ObjectNode node, ObjectMapper mapper) {
+    private static Document deserializeDocument(ObjectNode node, String documentNodeName, ObjectMapper mapper) {
         JsonNode typeNode = node.get("type");
         if (typeNode == null) return null;
         MediaType mediaType = mapper.convertValue(typeNode, MediaType.class);
@@ -96,6 +95,10 @@ public class DocumentContainerDeserializer<T> extends JsonDeserializer<T> {
         node.remove(documentNodeName);
         node.remove("type");
 
+        return getDocument(documentNode, mediaType, mapper);
+    }
+
+    static Document getDocument(JsonNode documentNode, MediaType mediaType, ObjectMapper mapper) {
         Class<?> documentClass = findDocumentClassFor(mediaType);
         if (documentClass == null) {
             if (mediaType.isJson()) {
@@ -105,7 +108,7 @@ public class DocumentContainerDeserializer<T> extends JsonDeserializer<T> {
                 return jsonDocument;
             }
 
-            return new PlainDocument(documentNode.asText(), MediaType.parse(typeNode.asText()));
+            return new PlainDocument(documentNode.asText(), mediaType);
         }
         return (Document) mapper.convertValue(documentNode, documentClass);
     }

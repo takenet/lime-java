@@ -1,17 +1,20 @@
 package org.limeprotocol.messaging.serialization;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.messaging.Registrator;
 import org.limeprotocol.messaging.contents.ChatState;
 import org.limeprotocol.messaging.contents.PlainText;
+import org.limeprotocol.messaging.contents.Select;
 import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
 import org.limeprotocol.messaging.resources.Receipt;
 import org.limeprotocol.messaging.testHelpers.MessagingJsonConstants;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
+import org.limeprotocol.testHelpers.Dummy;
 import org.limeprotocol.testHelpers.JsonConstants;
 import org.limeprotocol.util.StringUtils;
 
@@ -22,6 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertNotNull;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -86,6 +91,23 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
         assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
     }
+
+    @Test
+    public void serialize_selectMessage_returnsValidJsonString() {
+        // Arrange
+        Select select = createSelect();
+        Message message = Dummy.createMessage(select);
+
+        // Act
+        String resultString = target.serialize(message);
+        resultString = target.serialize(message);
+
+        // Assert
+        assertThatJson(resultString).node("id").isEqualTo(message.getId().toString());
+        assertThatJson(resultString).node("from").isEqualTo(message.getFrom().toString());
+        assertThatJson(resultString).node("to").isEqualTo(message.getTo().toString());
+    }
+
 
     //endregion Message
 
@@ -413,18 +435,64 @@ public class JacksonEnvelopeMessagingSerializerTest {
         Envelope envelope = target.deserialize(json);
 
         Message message = (Message)envelope;
-
         assertEquals(from, message.getFrom());
         assertEquals(to, message.getTo());
-
         assertEquals(message.getId(), null);
-
         assertNull(message.getPp());
         assertNull(message.getMetadata());
-
         assertTrue(message.getContent() instanceof ChatState);
         ChatState textContent = (ChatState)message.getContent();
         assertEquals(state, textContent.getState());
+    }
+
+    @Test
+    public void deserialize_documentContainerDocumentCollectionMessage_returnsValidInstance() {
+
+        // Arrange
+        UUID id = UUID.randomUUID();
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.collection+json\",\"content\":{\"total\":4,\"itemType\":\"application/vnd.lime.container+json\",\"items\":[{\"type\":\"text/plain\",\"value\":\"text1\"},{\"type\":\"application/vnd.lime.account+json\",\"value\":{\"fullName\":\"My Name\",\"photoUri\":\"http://url.com/resource\"}},{\"type\":\"application/q9gn1nsz6y+json\",\"value\":{\"o4s9txn80q\":\"}2['\u00F23 /bdkc]\u00FA2,\u00BA &%f0j\u00F9u#\u00F2\u00FA9;\u00EC\\\"t}#\u00F3(\u00E9a_94\u00E00q5m==\\\\\",\"ynpinmi0oq\":20,\"dkker2borf\":\"2016-04-13T16:24:49.729Z\",\"e98cyp215l\":{\"ljwbthakfx\":\"\\\\@(m1g=q.-jql[)5#n,\u00E09\u00BA\u00A8kg~]t(x:<u\u00E1z'8?.-^_cvqkk\u00EC@n\",\"z4uih47pct\":19,\"nxp3n8km78\":\"2016-04-13T16:24:49.729Z\"},\"sinvm70xls\":[{\"ypdd57j78y\":\"<>5_\u00ECnb'!,b.ps8\u00EC=9\\\\o\\\\_*qc6#k0\u00E8]$j\u00E1=-u\u00E1\u00FAq\u00EC{\u00E0r\u00F2\u00BAt\u00ED[\u00EC\",\"l3d24gigtt\":34,\"5ltasvmv3y\":\"2016-04-13T16:24:49.729Z\"},{\"1twigyljcf\":\"=!6-\u00F360 94fy2\u00A8e23q72\u00E0v\u00E9t(u!&[%\u00FA\u00E8#4f7\u00E0\u00ECkjv2n9=@pjp~\",\"ke4zjmvfbw\":46,\"2l7rf39qwq\":\"2016-04-13T16:24:49.729Z\"},{\"pckdtdowdc\":\"11\u00E9q>e:j,^;\u00F3\u00A8o@cs\u00F9@'r}(3\u00EDe(=,uq*\u00F9(+!!..hd\u00E9;~.*(j=\u00A8\",\"5pfq4y1rmz\":24,\"foqvh78vau\":\"2016-04-13T16:24:49.729Z\"}]}},{\"type\":\"vxhfxfm3tz/hhnzgm4kmh\",\"value\":\"9nav5pkhswvsw7mh24r1b3agbgic43piylveh1z6xtfz77nibt\"}]},\"id\":\"{0}\",\"from\":\"9afudsyl@je29bkh1bs.com/yq1oh\",\"to\":\"9zpfpsuc@d63uusxbfq.com/btp7i\"}",
+                id);
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertEquals(id, envelope.getId());
+        assertTrue(envelope instanceof Message);
+        Message message = (Message)envelope;
+        assertTrue(message.getContent() instanceof DocumentCollection);
+        DocumentCollection documentCollection = (DocumentCollection)message.getContent();
+        assertEquals(4, documentCollection.getTotal());
+        assertEquals(MediaType.parse(DocumentContainer.MIME_TYPE), documentCollection.getItemType());
+        assertNotNull(documentCollection.getItems());
+        assertEquals(4, documentCollection.getItems().length);
+        assertTrue(documentCollection.getItems()[0] instanceof DocumentContainer);
+        DocumentContainer container1 = (DocumentContainer)documentCollection.getItems()[0];
+        assertTrue(documentCollection.getItems()[1] instanceof DocumentContainer);
+        DocumentContainer container2 = (DocumentContainer)documentCollection.getItems()[1];
+        assertTrue(documentCollection.getItems()[2] instanceof DocumentContainer);
+        DocumentContainer container3 = (DocumentContainer)documentCollection.getItems()[2];
+        assertTrue(documentCollection.getItems()[3] instanceof DocumentContainer);
+        DocumentContainer container4 = (DocumentContainer)documentCollection.getItems()[3];
+        assertEquals(MediaType.parse(PlainText.MIME_TYPE), container1.getType());
+        assertTrue(container1.getValue() instanceof PlainText);
+        PlainText document1 = (PlainText)container1.getValue();
+        assertEquals("text1", document1.getText());
+        assertEquals(MediaType.parse(Account.MIME_TYPE), container2.getType());
+        assertTrue(container2.getValue() instanceof Account);
+        Account document2 = (Account)container2.getValue();
+        assertEquals("My Name", document2.getFullName());
+        Assert.assertNotNull(document2.getPhotoUri());
+        assertEquals("http://url.com/resource", document2.getPhotoUri().toString());
+        assertEquals(MediaType.parse("application/q9gn1nsz6y+json"), container3.getType());
+        assertTrue(container3.getValue() instanceof JsonDocument);
+        JsonDocument document3 = (JsonDocument)container3.getValue();
+        Assert.assertTrue(document3.size() > 0);
+        assertEquals(MediaType.parse("vxhfxfm3tz/hhnzgm4kmh"), container4.getType());
+        assertTrue(container3.getValue() instanceof JsonDocument);
+        PlainDocument document4 = (PlainDocument)container4.getValue();
+        assertEquals("9nav5pkhswvsw7mh24r1b3agbgic43piylveh1z6xtfz77nibt", document4.getValue());
     }
 
     //endregion Message

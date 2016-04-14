@@ -1,6 +1,7 @@
 package org.limeprotocol.messaging;
 
 import org.limeprotocol.DocumentCollection;
+import org.limeprotocol.DocumentContainer;
 import org.limeprotocol.messaging.contents.*;
 import org.limeprotocol.messaging.resources.*;
 import org.limeprotocol.serialization.SerializationUtil;
@@ -22,6 +23,7 @@ public class Registrator {
         SerializationUtil.registerDocumentClass(PlainText.class);
         SerializationUtil.registerDocumentClass(Select.class);
         SerializationUtil.registerDocumentClass(DocumentCollection.class);
+        SerializationUtil.registerDocumentClass(DocumentContainer.class);
         SerializationUtil.registerDocumentClass(Account.class);
         SerializationUtil.registerDocumentClass(Capability.class);
         SerializationUtil.registerDocumentClass(Contact.class);

@@ -4,6 +4,7 @@ import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.messaging.contents.PlainText;
+import org.limeprotocol.messaging.contents.Select;
 import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
@@ -77,5 +78,20 @@ public class MessagingTestDummy {
         dc.setItems(new Document[]{ contact1, contact2, contact3 });
 
         return dc;
+    }
+
+    public static Select createSelect() {
+        return new Select() {{
+            setDestination(createNode());
+            setText(createRandomString(100));
+            setOptions(new SelectOption[] {
+                    new SelectOption() {{
+                        setValue(createTextContent());
+                    }},
+                    new Select.SelectOption() {{
+                        setValue(createJsonDocument());
+                    }}
+            });
+        }};
     }
 }

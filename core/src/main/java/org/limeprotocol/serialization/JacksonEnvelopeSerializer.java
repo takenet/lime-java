@@ -13,33 +13,31 @@ import org.limeprotocol.serialization.jackson.CustomSerializerModule;
 import java.io.IOException;
 
 import static org.limeprotocol.security.Authentication.AuthenticationScheme;
-import static org.limeprotocol.serialization.SerializationUtil.*;
 
 public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
 
-    private final static ObjectMapper baseMapper;
+    private final static ObjectMapper templateObjectMapper;
+    private final static ObjectMapper objectMapper;
 
     static {
-        baseMapper = new ObjectMapper()
+        templateObjectMapper = new ObjectMapper()
                 .setSerializationInclusion(Include.NON_NULL)
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        objectMapper = createObjectMapper().registerModule(new CustomSerializerModule());
     }
 
-    public static ObjectMapper getBaseMapper() {
-        return baseMapper.copy();
+    public static ObjectMapper createObjectMapper() {
+        return templateObjectMapper.copy();
     }
 
-    private final ObjectMapper mapper;
-
-    public JacksonEnvelopeSerializer() {
-        this.mapper = getBaseMapper().registerModule(new CustomSerializerModule());
-    }
+    public static ObjectMapper getObjectMapper() { return objectMapper; }
 
     @Override
     public String serialize(Envelope envelope) {
         try {
-            return mapper.writeValueAsString(envelope);
+            return getObjectMapper().writeValueAsString(envelope);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
@@ -49,14 +47,14 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     public Envelope deserialize(String envelopeString) {
         try {
             ObjectNode node;
-            node = (ObjectNode) mapper.readTree(envelopeString);
+            node = (ObjectNode) getObjectMapper().readTree(envelopeString);
 
             if (node.has("content")) {
-                return  mapper.convertValue(node, Message.class);
+                return  getObjectMapper().convertValue(node, Message.class);
             } else if (node.has("event")) {
-                return mapper.convertValue(node, Notification.class);
+                return getObjectMapper().convertValue(node, Notification.class);
             } else if (node.has("method")) {
-                return  mapper.convertValue(node, Command.class);
+                return  getObjectMapper().convertValue(node, Command.class);
             } else if (node.has("state")) {
                 return deserializeSession(node);
             } else {
@@ -74,7 +72,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         node.remove("scheme");
         node.remove("authentication");
 
-        Session session = mapper.convertValue(node, Session.class);
+        Session session = getObjectMapper().convertValue(node, Session.class);
         Authentication authentication = deserializeAuthentication(schemeNode, authenticationNode);
         session.setAuthentication(authentication);
 
@@ -82,7 +80,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
     }
 
     private Authentication deserializeAuthentication(JsonNode schemeNode, JsonNode authenticationNode) {
-        AuthenticationScheme scheme = mapper.convertValue(schemeNode, AuthenticationScheme.class);
+        AuthenticationScheme scheme = getObjectMapper().convertValue(schemeNode, AuthenticationScheme.class);
         if (scheme == null) {
             return null;
         }
@@ -90,7 +88,7 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
             case GUEST:
                 return new GuestAuthentication();
             case PLAIN:
-                return mapper.convertValue(authenticationNode, PlainAuthentication.class);
+                return getObjectMapper().convertValue(authenticationNode, PlainAuthentication.class);
             case TRANSPORT:
                 return new TransportAuthentication();
             default:
