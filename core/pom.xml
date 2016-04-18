@@ -58,6 +58,11 @@
             <version>1.7.10</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.isomorphism</groupId>
+            <artifactId>token-bucket</artifactId>
+            <version>1.6</version>
+        </dependency>
     </dependencies>
 
 </project>
