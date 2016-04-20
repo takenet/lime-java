@@ -1,35 +1,25 @@
 package org.limeprotocol.network.modules;
 
-import org.isomorphism.util.TokenBucket;
-import org.isomorphism.util.TokenBuckets;
 import org.limeprotocol.Envelope;
 import org.limeprotocol.network.Channel;
+import org.limeprotocol.util.RateGate;
 
 import java.util.concurrent.TimeUnit;
 
 public class ThroughputControlChannelModule extends ChannelModuleBase {
 
-    private TokenBucket tokenBucket;
+    private RateGate rateGate;
+    private long timeoutSec = 10;
 
     private ThroughputControlChannelModule(int throughput) {
-
-        TokenBuckets.Builder builder = TokenBuckets.builder()
-                .withCapacity(throughput);
-
-        if(throughput % 10 == 0){
-            builder.withFixedIntervalRefillStrategy(throughput/10, 100, TimeUnit.MILLISECONDS);
-        } else if(throughput % 5 == 0) {
-            builder.withFixedIntervalRefillStrategy(throughput/5, 200, TimeUnit.MILLISECONDS);
-        } else {
-            builder.withFixedIntervalRefillStrategy(throughput, 1, TimeUnit.SECONDS);
-        }
-
-        this.tokenBucket = builder.build();
+        rateGate = new RateGate(throughput);
     }
 
     @Override
     public Envelope onSending(Envelope envelope) {
-        tokenBucket.consume();
+        try {
+            rateGate.waitToProceed(timeoutSec, TimeUnit.SECONDS);
+        }catch (InterruptedException e){ }
         return envelope;
     }
 

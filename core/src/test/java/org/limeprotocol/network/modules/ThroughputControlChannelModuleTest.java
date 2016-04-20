@@ -35,7 +35,7 @@ public class ThroughputControlChannelModuleTest {
     @Test
     public void onSending_shouldSendAllMessages_respectingThroughput() {
 
-        int totalMessages = 60;
+        int totalMessages = 50;
 
         // Arrange
         Message[] messages = new Message[totalMessages];
@@ -53,8 +53,12 @@ public class ThroughputControlChannelModuleTest {
         }
         stopwatch.stop();
 
+        long totalMinutes = stopwatch.elapsed(TimeUnit.MINUTES);
+        long totalSeconds = stopwatch.elapsed(TimeUnit.SECONDS);
+        long totalMiliseconds = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
         //Assert
-        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 4850);
-        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) < 5150);
+        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 3950);
+        Assert.assertTrue(stopwatch.elapsed(TimeUnit.MILLISECONDS) < 4050);
     }
 }
