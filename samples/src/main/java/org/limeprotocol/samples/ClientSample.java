@@ -163,7 +163,7 @@ public class ClientSample {
                 final Presence presence = new Presence() {{
                     setStatus(Presence.PresenceStatus.AVAILABLE);
                 }};
-                Command presenceCommand = new Command(UUID.randomUUID()) {{
+                Command presenceCommand = new Command(EnvelopeId.newId()) {{
                     setMethod(Command.CommandMethod.SET);
                     setResource(presence);
                     setUri(new LimeUri(UriTemplates.PRESENCE));
@@ -177,14 +177,14 @@ public class ClientSample {
                 }};
 
                 // Get presence
-                Command getPresenceCommand = new Command(UUID.randomUUID()) {{
+                Command getPresenceCommand = new Command(EnvelopeId.newId()) {{
                     setMethod(Command.CommandMethod.GET);
                     setUri(new LimeUri(UriTemplates.PRESENCE));
                 }};
                 clientChannel.sendCommand(getPresenceCommand);
 
 
-                Command receiptCommand = new Command(UUID.randomUUID()) {{
+                Command receiptCommand = new Command(EnvelopeId.newId()) {{
                     setMethod(Command.CommandMethod.SET);
                     setResource(receipt);
                     setUri(new LimeUri(UriTemplates.RECEIPT));
@@ -205,7 +205,7 @@ public class ClientSample {
                         final Node node = Node.parse(toInput);
                         out.print("Message text: ");
                         final PlainText plainText = new PlainText(inScanner.nextLine());
-                        Message message = new Message(UUID.randomUUID()) {{
+                        Message message = new Message(EnvelopeId.newId()) {{
                             setTo(node);
                             setContent(plainText);
                         }};

@@ -96,7 +96,7 @@ public final class RemotePingChannelModule implements ChannelModule {
             if (channel.getState() == ESTABLISHED && channel.getTransport().isConnected()) {
                 try {
                     if (pingDisconnectionInterval == 0 || System.currentTimeMillis() - lastReceivedEnvelope < pingDisconnectionInterval) {
-                        Command pingCommand = new Command(UUID.randomUUID());
+                        Command pingCommand = new Command(EnvelopeId.newId());
                         pingCommand.setMethod(Command.CommandMethod.GET);
                         pingCommand.setUri(new LimeUri(PING_URI_TEMPLATE));
                         channel.sendCommand(pingCommand);

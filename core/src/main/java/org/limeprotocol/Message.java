@@ -8,7 +8,7 @@ public class Message extends Envelope {
 
     public Message(){}
 
-    public Message(UUID id)
+    public Message(String id)
     {
         super(id);
     }

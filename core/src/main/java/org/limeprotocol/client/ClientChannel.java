@@ -5,7 +5,6 @@ import org.limeprotocol.network.Channel;
 import org.limeprotocol.security.Authentication;
 
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * Defines the communication channel between a client node and a server.
@@ -42,7 +41,7 @@ public interface ClientChannel extends Channel {
      * @param messageId
      * @param to
      */
-    void sendReceivedNotification(UUID messageId, Node to) throws IOException;
+    void sendReceivedNotification(String messageId, Node to) throws IOException;
 
     /**
      * Sends a finishing session envelope to the server.

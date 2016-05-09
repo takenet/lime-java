@@ -4,6 +4,7 @@ import com.google.common.base.Stopwatch;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.limeprotocol.EnvelopeId;
 import org.limeprotocol.Message;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.testHelpers.Dummy;
@@ -41,7 +42,7 @@ public class ThroughputControlChannelModuleTest {
         Message[] messages = new Message[totalMessages];
         for (int i = 0; i < totalMessages; i++) {
             Message message = Dummy.createMessage(Dummy.createTextContent());
-            message.setId(UUID.randomUUID());
+            message.setId(EnvelopeId.newId());
             messages[i] = message;
         }
         ThroughputControlChannelModule target = getTarget(10);

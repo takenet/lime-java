@@ -330,7 +330,7 @@ public class ClientChannelImplTest {
         message.setFrom(senderNode.copy());
         message.setTo(destinationNode.copy());
 
-        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true, remoteNode, localNode, UUID.randomUUID(), false);
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true, remoteNode, localNode, EnvelopeId.newId(), false);
 
         try {
             target.sendMessage(message);
@@ -526,18 +526,18 @@ public class ClientChannelImplTest {
     }
 
     private TestClientChannel getTarget(Session.SessionState state) {
-        return getTarget(state, false, null, null, UUID.randomUUID(), false);
+        return getTarget(state, false, null, null, EnvelopeId.newId(), false);
     }
 
     private TestClientChannel getTarget(Session.SessionState state, boolean autoNotifyReceipt) {
-        return getTarget(state, false, null, null, UUID.randomUUID(), autoNotifyReceipt);
+        return getTarget(state, false, null, null, EnvelopeId.newId(), autoNotifyReceipt);
     }
 
     private TestClientChannel getTarget(SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode) {
         return getTarget(state, fillEnvelopeRecipients, remoteNode, localNode, null, false);
     }
 
-    private TestClientChannel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId, boolean autoNotifyReceipt) {
+    private TestClientChannel getTarget(SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, String sessionId, boolean autoNotifyReceipt) {
         return new TestClientChannel(transport, state, fillEnvelopeRecipients, remoteNode, localNode, sessionId, false, autoNotifyReceipt);
     }
 }

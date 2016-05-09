@@ -115,7 +115,7 @@ public class Dummy {
 
     public static Session createSession(SessionState state) {
         Session session = new Session();
-        session.setId(UUID.randomUUID());
+        session.setId(EnvelopeId.newId());
         session.setFrom(createNode());
         session.setTo(createNode());
         session.setState(state);
@@ -162,7 +162,7 @@ public class Dummy {
 
     public static Message createMessage(Document content)
     {
-        Message message = new Message(UUID.randomUUID());
+        Message message = new Message(EnvelopeId.newId());
 
         message.setContent(content);
         message.setFrom(createNode());
@@ -180,7 +180,7 @@ public class Dummy {
     }
 
     public static Command createCommand(Document resource) {
-        Command command = new Command(UUID.randomUUID());
+        Command command = new Command(EnvelopeId.newId());
         command.setFrom(Dummy.createNode());
         command.setTo(Dummy.createNode());
         command.setMethod(Command.CommandMethod.GET);

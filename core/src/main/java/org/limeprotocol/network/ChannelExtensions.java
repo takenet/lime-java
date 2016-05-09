@@ -73,7 +73,7 @@ public class ChannelExtensions {
             throw new IllegalArgumentException("limeUri");
         }
 
-        final Command requestCommand = new Command(UUID.randomUUID()) {{
+        final Command requestCommand = new Command(EnvelopeId.newId()) {{
             setMethod(CommandMethod.GET);
             setFrom(from);
             setUri(limeUri);
@@ -123,7 +123,7 @@ public class ChannelExtensions {
             throw new IllegalArgumentException("resource");
         }
 
-        final Command requestCommand = new Command(UUID.randomUUID()) {{
+        final Command requestCommand = new Command(EnvelopeId.newId()) {{
             setMethod(CommandMethod.SET);
             setResource(resource);
             setFrom(from);
@@ -165,7 +165,7 @@ public class ChannelExtensions {
             throw new IllegalArgumentException("limeUri");
         }
 
-        final Command requestCommand = new Command(UUID.randomUUID()) {{
+        final Command requestCommand = new Command(EnvelopeId.newId()) {{
             setMethod(CommandMethod.DELETE);
             setFrom(from);
             setUri(limeUri);

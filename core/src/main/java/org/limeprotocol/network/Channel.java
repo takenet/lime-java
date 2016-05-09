@@ -3,8 +3,6 @@ package org.limeprotocol.network;
 import org.limeprotocol.*;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Defines a communication channel for the protocol.
@@ -32,7 +30,7 @@ public interface Channel extends MessageChannel, CommandChannel, NotificationCha
      * Gets the current session Id.
      * @return
      */
-    UUID getSessionId();
+    String getSessionId();
 
     /**
      * Gets the current session state.

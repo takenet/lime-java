@@ -1,9 +1,7 @@
 package org.limeprotocol.network;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.*;
-import org.limeprotocol.testHelpers.Dummy;
 
 import java.io.IOException;
 import java.net.URI;
@@ -34,15 +32,15 @@ public class ChannelBaseTest {
         return getTarget(state, fillEnvelopeRecipients, remoteNode, localNode, null);
     }
 
-    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
+    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, String sessionId) {
         return getTarget(state, fillEnvelopeRecipients, false, remoteNode, localNode, sessionId);
     }
     
-    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
+    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, String sessionId) {
         return getTarget(state, fillEnvelopeRecipients, autoReplyPings, 0, 0, remoteNode, localNode, sessionId);
     }
 
-    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, UUID sessionId) {
+    private ChannelBase getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, String sessionId) {
         transport = new TestTransport();
         sessionChannelListener = mock(SessionChannel.SessionChannelListener.class);
         ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval, remoteNode, localNode, sessionId);
@@ -206,7 +204,7 @@ public class ChannelBaseTest {
     @Test
     public void onReceiveCommand_autoReplyPings_callsSendCommandWithPingResponse() throws InterruptedException {
         // Arrange
-        Command command = new Command(UUID.randomUUID());
+        Command command = new Command(EnvelopeId.newId());
         command.setFrom(createNode());
         command.setMethod(Command.CommandMethod.GET);
         command.setUri(new LimeUri("/ping"));
@@ -889,7 +887,7 @@ public class ChannelBaseTest {
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED);
 
         // Act
-        UUID actual = target.getSessionId();
+        String actual = target.getSessionId();
 
         // Assert
         assertNull(actual);
@@ -898,11 +896,11 @@ public class ChannelBaseTest {
     @Test
     public void getSessionId_anyInstance_returnsInstance() {
         // Arrange
-        UUID sessionId = UUID.randomUUID();
+        String sessionId = EnvelopeId.newId();
         ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, null, null, sessionId);
 
         // Act
-        UUID actual = target.getSessionId();
+        String actual = target.getSessionId();
 
         // Assert
         assertEquals(sessionId, actual);
@@ -1140,7 +1138,7 @@ public class ChannelBaseTest {
     @Test
     public void schedulePing_inactiveEstablishedChannel_sendPings() throws InterruptedException {
         // Arrange
-        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 600, null, null, UUID.randomUUID());
+        ChannelBase target = getTarget(Session.SessionState.ESTABLISHED, false, true, 100, 600, null, null, EnvelopeId.newId());
 
         // Act
         Thread.sleep(350);
@@ -1150,7 +1148,7 @@ public class ChannelBaseTest {
     }
 
     private class TestChannel extends ChannelBase {
-        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, UUID sessionId) {
+        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, String sessionId) {
             super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
             setRemoteNode(remoteNode);
             setLocalNode(localNode);

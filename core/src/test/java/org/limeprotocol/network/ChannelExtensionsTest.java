@@ -10,7 +10,6 @@ import static org.fest.assertions.api.Assertions.fail;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Queue;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -34,11 +33,11 @@ public class ChannelExtensionsTest {
         return getTarget(state, fillEnvelopeRecipients, remoteNode, localNode, null);
     }
 
-    private Channel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, UUID sessionId) {
+    private Channel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode, String sessionId) {
         return getTarget(state, fillEnvelopeRecipients, false, remoteNode, localNode, sessionId);
     }
 
-    private Channel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
+    private Channel getTarget(Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, String sessionId) {
         transport = new TestTransport();
         sessionChannelListener = mock(SessionChannel.SessionChannelListener.class);
         ChannelBase channelBase = new TestChannel(transport, state, fillEnvelopeRecipients, autoReplyPings, remoteNode, localNode, sessionId);
@@ -70,7 +69,7 @@ public class ChannelExtensionsTest {
     }
 
     private class TestChannel extends ChannelBase {
-        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, UUID sessionId) {
+        protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, String sessionId) {
             super(transport, fillEnvelopeRecipients, autoReplyPings, 0, 0);
             setRemoteNode(remoteNode);
             setLocalNode(localNode);

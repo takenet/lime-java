@@ -12,6 +12,10 @@ public class Notification extends Envelope {
         super();
     }
 
+    public Notification(String id) {
+        super(id);
+    }
+
     /**
      * Related event to the notification
      */

@@ -287,7 +287,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void deserialize_TextMessage_ReturnsValidInstance()
     {
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node pp = createNode();
         Node to = createNode();
@@ -336,7 +336,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void deserialize_ChatStateMessage_ReturnsValidInstance()
     {
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node pp = createNode();
         Node to = createNode();
@@ -449,7 +449,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     public void deserialize_documentContainerDocumentCollectionMessage_returnsValidInstance() {
 
         // Arrange
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.collection+json\",\"content\":{\"total\":4,\"itemType\":\"application/vnd.lime.container+json\",\"items\":[{\"type\":\"text/plain\",\"value\":\"text1\"},{\"type\":\"application/vnd.lime.account+json\",\"value\":{\"fullName\":\"My Name\",\"photoUri\":\"http://url.com/resource\"}},{\"type\":\"application/q9gn1nsz6y+json\",\"value\":{\"o4s9txn80q\":\"}2['\u00F23 /bdkc]\u00FA2,\u00BA &%f0j\u00F9u#\u00F2\u00FA9;\u00EC\\\"t}#\u00F3(\u00E9a_94\u00E00q5m==\\\\\",\"ynpinmi0oq\":20,\"dkker2borf\":\"2016-04-13T16:24:49.729Z\",\"e98cyp215l\":{\"ljwbthakfx\":\"\\\\@(m1g=q.-jql[)5#n,\u00E09\u00BA\u00A8kg~]t(x:<u\u00E1z'8?.-^_cvqkk\u00EC@n\",\"z4uih47pct\":19,\"nxp3n8km78\":\"2016-04-13T16:24:49.729Z\"},\"sinvm70xls\":[{\"ypdd57j78y\":\"<>5_\u00ECnb'!,b.ps8\u00EC=9\\\\o\\\\_*qc6#k0\u00E8]$j\u00E1=-u\u00E1\u00FAq\u00EC{\u00E0r\u00F2\u00BAt\u00ED[\u00EC\",\"l3d24gigtt\":34,\"5ltasvmv3y\":\"2016-04-13T16:24:49.729Z\"},{\"1twigyljcf\":\"=!6-\u00F360 94fy2\u00A8e23q72\u00E0v\u00E9t(u!&[%\u00FA\u00E8#4f7\u00E0\u00ECkjv2n9=@pjp~\",\"ke4zjmvfbw\":46,\"2l7rf39qwq\":\"2016-04-13T16:24:49.729Z\"},{\"pckdtdowdc\":\"11\u00E9q>e:j,^;\u00F3\u00A8o@cs\u00F9@'r}(3\u00EDe(=,uq*\u00F9(+!!..hd\u00E9;~.*(j=\u00A8\",\"5pfq4y1rmz\":24,\"foqvh78vau\":\"2016-04-13T16:24:49.729Z\"}]}},{\"type\":\"vxhfxfm3tz/hhnzgm4kmh\",\"value\":\"9nav5pkhswvsw7mh24r1b3agbgic43piylveh1z6xtfz77nibt\"}]},\"id\":\"{0}\",\"from\":\"9afudsyl@je29bkh1bs.com/yq1oh\",\"to\":\"9zpfpsuc@d63uusxbfq.com/btp7i\"}",
                 id);
@@ -503,7 +503,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     public void deserialize_ReceiptRequestCommand_ReturnsValidInstance() {
         // Arrange
         Command.CommandMethod method = SET;
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
 
         String json = StringUtils.format(
                 "{\"type\":\"application/vnd.lime.receipt+json\",\"resource\":{\"events\":[\"dispatched\",\"received\"]},\"method\":\"{0}\",\"id\":\"{1}\"}",
@@ -538,7 +538,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     public void deserialize_AccountRequestCommand_ReturnsValidInstance() throws URISyntaxException {
         // Arrange
         Command.CommandMethod method = GET;
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         String fullName = createRandomString(30);
         URI photoUri = createUri("http", 80);
 
@@ -587,7 +587,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         Command.CommandMethod method = Command.CommandMethod.GET;
 
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node  pp = createNode();
         Node to = createNode();
@@ -667,7 +667,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         // Arrange
         Command.CommandMethod method = Command.CommandMethod.GET;
 
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node  pp = createNode();
         Node to = createNode();

@@ -7,7 +7,7 @@ public class Command extends Envelope {
     public Command() {
     }
 
-    public Command(UUID id) {
+    public Command(String id) {
         super(id);
     }
 

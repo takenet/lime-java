@@ -5,10 +5,8 @@ import org.limeprotocol.network.ChannelBase;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.modules.NotifyReceiptChannelModule;
 import org.limeprotocol.security.Authentication;
-import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import static org.limeprotocol.Session.SessionState.*;
 
@@ -109,12 +107,11 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
 
     /**
      * Notify to the server that the specified message was received by the peer.
-     *
-     * @param messageId
+     *  @param messageId
      * @param to
      */
     @Override
-    public void sendReceivedNotification(final UUID messageId, final Node to) throws IOException {
+    public void sendReceivedNotification(final String messageId, final Node to) throws IOException {
         if (to == null) {
             throw new IllegalArgumentException("to");
         }

@@ -4,7 +4,6 @@ import org.limeprotocol.*;
 import org.limeprotocol.network.modules.FillEnvelopeRecipientsChannelModule;
 import org.limeprotocol.network.modules.RemotePingChannelModule;
 import org.limeprotocol.network.modules.ReplyPingChannelModule;
-import org.limeprotocol.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -19,7 +18,7 @@ public abstract class ChannelBase implements Channel {
 
     private Node remoteNode;
     private Node localNode;
-    private UUID sessionId;
+    private String sessionId;
     private Session.SessionState state;
 
     private final Collection<ChannelModule<Message>> messageModules;
@@ -113,11 +112,11 @@ public abstract class ChannelBase implements Channel {
      * @return
      */
     @Override
-    public UUID getSessionId() {
+    public String getSessionId() {
         return sessionId;
     }
 
-    protected void setSessionId(UUID sessionId) {
+    protected void setSessionId(String sessionId) {
         this.sessionId = sessionId;
     }
 

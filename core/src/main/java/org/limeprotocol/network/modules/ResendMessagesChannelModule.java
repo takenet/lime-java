@@ -22,7 +22,7 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
     private final int resendMessageTryCount;
     private final long resendMessageInterval;
-    private final ConcurrentMap<UUID, SentMessage> sentMessageMap;
+    private final ConcurrentMap<String, SentMessage> sentMessageMap;
     private final BlockingQueue<SentMessage> sentMessageQueue;
 
     private Channel channel;

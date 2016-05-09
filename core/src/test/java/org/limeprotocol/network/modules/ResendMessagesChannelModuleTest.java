@@ -2,10 +2,7 @@ package org.limeprotocol.network.modules;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.limeprotocol.Command;
-import org.limeprotocol.Message;
-import org.limeprotocol.Notification;
-import org.limeprotocol.Session;
+import org.limeprotocol.*;
 import org.limeprotocol.client.ClientChannel;
 import org.limeprotocol.network.Channel;
 import org.limeprotocol.network.Transport;
@@ -79,7 +76,7 @@ public class ResendMessagesChannelModuleTest {
     public void onSending_messageWithoutNotification_shouldResendAfterInterval() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         resendMessageTryCount = 1;
         ResendMessagesChannelModule target = getTarget();
 
@@ -98,7 +95,7 @@ public class ResendMessagesChannelModuleTest {
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
             Message message = Dummy.createMessage(Dummy.createTextContent());
-            message.setId(UUID.randomUUID());
+            message.setId(EnvelopeId.newId());
             messages.add(message);
         }
         resendMessageTryCount = 1;
@@ -124,7 +121,7 @@ public class ResendMessagesChannelModuleTest {
     public void onSending_messageWithoutNotification_shouldResendUntilLimit() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -142,7 +139,7 @@ public class ResendMessagesChannelModuleTest {
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
             Message message = Dummy.createMessage(Dummy.createTextContent());
-            message.setId(UUID.randomUUID());
+            message.setId(EnvelopeId.newId());
             messages.add(message);
         }
         ResendMessagesChannelModule target = getTarget();
@@ -166,7 +163,7 @@ public class ResendMessagesChannelModuleTest {
     public void onSending_receivedNotificationAfterSend_shouldNotResend() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         Notification notification = Dummy.createNotification(Notification.Event.RECEIVED);
         notification.setId(message.getId());
         notification.setFrom(message.getTo());
@@ -187,7 +184,7 @@ public class ResendMessagesChannelModuleTest {
     public void onSending_receivedNotificationAfterFirstResend_shouldNotResend() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         Notification notification = Dummy.createNotification(Notification.Event.RECEIVED);
         notification.setId(message.getId());
         notification.setFrom(message.getTo());
@@ -209,7 +206,7 @@ public class ResendMessagesChannelModuleTest {
     public void onSending_receivedNotificationAfterSecondResend_shouldNotResend() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         Notification notification = Dummy.createNotification(Notification.Event.RECEIVED);
         notification.setId(message.getId());
         notification.setFrom(message.getTo());
@@ -231,7 +228,7 @@ public class ResendMessagesChannelModuleTest {
     public void onStateChanged_establishedToFinishedAfterSend_shouldNotResend() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -248,7 +245,7 @@ public class ResendMessagesChannelModuleTest {
     public void onStateChanged_establishedToFinishedAfterSecondResend_shouldNotResendAgain() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -266,7 +263,7 @@ public class ResendMessagesChannelModuleTest {
     public void onStateChanged_establishedToFailedAfterSend_shouldNotResend() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -283,7 +280,7 @@ public class ResendMessagesChannelModuleTest {
     public void onStateChanged_establishedToFailedAfterSecondResend_shouldNotResendAgain() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -320,7 +317,7 @@ public class ResendMessagesChannelModuleTest {
     public void unbind_pendingMessage_shouldNotResend() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
 
         // Act
@@ -339,7 +336,7 @@ public class ResendMessagesChannelModuleTest {
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
             Message message = Dummy.createMessage(Dummy.createTextContent());
-            message.setId(UUID.randomUUID());
+            message.setId(EnvelopeId.newId());
             messages.add(message);
         }
         resendMessageTryCount = 1;
@@ -365,7 +362,7 @@ public class ResendMessagesChannelModuleTest {
     public void unbind_pendingMessageAndBoundToNewChannel_sendsToBoundChannel() throws InterruptedException, IOException {
         // Arrange
         Message message = Dummy.createMessage(Dummy.createTextContent());
-        message.setId(UUID.randomUUID());
+        message.setId(EnvelopeId.newId());
         ResendMessagesChannelModule target = getTarget();
         ClientChannel channel2 = mock(ClientChannel.class);
         when(channel2.getTransport()).thenReturn(transport);
@@ -389,7 +386,7 @@ public class ResendMessagesChannelModuleTest {
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < Dummy.createRandomInt(100) + 1; i++) {
             Message message = Dummy.createMessage(Dummy.createTextContent());
-            message.setId(UUID.randomUUID());
+            message.setId(EnvelopeId.newId());
             messages.add(message);
         }
         ResendMessagesChannelModule target = getTarget();

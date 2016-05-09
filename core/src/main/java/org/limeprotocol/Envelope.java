@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public abstract class Envelope {
-    private UUID id;
+    private String id;
     private Node from;
     private Node to;
     private Node pp;
@@ -12,15 +12,15 @@ public abstract class Envelope {
 
     public Envelope(){ }
 
-    protected Envelope(UUID id){
+    protected Envelope(String id){
         this.id = id;
     }
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id = id;
     }
 

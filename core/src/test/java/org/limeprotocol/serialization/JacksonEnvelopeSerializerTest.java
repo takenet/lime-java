@@ -189,7 +189,7 @@ public class JacksonEnvelopeSerializerTest {
     public void serialize_FailedNotification_ReturnsValidJsonString()
     {
         Notification notification = createNotification(Notification.Event.FAILED);
-        notification.setId(UUID.randomUUID());
+        notification.setId(EnvelopeId.newId());
         notification.setReason(createReason());
 
         String resultString = target.serialize(notification);
@@ -208,7 +208,7 @@ public class JacksonEnvelopeSerializerTest {
     public void serialize_ReceivedNotification_ReturnsValidJsonString()
     {
         Notification notification = createNotification(Notification.Event.RECEIVED);
-        notification.setId(UUID.randomUUID());
+        notification.setId(EnvelopeId.newId());
         notification.setPp(createNode());
 
         notification.setMetadata(createRandomMetadata("randomString1", "randomString2"));
@@ -240,7 +240,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_AuthenticatingSession_ReturnsValidInstance() {
         // Arrange
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node to = createNode();
 
@@ -294,7 +294,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_FailedSessionNullProperties_ReturnsValidInstance(){
         // Arrange
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node to = createNode();
 
@@ -372,7 +372,7 @@ public class JacksonEnvelopeSerializerTest {
     public void deserialize_AbsoluteUriRequestCommand_ReturnsValidInstance() {
         // Arrange
         CommandMethod method = GET;
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
 
         Node from = createNode();
         Node pp = createNode();
@@ -431,7 +431,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_UnknownPlainContentMessage_ReturnsValidInstance()
     {
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node pp = createNode();
         Node to = createNode();
@@ -485,7 +485,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_UnknownJsonContentMessage_ReturnsValidInstance()
     {
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node pp = createNode();
         Node to = createNode();
@@ -556,7 +556,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_GenericJsonContentMessage_ReturnsValidInstance()
     {
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node pp = createNode();
         Node to = createNode();
@@ -632,7 +632,7 @@ public class JacksonEnvelopeSerializerTest {
     @Test
     public void deserialize_ReceivedNotification_ReturnsValidInstance()
     {
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node  pp = createNode();
         Node to = createNode();
@@ -684,7 +684,7 @@ public class JacksonEnvelopeSerializerTest {
         int reasonCode = createRandomInt(100);
         String reasonDescription = createRandomString(100);
 
-        UUID id = UUID.randomUUID();
+        String id = EnvelopeId.newId();
         Node from = createNode();
         Node to = createNode();
 
