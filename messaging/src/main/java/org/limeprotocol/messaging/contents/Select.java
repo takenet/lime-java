@@ -79,6 +79,7 @@ public class Select extends DocumentBase {
         private MediaType type;
         private Document value;
 
+        public SelectOption(){}
         /**
          * Gets or sets the option order number.
          * @return
