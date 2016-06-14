@@ -6,7 +6,7 @@
 
     <properties>
         <!-- Increase version number here -->
-        <build.number>2</build.number>
+        <build.number>4</build.number>
         <lime.version>1.1.${build.number}</lime.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <bintray.repo>takenet/maven</bintray.repo>
