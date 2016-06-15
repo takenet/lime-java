@@ -2,6 +2,7 @@ package org.limeprotocol.messaging.serialization;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.messaging.Registrator;
@@ -493,6 +494,56 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertTrue(container3.getValue() instanceof JsonDocument);
         PlainDocument document4 = (PlainDocument)container4.getValue();
         assertEquals("9nav5pkhswvsw7mh24r1b3agbgic43piylveh1z6xtfz77nibt", document4.getValue());
+    }
+
+    @Test
+    @Ignore
+    public void deserialize_SelectDocumentMessage_returnsValidInstance() {
+
+        // Arrange
+        String id = EnvelopeId.newId();
+        String json = StringUtils.format(
+                "{\"type\":\"application/vnd.lime.select+json\",\"content\":{\"text\":\"escolha uma das opções:\",\"options\":[{\"order\":0,\"text\":\"text 0\",\"type\":\"text/plain\",\"value\":\"msg\"},{\"order\":1,\"text\":\"text 1\",\"type\":\"text/plain\",\"value\":\"msg\"},{\"order\":2,\"text\":\"text 2\",\"type\":\"text/plain\",\"value\":\"msg\"}]},\"id\":\"{0}\",\"to\":\"5531988927434@0mn.io/354983055299480-30\"}", id);
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertEquals(id, envelope.getId());
+        assertTrue(envelope instanceof Message);
+        Message message = (Message)envelope;
+        assertTrue(message.getContent() instanceof Select);
+        Select selectDocument = (Select) message.getContent();
+        //assertEquals(4, documentCollection.getTotal());
+        //assertEquals(MediaType.parse(DocumentContainer.MIME_TYPE), documentCollection.getItemType());
+        //assertNotNull(documentCollection.getItems());
+        //assertEquals(4, documentCollection.getItems().length);
+        //assertTrue(documentCollection.getItems()[0] instanceof DocumentContainer);
+        //DocumentContainer container1 = (DocumentContainer)documentCollection.getItems()[0];
+        //assertTrue(documentCollection.getItems()[1] instanceof DocumentContainer);
+        //DocumentContainer container2 = (DocumentContainer)documentCollection.getItems()[1];
+        //assertTrue(documentCollection.getItems()[2] instanceof DocumentContainer);
+        //DocumentContainer container3 = (DocumentContainer)documentCollection.getItems()[2];
+        //assertTrue(documentCollection.getItems()[3] instanceof DocumentContainer);
+        //DocumentContainer container4 = (DocumentContainer)documentCollection.getItems()[3];
+        //assertEquals(MediaType.parse(PlainText.MIME_TYPE), container1.getType());
+        //assertTrue(container1.getValue() instanceof PlainText);
+        //PlainText document1 = (PlainText)container1.getValue();
+        //assertEquals("text1", document1.getText());
+        //assertEquals(MediaType.parse(Account.MIME_TYPE), container2.getType());
+        //assertTrue(container2.getValue() instanceof Account);
+        //Account document2 = (Account)container2.getValue();
+        //assertEquals("My Name", document2.getFullName());
+        //Assert.assertNotNull(document2.getPhotoUri());
+        //assertEquals("http://url.com/resource", document2.getPhotoUri().toString());
+        //assertEquals(MediaType.parse("application/q9gn1nsz6y+json"), container3.getType());
+        //assertTrue(container3.getValue() instanceof JsonDocument);
+        //JsonDocument document3 = (JsonDocument)container3.getValue();
+        //Assert.assertTrue(document3.size() > 0);
+        //assertEquals(MediaType.parse("vxhfxfm3tz/hhnzgm4kmh"), container4.getType());
+        //assertTrue(container3.getValue() instanceof JsonDocument);
+        //PlainDocument document4 = (PlainDocument)container4.getValue();
+        //assertEquals("9nav5pkhswvsw7mh24r1b3agbgic43piylveh1z6xtfz77nibt", document4.getValue());
     }
 
     //endregion Message
