@@ -100,7 +100,6 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         // Act
         String resultString = target.serialize(message);
-        resultString = target.serialize(message);
 
         // Assert
         assertThatJson(resultString).node("id").isEqualTo(message.getId().toString());
@@ -493,6 +492,18 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertTrue(container3.getValue() instanceof JsonDocument);
         PlainDocument document4 = (PlainDocument)container4.getValue();
         assertEquals("9nav5pkhswvsw7mh24r1b3agbgic43piylveh1z6xtfz77nibt", document4.getValue());
+    }
+
+    @Test
+    public void deserialize_selectMessage_returnValidInstance() {
+        // Arrange
+        String json = "{\"id\":\"9c18cf8a-6270-4670-8900-02f5751f4366\",\"from\":\"clmmeemi@z14wp95v5a.com/6hjtk\",\"to\":\"web9wo48@ude6wpmltb.com/imo3y\",\"content\":{\"text\":\"g0m585e4hrd11um88mh6ketg6tv8uj3a8jfzcuj4hvwxssu48iqtqam9ha71w2cl46c1lhqa6wq2drlb91x3um7mk9a4009ioiij\",\"destination\":\"ccyvngc6@04tovjshsn.com/k8o70\",\"options\":[{\"order\":1,\"text\":\"qviwrj95mc\",\"type\":\"text/plain\",\"value\":\"aqgew853rlhgajofzgnp6ij0v8xym1xq56pdtm6grkd5iebk9tzpyehfv8gjab2ng9gaujx2npcyqfy64wes4ar5rqodzyb3g0lm97jx6eh629biok5gfqhlq3okn62w73bz8xac4sahm1ccwjvse6\"},{\"order\":2,\"text\":\"vtxfmwc0yk\"},{\"text\":\"1a7jmddoyf\"},{\"type\":\"application/6md3v82upq+json\",\"value\":{\"c61ozm28zj\":11,\"xr2tovgzmt\":\"bviy3y4io3wwmp5wmkpl87z9uhgcxd4lk5dbd8mo982vgsg8el\"}}]},\"type\":\"application/vnd.lime.select+json\",\"sender\":\"clmmeemi@z14wp95v5a.com/6hjtk\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertEquals("9c18cf8a-6270-4670-8900-02f5751f4366", envelope.getId());
     }
 
     //endregion Message

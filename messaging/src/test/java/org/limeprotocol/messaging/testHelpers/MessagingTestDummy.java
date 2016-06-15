@@ -86,7 +86,16 @@ public class MessagingTestDummy {
             setText(createRandomString(100));
             setOptions(new SelectOption[] {
                     new SelectOption() {{
+                        setText(createRandomString(10));
+                        setOrder(1);
                         setValue(createTextContent());
+                    }},
+                    new Select.SelectOption() {{
+                        setText(createRandomString(10));
+                        setOrder(2);
+                    }},
+                    new Select.SelectOption() {{
+                        setText(createRandomString(10));
                     }},
                     new Select.SelectOption() {{
                         setValue(createJsonDocument());
