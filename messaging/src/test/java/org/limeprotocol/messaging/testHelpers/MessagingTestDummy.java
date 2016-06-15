@@ -5,6 +5,7 @@ import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.contents.Select;
+import org.limeprotocol.messaging.contents.SelectOption;
 import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
@@ -82,7 +83,6 @@ public class MessagingTestDummy {
 
     public static Select createSelect() {
         return new Select() {{
-            setDestination(createNode());
             setText(createRandomString(100));
             setOptions(new SelectOption[] {
                     new SelectOption() {{
@@ -90,14 +90,14 @@ public class MessagingTestDummy {
                         setOrder(1);
                         setValue(createTextContent());
                     }},
-                    new Select.SelectOption() {{
+                    new SelectOption() {{
                         setText(createRandomString(10));
                         setOrder(2);
                     }},
-                    new Select.SelectOption() {{
+                    new SelectOption() {{
                         setText(createRandomString(10));
                     }},
-                    new Select.SelectOption() {{
+                    new SelectOption() {{
                         setValue(createJsonDocument());
                     }}
             });

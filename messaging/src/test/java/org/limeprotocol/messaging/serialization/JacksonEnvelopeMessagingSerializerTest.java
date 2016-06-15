@@ -498,13 +498,48 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Test
     public void deserialize_selectMessage_returnValidInstance() {
         // Arrange
-        String json = "{\"id\":\"9c18cf8a-6270-4670-8900-02f5751f4366\",\"from\":\"clmmeemi@z14wp95v5a.com/6hjtk\",\"to\":\"web9wo48@ude6wpmltb.com/imo3y\",\"content\":{\"text\":\"g0m585e4hrd11um88mh6ketg6tv8uj3a8jfzcuj4hvwxssu48iqtqam9ha71w2cl46c1lhqa6wq2drlb91x3um7mk9a4009ioiij\",\"destination\":\"ccyvngc6@04tovjshsn.com/k8o70\",\"options\":[{\"order\":1,\"text\":\"qviwrj95mc\",\"type\":\"text/plain\",\"value\":\"aqgew853rlhgajofzgnp6ij0v8xym1xq56pdtm6grkd5iebk9tzpyehfv8gjab2ng9gaujx2npcyqfy64wes4ar5rqodzyb3g0lm97jx6eh629biok5gfqhlq3okn62w73bz8xac4sahm1ccwjvse6\"},{\"order\":2,\"text\":\"vtxfmwc0yk\"},{\"text\":\"1a7jmddoyf\"},{\"type\":\"application/6md3v82upq+json\",\"value\":{\"c61ozm28zj\":11,\"xr2tovgzmt\":\"bviy3y4io3wwmp5wmkpl87z9uhgcxd4lk5dbd8mo982vgsg8el\"}}]},\"type\":\"application/vnd.lime.select+json\",\"sender\":\"clmmeemi@z14wp95v5a.com/6hjtk\"}";
+        String json = "{\"id\":\"9c18cf8a-6270-4670-8900-02f5751f4366\",\"from\":\"clmmeemi@z14wp95v5a.com/6hjtk\",\"to\":\"web9wo48@ude6wpmltb.com/imo3y\",\"content\":{\"text\":\"g0m585e4hrd11um88mh6ketg6tv8uj3a8jfzcuj4hvwxssu48iqtqam9ha71w2cl46c1lhqa6wq2drlb91x3um7mk9a4009ioiij\",\"options\":[{\"order\":1,\"text\":\"qviwrj95mc\",\"type\":\"text/plain\",\"value\":\"aqgew853rlhgajofzgnp6ij0v8xym1xq56pdtm6grkd5iebk9tzpyehfv8gjab2ng9gaujx2npcyqfy64wes4ar5rqodzyb3g0lm97jx6eh629biok5gfqhlq3okn62w73bz8xac4sahm1ccwjvse6\"},{\"order\":2,\"text\":\"vtxfmwc0yk\"},{\"text\":\"1a7jmddoyf\"},{\"type\":\"application/6md3v82upq+json\",\"value\":{\"c61ozm28zj\":11,\"xr2tovgzmt\":\"bviy3y4io3wwmp5wmkpl87z9uhgcxd4lk5dbd8mo982vgsg8el\"}}]},\"type\":\"application/vnd.lime.select+json\",\"sender\":\"clmmeemi@z14wp95v5a.com/6hjtk\"}";
 
         // Act
         Envelope envelope = target.deserialize(json);
 
         // Assert
         assertEquals("9c18cf8a-6270-4670-8900-02f5751f4366", envelope.getId());
+        assertEquals("clmmeemi@z14wp95v5a.com/6hjtk", envelope.getFrom().toString());
+        assertEquals("web9wo48@ude6wpmltb.com/imo3y", envelope.getTo().toString());
+        assertTrue(envelope instanceof Message);
+        Message message = (Message)envelope;
+        assertTrue(message.getContent() instanceof Select);
+        Select select = (Select)message.getContent();
+        assertEquals(select.getText(), "g0m585e4hrd11um88mh6ketg6tv8uj3a8jfzcuj4hvwxssu48iqtqam9ha71w2cl46c1lhqa6wq2drlb91x3um7mk9a4009ioiij");
+        assertNotNull(select.getOptions());
+        assertEquals(select.getOptions().length, 4);
+
+        assertEquals(select.getOptions()[0].getOrder(), (Integer)1);
+        assertEquals(select.getOptions()[0].getText(), "qviwrj95mc");
+        assertEquals(select.getOptions()[0].getType().toString(), "text/plain");
+        assertEquals(select.getOptions()[0].getValue().toString(), "aqgew853rlhgajofzgnp6ij0v8xym1xq56pdtm6grkd5iebk9tzpyehfv8gjab2ng9gaujx2npcyqfy64wes4ar5rqodzyb3g0lm97jx6eh629biok5gfqhlq3okn62w73bz8xac4sahm1ccwjvse6");
+
+        assertEquals(select.getOptions()[1].getOrder(), (Integer)2);
+        assertEquals(select.getOptions()[1].getText(), "vtxfmwc0yk");
+        assertNull(select.getOptions()[1].getType());
+        assertNull(select.getOptions()[1].getValue());
+
+        assertNull(select.getOptions()[2].getOrder());
+        assertEquals(select.getOptions()[2].getText(), "1a7jmddoyf");
+        assertNull(select.getOptions()[2].getType());
+        assertNull(select.getOptions()[2].getValue());
+
+        assertNull(select.getOptions()[3].getOrder());
+        assertNull(select.getOptions()[3].getText());
+        assertEquals(select.getOptions()[3].getType().toString(), "application/6md3v82upq+json");
+
+        assertTrue(select.getOptions()[3].getValue() instanceof JsonDocument);
+        JsonDocument jsonDocument = (JsonDocument)(select.getOptions()[3].getValue());
+        assertTrue(jsonDocument.containsKey("c61ozm28zj"));
+        assertEquals(jsonDocument.get("c61ozm28zj"), 11);
+        assertTrue(jsonDocument.containsKey("xr2tovgzmt"));
+        assertEquals(jsonDocument.get("xr2tovgzmt"), "bviy3y4io3wwmp5wmkpl87z9uhgcxd4lk5dbd8mo982vgsg8el");
     }
 
     //endregion Message
