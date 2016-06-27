@@ -82,4 +82,9 @@ public abstract class Link extends DocumentBase {
         this.text = text;
     }
 
+    @Override
+    public String toString() {
+        return (getText() == null ? "" : getText() + " ") +
+                getUri().toString().trim();
+    }
 }

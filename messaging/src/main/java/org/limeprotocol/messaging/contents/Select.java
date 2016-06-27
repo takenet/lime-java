@@ -50,4 +50,17 @@ public class Select extends DocumentBase {
     public void setOptions(SelectOption[] options) {
         this.options = options;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(getText() + "\n");
+        for (SelectOption option : getOptions()) {
+            if (option.getOrder() != null) {
+                builder.append(option.getOrder() + ". ");
+            }
+            builder.append(option.getText() + "\n");
+        }
+        return builder.toString().trim();
+    }
 }

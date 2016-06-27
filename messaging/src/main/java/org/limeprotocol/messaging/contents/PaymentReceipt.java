@@ -4,7 +4,15 @@ import org.limeprotocol.DocumentBase;
 import org.limeprotocol.MediaType;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Currency;
 import java.util.Date;
+import java.util.Locale;
+import java.util.Set;
+
+import static java.util.Currency.getAvailableCurrencies;
 
 /**
  * Defines a receipt for an invoice payment.
@@ -14,6 +22,7 @@ public class PaymentReceipt extends DocumentBase {
     public static final String MIME_TYPE = "application/vnd.lime.payment-receipt+json";
 
     private String invoiceNumber;
+    private InvoiceItem[] items;
     private PaymentMethod method;
     private String code;
     private Date paidOn;
@@ -135,5 +144,61 @@ public class PaymentReceipt extends DocumentBase {
      */
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    /**
+     * Gets the invoice items.
+     * @return
+     */
+    public InvoiceItem[] getItems() {
+        return items;
+    }
+
+    /**
+     * Sets the invoice items.
+     * @param items
+     */
+    public void setItems(InvoiceItem[] items) {
+        this.items = items;
+    }
+
+    @Override
+    public String toString() {
+        Locale locale = getLocaleByCurrencySymbol(getCurrency());
+        NumberFormat numberFormatter = DecimalFormat.getCurrencyInstance(locale);
+
+        StringBuilder builder = new StringBuilder();
+
+        if (getItems() != null) {
+            int index = 1;
+            for (InvoiceItem item: getItems()) {
+                builder.append(index++ + ". " + item.getDescription() + " (" + numberFormatter.format(item.getTotal()) + ")\n");
+            }
+        }
+
+        builder.append(numberFormatter.format(getTotal()));
+
+        if (getPaidOn() != null) {
+            builder.append("\n");
+            builder.append(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(getPaidOn()));
+
+            if (getMethod() != null && getMethod().getName() != null) {
+                builder.append(" (" + getMethod().getName() + ")");
+            }
+        }
+
+        return builder.toString();
+    }
+
+    private Locale getLocaleByCurrencySymbol(String currencySymbol)
+    {
+        Locale[] availableLocales = Locale.getAvailableLocales();
+        for (Locale locale: availableLocales) {
+            try {
+                if (Currency.getInstance(locale).getCurrencyCode().equals(currencySymbol)) return locale;
+            } catch (IllegalArgumentException _) { }
+        }
+
+        return new Locale("pt", "BR");
     }
 }
