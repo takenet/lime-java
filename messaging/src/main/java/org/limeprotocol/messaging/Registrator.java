@@ -19,6 +19,7 @@ public class Registrator {
         SerializationUtil.registerDocumentClass(Invoice.class);
         SerializationUtil.registerDocumentClass(Location.class);
         SerializationUtil.registerDocumentClass(MediaLink.class);
+        SerializationUtil.registerDocumentClass(WebLink.class);
         SerializationUtil.registerDocumentClass(PaymentReceipt.class);
         SerializationUtil.registerDocumentClass(PlainText.class);
         SerializationUtil.registerDocumentClass(Select.class);

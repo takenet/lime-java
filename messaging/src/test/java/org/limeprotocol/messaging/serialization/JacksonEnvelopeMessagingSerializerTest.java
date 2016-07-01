@@ -9,6 +9,7 @@ import org.limeprotocol.messaging.Registrator;
 import org.limeprotocol.messaging.contents.ChatState;
 import org.limeprotocol.messaging.contents.PlainText;
 import org.limeprotocol.messaging.contents.Select;
+import org.limeprotocol.messaging.contents.WebLink;
 import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
@@ -540,6 +541,30 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertEquals(jsonDocument.get("c61ozm28zj"), 11);
         assertTrue(jsonDocument.containsKey("xr2tovgzmt"));
         assertEquals(jsonDocument.get("xr2tovgzmt"), "bviy3y4io3wwmp5wmkpl87z9uhgcxd4lk5dbd8mo982vgsg8el");
+    }
+
+    @Test
+    public void deserialize_WeblinkMessage_ReturnsValidInstance()
+    {
+        // Arrange
+        String json =
+                "{\"type\":\"application/vnd.lime.web-link+json\",\"content\":{\"uri\":\"http://e0x0rkuaof.com:9288/\",\"previewUri\":\"http://pcmcjxomhd.com:9875/\",\"previewType\":\"image/jpeg\",\"text\":\"b9s38pra6s7w7b4w1jca6lzf9zp8927ciy4lwdsa3y1gc2ekiw\"},\"id\":\"25058656-ea3e-4f2a-9b27-fe14d1470796\",\"from\":\"6fjghzjm@3j9saev4nj.com/gtax0\",\"to\":\"cghusdgu@f0m512bqfb.com/jjjak\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertTrue(envelope instanceof Message);
+        Message message = (Message)envelope;
+        assertTrue(message.getContent() instanceof WebLink);
+        WebLink webLink = (WebLink) message.getContent();
+        assertNotNull(webLink.getUri());
+        assertEquals(webLink.getUri().toString(), "http://e0x0rkuaof.com:9288/");
+        assertNotNull(webLink.getPreviewUri());
+        assertEquals(webLink.getPreviewUri().toString(), "http://pcmcjxomhd.com:9875/");
+        assertNotNull(webLink.getPreviewType());
+        assertEquals(webLink.getPreviewType().toString(), "image/jpeg");
+        assertEquals(webLink.getText(), "b9s38pra6s7w7b4w1jca6lzf9zp8927ciy4lwdsa3y1gc2ekiw");
     }
 
     //endregion Message
