@@ -18,7 +18,6 @@ import java.util.Iterator;
 
 public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCollection> {
 
-
     public DocumentCollectionDeserializer() {
 
     }
@@ -29,19 +28,20 @@ public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCol
         ObjectNode objectNode = objectCodec.readTree(jsonParser);
         DocumentCollection collection = new DocumentCollection();
 
-        int total = 0;
-        if (objectNode.has("total")) {
-            total = objectNode.get("total").asInt();
-        }
-        Document[] items = new Document[total];
         MediaType itemType = MediaType.parse(objectNode.get("itemType").asText());
         ArrayNode documentsNode = (ArrayNode) objectNode.get("items");
+        Document[] items = new Document[documentsNode.size()];
 
         int i = 0;
         for (Iterator iterator = documentsNode.elements(); iterator.hasNext(); i++) {
             ObjectNode documentNode = (ObjectNode) iterator.next();
             Document document = DocumentContainerDeserializer.getDocument(documentNode, itemType, JacksonEnvelopeSerializer.getObjectMapper());
             items[i] = document;
+        }
+
+        int total = 0;
+        if (objectNode.has("total")) {
+            total = objectNode.get("total").asInt();
         }
 
         collection.setTotal(total);
