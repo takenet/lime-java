@@ -76,4 +76,17 @@ public class DocumentCollection extends DocumentBase implements Iterable {
 
         return null;
     }
+
+    @Override
+    public String toString() {
+        if (this.items != null) {
+            StringBuilder builder = new StringBuilder();
+            for (Document item: items) {
+                builder.append(item.toString() + "\n");
+            }
+            return builder.toString().trim();
+        }
+
+        return super.toString();
+    }
 }

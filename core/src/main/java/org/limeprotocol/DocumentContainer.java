@@ -38,4 +38,10 @@ public class DocumentContainer extends DocumentBase {
     public void setValue(Document value) {
         this.value = value;
     }
+
+    @Override
+    public String toString() {
+        if (value != null) return value.toString();
+        return super.toString();
+    }
 }
