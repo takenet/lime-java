@@ -11,12 +11,30 @@ import org.limeprotocol.Node;
 public class Select extends DocumentBase {
     public static final String MIME_TYPE = "application/vnd.lime.select+json";
 
+    private SelectScope scope;
     private String text;
-    private Node destination;
     private SelectOption[] options;
 
     public Select() {
         super(MediaType.parse(MIME_TYPE));
+    }
+
+    /**
+     * Gets the scope which the select options is valid.
+     * This property hints to the destination of the select when the sender is able to receive and understand a select option reply.
+     * @return
+     */
+    public SelectScope getScope() {
+        return scope;
+    }
+
+    /**
+     * Sets the scope which the select options is valid.
+     * This property hints to the destination of the select when the sender is able to receive and understand a select option reply.
+     * @param scope
+     */
+    public void setScope(SelectScope scope) {
+        this.scope = scope;
     }
 
     /**
@@ -62,5 +80,27 @@ public class Select extends DocumentBase {
             builder.append(option.getText() + "\n");
         }
         return builder.toString().trim();
+    }
+
+    /**
+     * Defines the scope which a select is valid.
+     */
+    public enum SelectScope {
+
+        /**
+         * The select is transient and its valid during a temporary conversation scope.
+         * This is the default scope.
+         */
+        TRANSIENT,
+
+        /**
+         * The select is persistent and its valid in any time for the specific sender.
+         */
+        PERSISTENT,
+
+        /**
+         * The select is valid only valid for the current scope.
+         */
+        IMMEDIATE
     }
 }
