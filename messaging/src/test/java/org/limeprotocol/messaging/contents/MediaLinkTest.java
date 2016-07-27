@@ -10,6 +10,20 @@ import static org.junit.Assert.assertEquals;
 public class MediaLinkTest {
 
     @Test
+    public void toString_WithTitleTextAndValue_ReturnsCorrectValue() throws URISyntaxException {
+        String uri = "http://localhost/testing.jpg";
+        String text = "This is a photo";
+        String title = "Photo";
+
+        MediaLink link = new MediaLink();
+        link.setUri(new URI(uri));
+        link.setText(text);
+        link.setTitle(title);
+
+        assertEquals(title + "\n" + text + " " + uri, link.toString());
+    }
+
+    @Test
     public void toString_WithTextAndValue_ReturnsCorrectValue() throws URISyntaxException {
         String uri = "http://localhost/testing.jpg";
         String text = "This is a photo";

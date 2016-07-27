@@ -101,7 +101,9 @@ public abstract class Link extends DocumentBase {
 
     @Override
     public String toString() {
-        return (getText() == null ? "" : getText() + " ") +
-                getUri().toString().trim();
+
+        return (getTitle() == null ? "" : getTitle() + "\n") +
+               (getText() == null ? "" : getText() + " ") +
+               getUri().toString().trim();
     }
 }
