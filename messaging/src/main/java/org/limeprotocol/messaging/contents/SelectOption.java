@@ -10,7 +10,6 @@ public class SelectOption {
 
     private Integer order;
     private String text;
-    private MediaType type;
     private Document value;
 
     public SelectOption() {
