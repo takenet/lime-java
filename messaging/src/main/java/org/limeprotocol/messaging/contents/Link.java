@@ -10,6 +10,7 @@ public abstract class Link extends DocumentBase {
     private URI uri;
     private URI previewUri;
     private MediaType previewType;
+    private String title;
     private String text;
 
     public Link(MediaType mediaType) {
@@ -64,6 +65,22 @@ public abstract class Link extends DocumentBase {
      */
     public void setPreviewType(MediaType previewType) {
         this.previewType = previewType;
+    }
+
+    /**
+     * Gets the link title text.
+     * @return
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Sets the link title text.
+     * @param title
+     */
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     /**
