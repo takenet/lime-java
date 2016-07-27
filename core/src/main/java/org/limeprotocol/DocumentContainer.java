@@ -14,6 +14,11 @@ public class DocumentContainer extends DocumentBase {
         super(MediaType.parse(MIME_TYPE));
     }
 
+    public DocumentContainer(Document value) {
+        this();
+        setValue(value);
+    }
+
     /**
      * Gets the media type of the contained document.
      * @return

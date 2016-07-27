@@ -69,6 +69,22 @@ public class DocumentSelect extends DocumentBase {
         this.options = options;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        if (getHeader() != null) {
+            builder.append(getHeader() + "\n");
+        }
+
+        for (DocumentSelectOption option : getOptions()) {
+            if (option.getOrder() != null) {
+                builder.append(option.getOrder() + ". ");
+            }
+            builder.append(option.getLabel() + "\n");
+        }
+        return builder.toString().trim();
+    }
+
     /**
      * Defines the scope which a select is valid.
      */
