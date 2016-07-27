@@ -2,10 +2,9 @@ package org.limeprotocol.messaging.testHelpers;
 
 import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
+import org.limeprotocol.DocumentContainer;
 import org.limeprotocol.MediaType;
-import org.limeprotocol.messaging.contents.PlainText;
-import org.limeprotocol.messaging.contents.Select;
-import org.limeprotocol.messaging.contents.SelectOption;
+import org.limeprotocol.messaging.contents.*;
 import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
@@ -81,6 +80,12 @@ public class MessagingTestDummy {
         return dc;
     }
 
+    public static DocumentContainer createDocumentContainer(final Document document) {
+        return new DocumentContainer() {{
+            setValue(document);
+        }};
+    }
+
     public static Select createSelect() {
         return new Select() {{
             setText(createRandomString(100));
@@ -101,6 +106,23 @@ public class MessagingTestDummy {
                         setValue(createJsonDocument());
                     }}
             });
+        }};
+    }
+
+    public static DocumentSelect createDocumentSelect() {
+        return new DocumentSelect() {{
+            setHeader(createDocumentContainer(createPlainText()));
+            setOptions(new DocumentSelectOption[] {
+                createDocumentSelectOption(createTextContent(), null),
+                createDocumentSelectOption(createJsonDocument(), createJsonDocument())
+            });
+        }};
+    }
+
+    public static DocumentSelectOption createDocumentSelectOption(final Document label, final Document value) {
+        return new DocumentSelectOption() {{
+            setLabel(createDocumentContainer(label));
+            setValue(value != null ? createDocumentContainer(value) : null);
         }};
     }
 }

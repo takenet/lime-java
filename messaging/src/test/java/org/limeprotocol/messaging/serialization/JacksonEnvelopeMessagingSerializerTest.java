@@ -6,10 +6,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.limeprotocol.*;
 import org.limeprotocol.messaging.Registrator;
-import org.limeprotocol.messaging.contents.ChatState;
-import org.limeprotocol.messaging.contents.PlainText;
-import org.limeprotocol.messaging.contents.Select;
-import org.limeprotocol.messaging.contents.WebLink;
+import org.limeprotocol.messaging.contents.*;
 import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
@@ -109,7 +106,20 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertThatJson(resultString).node("to").isEqualTo(message.getTo().toString());
     }
 
+    @Test
+    public void serialize_documentSelectMessage_returnsValidJsonString() {
+        // Arrange
+        DocumentSelect select = createDocumentSelect();
+        Message message = Dummy.createMessage(select);
 
+        // Act
+        String resultString = target.serialize(message);
+
+        // Assert
+        assertThatJson(resultString).node("id").isEqualTo(message.getId().toString());
+        assertThatJson(resultString).node("from").isEqualTo(message.getFrom().toString());
+        assertThatJson(resultString).node("to").isEqualTo(message.getTo().toString());
+    }
     //endregion Message
 
     //region Command
@@ -541,6 +551,48 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertEquals(jsonDocument.get("c61ozm28zj"), 11);
         assertTrue(jsonDocument.containsKey("xr2tovgzmt"));
         assertEquals(jsonDocument.get("xr2tovgzmt"), "bviy3y4io3wwmp5wmkpl87z9uhgcxd4lk5dbd8mo982vgsg8el");
+    }
+
+    @Test
+    public void deserialize_documentSelectMessage_returnValidInstance() {
+        // Arrange
+        String json = "{\"id\":\"message-id\",\"from\":\"andreb@msging.net\",\"type\":\"application/vnd.lime.document-select+json\",\"content\":{\"header\":{\"type\":\"application/vnd.lime.media-link+json\",\"value\":{\"title\":\"Welcome to Peter\'s Hats\",\"text\":\"We\'ve got the right hat for everyone.\",\"type\":\"image/jpeg\",\"uri\":\"http://petersapparel.parseapp.com/img/item100-thumb.png\"}},\"options\":[{\"label\":{\"type\":\"application/vnd.lime.web-link+json\",\"value\":{\"text\":\"View Website\",\"uri\":\"https://petersapparel.parseapp.com/view_item?item_id=100\"}}},{\"label\":{\"type\":\"text/plain\",\"value\":\"Start Chatting\"},\"value\":{\"type\":\"application/json\",\"value\":{\"key\":\"key1\",\"value\":1}}}]}}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertNotNull(envelope);
+        assertEquals("message-id", envelope.getId());
+        assertEquals("andreb@msging.net", envelope.getFrom().toString());
+        assertNull(envelope.getTo());
+        assertTrue(envelope instanceof Message);
+        Message message = (Message)envelope;
+        assertTrue(message.getContent() instanceof DocumentSelect);
+        DocumentSelect documentSelect = (DocumentSelect)message.getContent();
+        assertNotNull(documentSelect.getHeader());
+        Assert.assertTrue(documentSelect.getHeader().getValue() instanceof MediaLink);
+        MediaLink header = (MediaLink)documentSelect.getHeader().getValue();
+        assertEquals("Welcome to Peter's Hats", header.getTitle());
+        assertEquals("We've got the right hat for everyone.", header.getText());
+        assertEquals("image/jpeg", header.getType().toString());
+        assertEquals("http://petersapparel.parseapp.com/img/item100-thumb.png", header.getUri().toString());
+        assertNotNull(documentSelect.getOptions());
+        assertEquals(2, documentSelect.getOptions().length);
+        assertTrue(documentSelect.getOptions()[0].getLabel().getValue() instanceof WebLink);
+        WebLink option1Label = (WebLink)documentSelect.getOptions()[0].getLabel().getValue();
+        assertEquals("View Website", option1Label.getText());
+        assertEquals("https://petersapparel.parseapp.com/view_item?item_id=100", option1Label.getUri().toString());
+        assertNull(documentSelect.getOptions()[0].getValue());
+        assertTrue(documentSelect.getOptions()[1].getLabel().getValue() instanceof PlainText);
+        PlainText option2Label = (PlainText)documentSelect.getOptions()[1].getLabel().getValue();
+        assertEquals("Start Chatting", option2Label.getText());
+        assertTrue(documentSelect.getOptions()[1].getValue().getValue() instanceof JsonDocument);
+        JsonDocument option2Value = (JsonDocument)documentSelect.getOptions()[1].getValue().getValue();
+        assertTrue(option2Value.containsKey("key"));
+        assertEquals("key1", option2Value.get("key"));
+        assertTrue(option2Value.containsKey("value"));
+        assertEquals(1, option2Value.get("value"));
     }
 
     @Test

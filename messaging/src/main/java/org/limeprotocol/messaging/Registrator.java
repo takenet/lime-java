@@ -23,6 +23,7 @@ public class Registrator {
         SerializationUtil.registerDocumentClass(PaymentReceipt.class);
         SerializationUtil.registerDocumentClass(PlainText.class);
         SerializationUtil.registerDocumentClass(Select.class);
+        SerializationUtil.registerDocumentClass(DocumentSelect.class);
         SerializationUtil.registerDocumentClass(DocumentCollection.class);
         SerializationUtil.registerDocumentClass(DocumentContainer.class);
         SerializationUtil.registerDocumentClass(Account.class);
