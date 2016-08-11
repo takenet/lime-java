@@ -16,6 +16,7 @@ public class Location extends DocumentBase {
     private Integer course;
     private Double speed;
     private Double accuracy;
+    private String text;
 
     public Location() {
         super(MediaType.parse(MIME_TYPE));
@@ -121,5 +122,29 @@ public class Location extends DocumentBase {
      */
     public void setAccuracy(Double accuracy) {
         this.accuracy = accuracy;
+    }
+
+    /**
+     * Gets the location description text.
+     * @return
+     */
+    public String getText() {
+        return text;
+    }
+
+    /**
+     * Sets the location description text.
+     * @param text
+     */
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    @Override
+    public String toString() {
+        if (getText() != null) {
+            return String.format("%s (Latitude: %f, Longitude: %f)", getText(), getLatitude(), getLongitude());
+        }
+        return String.format("Latitude: %f, Longitude: %f",  getLatitude(), getLongitude());
     }
 }
