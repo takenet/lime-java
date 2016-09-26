@@ -15,88 +15,121 @@ import java.util.Date;
  * In a new session, the node starts with an unavailable status.
  */
 public class Presence extends DocumentBase {
+
     public static final String MIME_TYPE = "application/vnd.lime.presence+json";
+
+    private PresenceStatus status;
+    private String message;
+    private RoutingRule routingRule;
+    private Date lastSeen;
+    private int priority;
+    private Boolean echo;
+    private String[] instances;
 
     public Presence() {
         super(MediaType.parse(MIME_TYPE));
     }
 
     /**
-    * The node presence status.
-    */
-    private PresenceStatus status;
-
-    /**
-    * A status message associated
-    * to the presence status.
-    */
-    private String message;
-
-    /**
-    * Rule to the server route envelopes
-    * addressed to the identity.
-    */
-    private RoutingRule routingRule;
-
-
-    private Date lastSeen;
-
-    /**
-    * The value of the priority for
-    * the identityByPriority routing rule.
-    */
-    private int priority;
-
-    /**
-    * Present instances for
-    * a identity.
-    */
-    private String[] instances;
-
-    public Date getLastSeen() {
-        return lastSeen;
-    }
-
-    public void setLastSeen(Date lastSeen) {
-        this.lastSeen = lastSeen;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
+     * The node presence status.
+     */
     public PresenceStatus getStatus() {
         return status;
     }
 
+    /**
+     * The node presence status.
+     */
     public void setStatus(PresenceStatus status) {
         this.status = status;
     }
 
-    public RoutingRule getRoutingRule() {
-        return routingRule;
-    }
-
-    public void setRoutingRule(RoutingRule routingRule) {
-        this.routingRule = routingRule;
-    }
-
+    /**
+     * A status message associated to the presence status.
+     */
     public String getMessage() {
         return message;
     }
 
+    /**
+     * A status message associated to the presence status.
+     */
     public void setMessage(String message) {
         this.message = message;
     }
 
+    /**
+     * Rule to the server route envelopes addressed to the identity.
+     */
+    public RoutingRule getRoutingRule() {
+        return routingRule;
+    }
+
+    /**
+     * Rule to the server route envelopes addressed to the identity.
+     */
+    public void setRoutingRule(RoutingRule routingRule) {
+        this.routingRule = routingRule;
+    }
+
+    /**
+     * The value of the priority for the identityByPriority routing rule.
+     */
+    public int getPriority() {
+        return priority;
+    }
+
+    /**
+     * The value of the priority for the identityByPriority routing rule.
+     */
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+    /**
+     * Gets the date of the last known presence status for the node.
+     * @return
+     */
+    public Date getLastSeen() {
+        return lastSeen;
+    }
+
+    /**
+     * Sets the date of the last known presence status for the node.
+     * @param lastSeen
+     */
+    public void setLastSeen(Date lastSeen) {
+        this.lastSeen = lastSeen;
+    }
+
+    /**
+     * Gets the echo value.
+     * If true, indicates that the current session should receive the messages sent by itself.
+     * @return
+     */
+    public Boolean getEcho() {
+        return echo;
+    }
+
+    /**
+     * Sets the echo value.
+     * If true, indicates that the current session should receive the messages sent by itself.
+     * @param echo
+     */
+    public void setEcho(Boolean echo) {
+        this.echo = echo;
+    }
+
+    /**
+     * Present instances for an identity.
+     */
     public String[] getInstances() {
         return instances;
     }
 
+    /**
+     * Present instances for an identity.
+     */
     public void setInstances(String[] instances) {
         this.instances = instances;
     }
@@ -116,15 +149,6 @@ public class Presence extends DocumentBase {
         IDENTITY,
 
         /**
-         * Deliver envelopes addressed to the current session
-         * instance (name@domain/instance) and envelopes addressed
-         * to the identity (name@domain) if the distance from the
-         * origitator is the smallest among the available
-         * nodes of the identity with this setting.
-         */
-        IDENTITY_BY_DISTANCE,
-
-        /**
          * Deliver any envelopes addressed to the identity name@domain,
          * including the envelopes addressed to any specific instance.
          */
@@ -136,17 +160,7 @@ public class Presence extends DocumentBase {
          * This rule is intended to be used only for external domain authorities
          * (gateways) and sub-domain authorities (applications).
          */
-        DOMAIN,
-
-        /**
-         * Deliver envelopes addressed to the current session
-         * instance (name@domain/instance) and envelopes addresses to the node domain
-         * if the distance from the originator is the smallest among the available
-         * nodes of the domain with this setting.
-         * This rule is intended to be used only for external domain authorities
-         * (gateways) and sub-domain authorities (applications)
-         */
-        DOMAIN_BY_DISTANCE
+        DOMAIN
     }
 
     /**
