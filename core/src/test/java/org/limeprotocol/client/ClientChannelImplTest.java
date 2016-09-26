@@ -397,7 +397,7 @@ public class ClientChannelImplTest {
         PlainDocument content = createTextContent();
         Message message = createMessage(content);
 
-        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true);
+        TestClientChannel target = getTarget(SessionState.ESTABLISHED, true, message.getTo());
         target.raiseOnReceiveMessage(message);
 
         assertThat(transport.getSentEnvelopes()).hasSize(1);
@@ -531,6 +531,10 @@ public class ClientChannelImplTest {
 
     private TestClientChannel getTarget(Session.SessionState state, boolean autoNotifyReceipt) {
         return getTarget(state, false, null, null, EnvelopeId.newId(), autoNotifyReceipt);
+    }
+
+    private TestClientChannel getTarget(Session.SessionState state, boolean autoNotifyReceipt, Node localNode) {
+        return getTarget(state, false, null, localNode, EnvelopeId.newId(), autoNotifyReceipt);
     }
 
     private TestClientChannel getTarget(SessionState state, boolean fillEnvelopeRecipients, Node remoteNode, Node localNode) {
