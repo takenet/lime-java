@@ -22,6 +22,7 @@ public final class ResendMessagesChannelModule implements ChannelModule {
 
     private final int resendMessageTryCount;
     private final long resendMessageInterval;
+    private final Notification.Event expectedEvent;
     private final ConcurrentMap<String, SentMessage> sentMessageMap;
     private final BlockingQueue<SentMessage> sentMessageQueue;
 
@@ -30,8 +31,14 @@ public final class ResendMessagesChannelModule implements ChannelModule {
     private Thread consumerThread;
 
     public ResendMessagesChannelModule(int resendMessageTryCount, long resendMessageInterval) {
+        this(resendMessageTryCount, resendMessageInterval, Notification.Event.RECEIVED);
+    }
+
+    public ResendMessagesChannelModule(int resendMessageTryCount, long resendMessageInterval, Notification.Event expectedEvent) {
+        if (expectedEvent == Notification.Event.FAILED) throw new IllegalArgumentException("Invalid expected event");
         this.resendMessageTryCount = resendMessageTryCount;
         this.resendMessageInterval = resendMessageInterval;
+        this.expectedEvent = expectedEvent;
         this.sentMessageMap = new ConcurrentHashMap<>();
         this.sentMessageQueue = new ArrayBlockingQueue<>(100);
     }
@@ -108,7 +115,7 @@ public final class ResendMessagesChannelModule implements ChannelModule {
     public Envelope onReceiving(Envelope envelope) {
         if (envelope instanceof Notification && envelope.getId() != null) {
             Notification notification = (Notification)envelope;
-            if (notification.getEvent() == Notification.Event.RECEIVED || notification.getEvent() == Notification.Event.FAILED) {
+            if (notification.getEvent() == expectedEvent || notification.getEvent() == Notification.Event.FAILED) {
                 SentMessage sentMessage = sentMessageMap.remove(envelope.getId());
                 if (sentMessage != null) {
                     sentMessage.cancelResent();
