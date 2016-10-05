@@ -5,7 +5,7 @@ import org.limeprotocol.Identity;
 import org.limeprotocol.MediaType;
 import org.limeprotocol.util.StringUtils;
 
-public class Contact extends DocumentBase {
+public class Contact extends ContactDocument {
 
     public static final String MIME_TYPE = "application/vnd.lime.contact+json";
 
