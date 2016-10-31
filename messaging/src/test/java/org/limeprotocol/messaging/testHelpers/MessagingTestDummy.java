@@ -9,6 +9,7 @@ import org.limeprotocol.messaging.resources.Account;
 import org.limeprotocol.messaging.resources.Capability;
 import org.limeprotocol.messaging.resources.Contact;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 
 import static org.limeprotocol.testHelpers.Dummy.*;
@@ -123,6 +124,13 @@ public class MessagingTestDummy {
         return new DocumentSelectOption() {{
             setLabel(createDocumentContainer(label));
             setValue(value != null ? createDocumentContainer(value) : null);
+        }};
+    }
+
+    public static WebLink createWebLink(final URI uri) {
+        return new WebLink() {{
+            setText(createRandomString(30));
+            setUri(uri);
         }};
     }
 }

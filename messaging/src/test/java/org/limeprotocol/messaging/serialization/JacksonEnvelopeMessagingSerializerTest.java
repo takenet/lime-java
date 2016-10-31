@@ -43,6 +43,7 @@ import static org.limeprotocol.testHelpers.JsonConstants.Command.*;
 import static org.limeprotocol.testHelpers.JsonConstants.DocumentCollection.*;
 import static org.limeprotocol.testHelpers.JsonConstants.Envelope.*;
 import static org.limeprotocol.testHelpers.Dummy.*;
+import static org.limeprotocol.testHelpers.JsonConstants.Message.CONTENT_KEY;
 
 public class JacksonEnvelopeMessagingSerializerTest {
 
@@ -73,7 +74,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
 
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
+        assertThatJson(resultString).node(CONTENT_KEY).isEqualTo(content.getText());
     }
 
     @Test
@@ -88,7 +89,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertJsonEnvelopeProperties(message, resultString, FROM_KEY, TO_KEY);
 
         assertThatJson(resultString).node(JsonConstants.Message.TYPE_KEY).isEqualTo(message.getType().toString());
-        assertThatJson(resultString).node(JsonConstants.Message.CONTENT_KEY).isEqualTo(content.getText());
+        assertThatJson(resultString).node(CONTENT_KEY).isEqualTo(content.getText());
     }
 
     @Test
@@ -101,9 +102,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         String resultString = target.serialize(message);
 
         // Assert
-        assertThatJson(resultString).node("id").isEqualTo(message.getId().toString());
-        assertThatJson(resultString).node("from").isEqualTo(message.getFrom().toString());
-        assertThatJson(resultString).node("to").isEqualTo(message.getTo().toString());
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY);
     }
 
     @Test
@@ -116,10 +115,26 @@ public class JacksonEnvelopeMessagingSerializerTest {
         String resultString = target.serialize(message);
 
         // Assert
-        assertThatJson(resultString).node("id").isEqualTo(message.getId().toString());
-        assertThatJson(resultString).node("from").isEqualTo(message.getFrom().toString());
-        assertThatJson(resultString).node("to").isEqualTo(message.getTo().toString());
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY, FROM_KEY, TO_KEY);
     }
+
+    @Test
+    public void serialize_weblinkMessage_returnsValidJsonString() {
+        // Arrange
+        URI uri = URI.create("http://dummy.domain.com:785/file%20name.mp3");
+        WebLink webLink = createWebLink(uri);
+        Message message = Dummy.createMessage(webLink);
+
+        // Act
+        String resultString = target.serialize(message);
+
+        // Assert
+        assertJsonEnvelopeProperties(message, resultString, ID_KEY,  FROM_KEY, TO_KEY);
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(message.getType().toString());
+        assertThatJson(resultString).node(CONTENT_KEY + "." + "uri").isEqualTo(uri);
+        assertThatJson(resultString).node(CONTENT_KEY + "." + "text").isEqualTo(webLink.getText());
+    }
+
     //endregion Message
 
     //region Command
@@ -600,7 +615,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     {
         // Arrange
         String json =
-                "{\"type\":\"application/vnd.lime.web-link+json\",\"content\":{\"uri\":\"http://e0x0rkuaof.com:9288/\",\"previewUri\":\"http://pcmcjxomhd.com:9875/\",\"previewType\":\"image/jpeg\",\"text\":\"b9s38pra6s7w7b4w1jca6lzf9zp8927ciy4lwdsa3y1gc2ekiw\"},\"id\":\"25058656-ea3e-4f2a-9b27-fe14d1470796\",\"from\":\"6fjghzjm@3j9saev4nj.com/gtax0\",\"to\":\"cghusdgu@f0m512bqfb.com/jjjak\"}";
+                "{\"type\":\"application/vnd.lime.web-link+json\",\"content\":{\"uri\":\"http://e0x0rkuaof.com:9288/file%20name.jpg\",\"previewUri\":\"http://pcmcjxomhd.com:9875/\",\"previewType\":\"image/jpeg\",\"text\":\"b9s38pra6s7w7b4w1jca6lzf9zp8927ciy4lwdsa3y1gc2ekiw\"},\"id\":\"25058656-ea3e-4f2a-9b27-fe14d1470796\",\"from\":\"6fjghzjm@3j9saev4nj.com/gtax0\",\"to\":\"cghusdgu@f0m512bqfb.com/jjjak\"}";
 
         // Act
         Envelope envelope = target.deserialize(json);
@@ -611,7 +626,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         assertTrue(message.getContent() instanceof WebLink);
         WebLink webLink = (WebLink) message.getContent();
         assertNotNull(webLink.getUri());
-        assertEquals(webLink.getUri().toString(), "http://e0x0rkuaof.com:9288/");
+        assertEquals(webLink.getUri().toString(), "http://e0x0rkuaof.com:9288/file%20name.jpg");
         assertNotNull(webLink.getPreviewUri());
         assertEquals(webLink.getPreviewUri().toString(), "http://pcmcjxomhd.com:9875/");
         assertNotNull(webLink.getPreviewType());
