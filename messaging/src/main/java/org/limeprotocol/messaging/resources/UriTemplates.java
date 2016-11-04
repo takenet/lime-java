@@ -67,4 +67,17 @@ public class UriTemplates
      * receipt resource
      */
     public final static String RECEIPT = "/receipt";
+
+    /**
+     * Template for the
+     * thread resource
+     */
+    public final static String THREAD = "/threads";
+
+    /**
+     * Template for the
+     * thread messages resource
+     */
+    public final static String THREAD_MESSAGES = "/threads/{threadIdentity}";
+
 }
