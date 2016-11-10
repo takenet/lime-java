@@ -20,7 +20,7 @@ import java.nio.charset.Charset;
  */
 public class TcpTransport extends TransportBase implements Transport {
 
-    public final static int DEFAULT_BUFFER_SIZE = 8192;
+    public final static int DEFAULT_BUFFER_SIZE = 8192 * 8;
     private final EnvelopeSerializer envelopeSerializer;
     private final TcpClientFactory tcpClientFactory;
     private final TraceWriter traceWriter;
