@@ -80,4 +80,9 @@ public class UriTemplates
      */
     public final static String THREAD_MESSAGES = "/threads/{threadIdentity}";
 
+    /**
+     * Template for the
+     * messages resource
+     */
+    public final static String MESSAGES = "/messages";
 }
