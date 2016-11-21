@@ -82,7 +82,7 @@ public class UriTemplates
 
     /**
      * Template for the
-     * messages resource
+     * messages history resource
      */
-    public final static String MESSAGES = "/messages";
+    public final static String MESSAGES_HISTORY = "/messages-history";
 }
