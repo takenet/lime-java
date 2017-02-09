@@ -42,7 +42,11 @@ public abstract class Authentication {
         /**
          * Key authentication.
          */
-        KEY
+        KEY,
+        /**
+         * External authentication.
+         */
+        EXTERNAL
     }
 }
 

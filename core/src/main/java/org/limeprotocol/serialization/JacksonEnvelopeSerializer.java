@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.limeprotocol.*;
-import org.limeprotocol.security.Authentication;
-import org.limeprotocol.security.GuestAuthentication;
-import org.limeprotocol.security.PlainAuthentication;
-import org.limeprotocol.security.TransportAuthentication;
+import org.limeprotocol.security.*;
 import org.limeprotocol.serialization.jackson.CustomSerializerModule;
 
 import java.io.IOException;
@@ -91,6 +88,10 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
                 return getObjectMapper().convertValue(authenticationNode, PlainAuthentication.class);
             case TRANSPORT:
                 return new TransportAuthentication();
+            case KEY:
+                return new KeyAuthentication();
+            case EXTERNAL:
+                return new ExternalAuthentication();
             default:
                 throw new IllegalArgumentException("JSON string is not a valid session envelope");
         }
