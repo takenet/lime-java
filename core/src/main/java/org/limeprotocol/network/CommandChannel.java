@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Defines a command envelopes exchanging channel.
  */
-public interface CommandChannel {
+public interface CommandChannel extends CommandProcessor {
     /**
      * Sends a command to the remote node.
      * @param command

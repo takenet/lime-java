@@ -50,7 +50,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> TResource getResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
+    public static <TResource extends Document> TResource getResource(CommandChannel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
         return getResource(channel, limeUri, null);
     }
 
@@ -65,7 +65,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> TResource getResource(Channel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException, TimeoutException {
+    public static <TResource extends Document> TResource getResource(CommandChannel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -97,7 +97,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> void setResource(Channel channel, final LimeUri limeUri, final TResource resource) throws IOException, InterruptedException, TimeoutException {
+    public static <TResource extends Document> void setResource(CommandChannel channel, final LimeUri limeUri, final TResource resource) throws IOException, InterruptedException, TimeoutException {
         setResource(channel, limeUri, null, resource);
     }
 
@@ -112,7 +112,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static <TResource extends Document> void setResource(Channel channel, final LimeUri limeUri, final Node from, final TResource resource) throws IOException, InterruptedException, TimeoutException {
+    public static <TResource extends Document> void setResource(CommandChannel channel, final LimeUri limeUri, final Node from, final TResource resource) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -144,7 +144,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static void deleteResource(Channel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
+    public static void deleteResource(CommandChannel channel, final LimeUri limeUri) throws IOException, InterruptedException, TimeoutException {
         deleteResource(channel, limeUri, null);
     }
 
@@ -157,7 +157,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static void deleteResource(Channel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException, TimeoutException {
+    public static void deleteResource(CommandChannel channel, final LimeUri limeUri, final Node from) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
         }
@@ -187,7 +187,7 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Command processCommand(Channel channel, Command command) throws IOException, InterruptedException, TimeoutException {
+    public static Command processCommand(CommandChannel channel, Command command) throws IOException, InterruptedException, TimeoutException {
         return processCommand(channel, command, DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
@@ -203,13 +203,9 @@ public class ChannelExtensions {
      * @throws IOException
      * @throws InterruptedException
      */
-    public static Command processCommand(final Channel channel, final Command command, long timeout, TimeUnit timeoutTimeUnit) throws IOException, InterruptedException, TimeoutException {
+    public static Command processCommand(final CommandChannel channel, final Command command, long timeout, TimeUnit timeoutTimeUnit) throws IOException, InterruptedException, TimeoutException {
         if (channel == null) {
             throw new IllegalArgumentException("channel");
-        }
-
-        if (channel.getState() != Session.SessionState.ESTABLISHED) {
-            throw new IllegalStateException("The channel state must be established");
         }
 
         if (command == null) {

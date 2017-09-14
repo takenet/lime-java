@@ -36,7 +36,7 @@ public abstract class ChannelBase implements Channel {
 
     protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval) {
         if (transport == null) {
-            throw new IllegalArgumentException("transport");
+            throw new IllegalArgumentException("The argument transport cannot be null");
         }
         this.transport = transport;
 
@@ -185,6 +185,18 @@ public abstract class ChannelBase implements Channel {
     @Override
     public void removeCommandListener(CommandChannelListener listener) {
         removeListener(listener, commandListeners, singleReceiveCommandListeners);
+    }
+
+    /**
+     * Processes a command request, awaiting for the response.
+     *
+     * @param requestCommand
+     * @return
+     */
+    @Override
+    public Command processCommand(Command requestCommand, long timeout, TimeUnit timeUnit) throws IOException, TimeoutException {
+        // TODO: implement
+        return null;
     }
 
     /**
