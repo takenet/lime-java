@@ -220,29 +220,6 @@ public class ChannelExtensions {
             throw new IllegalArgumentException("The command status should not be defined");
         }
 
-        final Command[] responseCommand = new Command[1];
-        final Semaphore clientChannelSemaphore = new Semaphore(1);
-        clientChannelSemaphore.acquire();
-
-        CommandChannel.CommandChannelListener listener = new CommandChannel.CommandChannelListener() {
-            @Override
-            public void onReceiveCommand(Command c) {
-                if (command.getId().equals(c.getId())) {
-                    responseCommand[0] = c;
-                    clientChannelSemaphore.release();
-                }
-            }
-        };
-        channel.addCommandListener(listener, false);
-
-        try {
-            channel.sendCommand(command);
-            if (!clientChannelSemaphore.tryAcquire(1, timeout, timeoutTimeUnit)) {
-                throw new TimeoutException("The request has timed out");
-            }
-            return responseCommand[0];
-        } finally {
-            channel.removeCommandListener(listener);
-        }
+        return channel.processCommand(command, timeout, timeoutTimeUnit);
     }
 }

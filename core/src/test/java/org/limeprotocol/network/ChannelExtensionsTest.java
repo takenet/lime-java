@@ -51,15 +51,11 @@ public class ChannelExtensionsTest {
         Command requestCommand = Dummy.createCommand();
         final Command responseCommand = Dummy.createCommand(Dummy.createJsonDocument());
         responseCommand.setId(requestCommand.getId());
+        responseCommand.setStatus(Command.CommandStatus.SUCCESS);
 
         Channel channel = getTarget(Session.SessionState.ESTABLISHED);
         
-        transport.onSentCallback = new Runnable() {
-            @Override
-            public void run() {
-                transport.getEnvelopeListener().onReceive(responseCommand);
-            }
-        };
+        transport.onSentCallback = () -> transport.getEnvelopeListener().onReceive(responseCommand);
         
         // Act
         Command actual = ChannelExtensions.processCommand(channel, requestCommand, 5, TimeUnit.SECONDS);
@@ -70,7 +66,7 @@ public class ChannelExtensionsTest {
 
     private class TestChannel extends ChannelBase {
         protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, Node remoteNode, Node localNode, String sessionId) {
-            super(transport, fillEnvelopeRecipients, autoReplyPings, 0, 0);
+            super(transport, fillEnvelopeRecipients, autoReplyPings, 0, 0, new ChannelCommandProcessorImpl());
             setRemoteNode(remoteNode);
             setLocalNode(localNode);
             setState(state);

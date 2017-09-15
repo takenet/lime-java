@@ -1149,7 +1149,7 @@ public class ChannelBaseTest {
 
     private class TestChannel extends ChannelBase {
         protected TestChannel(Transport transport, Session.SessionState state, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval, Node remoteNode, Node localNode, String sessionId) {
-            super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
+            super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval, new ChannelCommandProcessorImpl());
             setRemoteNode(remoteNode);
             setLocalNode(localNode);
             setState(state);

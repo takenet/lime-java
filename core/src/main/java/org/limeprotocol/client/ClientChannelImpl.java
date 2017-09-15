@@ -2,6 +2,8 @@ package org.limeprotocol.client;
 
 import org.limeprotocol.*;
 import org.limeprotocol.network.ChannelBase;
+import org.limeprotocol.network.ChannelCommandProcessor;
+import org.limeprotocol.network.ChannelCommandProcessorImpl;
 import org.limeprotocol.network.Transport;
 import org.limeprotocol.network.modules.NotifyReceiptChannelModule;
 import org.limeprotocol.security.Authentication;
@@ -29,9 +31,26 @@ public class ClientChannelImpl extends ChannelBase implements ClientChannel {
         this(transport, fillEnvelopeRecipients, autoReplyPings, autoNotifyReceipt, 0, 0);
     }
 
-    public ClientChannelImpl(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings,
-                             boolean autoNotifyReceipt, long pingInterval, long pingDisconnectionInterval) {
-        super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval);
+    public ClientChannelImpl(
+            Transport transport,
+            boolean fillEnvelopeRecipients,
+            boolean autoReplyPings,
+            boolean autoNotifyReceipt,
+            long pingInterval,
+            long pingDisconnectionInterval) {
+        this(transport, fillEnvelopeRecipients, autoReplyPings, autoNotifyReceipt, pingInterval, pingDisconnectionInterval, new ChannelCommandProcessorImpl());
+
+    }
+
+    public ClientChannelImpl(
+            Transport transport,
+            boolean fillEnvelopeRecipients,
+            boolean autoReplyPings,
+            boolean autoNotifyReceipt,
+            long pingInterval,
+            long pingDisconnectionInterval,
+            ChannelCommandProcessor channelCommandProcessor) {
+        super(transport, fillEnvelopeRecipients, autoReplyPings, pingInterval, pingDisconnectionInterval, channelCommandProcessor);
 
         if (autoNotifyReceipt) {
             getMessageModules().add(new NotifyReceiptChannelModule(this));

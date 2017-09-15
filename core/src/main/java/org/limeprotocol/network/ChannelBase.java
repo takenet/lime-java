@@ -15,6 +15,7 @@ public abstract class ChannelBase implements Channel {
 
 
     private final Transport transport;
+    private final ChannelCommandProcessor channelCommandProcessor;
 
     private Node remoteNode;
     private Node localNode;
@@ -34,11 +35,19 @@ public abstract class ChannelBase implements Channel {
     private final Queue<SessionChannelListener> sessionChannelListeners;
     private final Transport.TransportEnvelopeListener transportEnvelopeListener;
 
-    protected ChannelBase(Transport transport, boolean fillEnvelopeRecipients, boolean autoReplyPings, long pingInterval, long pingDisconnectionInterval) {
-        if (transport == null) {
-            throw new IllegalArgumentException("The argument transport cannot be null");
-        }
+    protected ChannelBase(
+            Transport transport,
+            boolean fillEnvelopeRecipients,
+            boolean autoReplyPings,
+            long pingInterval,
+            long pingDisconnectionInterval,
+            ChannelCommandProcessor channelCommandProcessor) {
+
+        if (transport == null) throw new IllegalArgumentException("The argument transport cannot be null");
+        if (channelCommandProcessor == null) throw new IllegalArgumentException("The argument channelCommandProcessor cannot be null");
+
         this.transport = transport;
+        this.channelCommandProcessor = channelCommandProcessor;
 
         messageModules = new ArrayList<>();
         notificationModules = new ArrayList<>();
@@ -195,8 +204,7 @@ public abstract class ChannelBase implements Channel {
      */
     @Override
     public Command processCommand(Command requestCommand, long timeout, TimeUnit timeUnit) throws IOException, TimeoutException {
-        // TODO: implement
-        return null;
+        return this.channelCommandProcessor.processCommand(this, requestCommand, timeout, timeUnit);
     }
 
     /**
@@ -310,7 +318,9 @@ public abstract class ChannelBase implements Channel {
         ensureSessionEstablished();
 
         command = invokeModulesOnReceiving(command, commandModules);
-        if (command != null) {
+
+        // Checks it is a command response
+        if (command != null && !this.channelCommandProcessor.trySubmitCommandResult(command)) {
             for (CommandChannelListener listener : snapshot(singleReceiveCommandListeners, commandListeners)) {
                 try {
                     listener.onReceiveCommand(command);
