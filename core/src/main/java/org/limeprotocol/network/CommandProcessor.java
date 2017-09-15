@@ -15,5 +15,5 @@ public interface CommandProcessor {
      * @param requestCommand
      * @return
      */
-    Command processCommand(Command requestCommand, long timeout, TimeUnit timeUnit) throws IOException, TimeoutException;
+    Command processCommand(Command requestCommand, long timeout, TimeUnit timeoutTimeUnit) throws IOException, TimeoutException, InterruptedException;
 }

@@ -17,7 +17,7 @@ public class ChannelCommandProcessorImpl implements ChannelCommandProcessor {
     }
 
     @Override
-    public Command processCommand(CommandChannel commandChannel, Command requestCommand, long timeout, TimeUnit timeUnit) throws IOException, TimeoutException {
+    public Command processCommand(CommandChannel commandChannel, Command requestCommand, long timeout, TimeUnit timeoutTimeUnit) throws IOException, TimeoutException, InterruptedException {
         Objects.requireNonNull(commandChannel);
         Objects.requireNonNull(requestCommand);
 
@@ -42,8 +42,8 @@ public class ChannelCommandProcessorImpl implements ChannelCommandProcessor {
 
         commandChannel.sendCommand(requestCommand);
         try {
-            return commandFuture.get(timeout, timeUnit);
-        } catch (InterruptedException | ExecutionException e) {
+            return commandFuture.get(timeout, timeoutTimeUnit);
+        } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
     }

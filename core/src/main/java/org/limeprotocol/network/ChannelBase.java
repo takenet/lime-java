@@ -148,6 +148,10 @@ public abstract class ChannelBase implements Channel {
         onStateChanged(messageModules, state);
         onStateChanged(notificationModules, state);
         onStateChanged(commandModules, state);
+
+        if (state == Session.SessionState.FINISHED || state == Session.SessionState.FAILED) {
+            this.channelCommandProcessor.cancelAll();
+        }
     }
 
     @Override
@@ -203,8 +207,8 @@ public abstract class ChannelBase implements Channel {
      * @return
      */
     @Override
-    public Command processCommand(Command requestCommand, long timeout, TimeUnit timeUnit) throws IOException, TimeoutException {
-        return this.channelCommandProcessor.processCommand(this, requestCommand, timeout, timeUnit);
+    public Command processCommand(Command requestCommand, long timeout, TimeUnit timeoutTimeUnit) throws IOException, TimeoutException, InterruptedException {
+        return this.channelCommandProcessor.processCommand(this, requestCommand, timeout, timeoutTimeUnit);
     }
 
     /**
