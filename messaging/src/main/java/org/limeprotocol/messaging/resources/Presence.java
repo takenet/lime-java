@@ -23,6 +23,8 @@ public class Presence extends DocumentBase {
     private RoutingRule routingRule;
     private Date lastSeen;
     private int priority;
+    private Boolean filterByDistance;
+    private Boolean roundRobin;
     private Boolean echo;
     private String[] instances;
 
@@ -132,6 +134,40 @@ public class Presence extends DocumentBase {
      */
     public void setInstances(String[] instances) {
         this.instances = instances;
+    }
+
+    /**
+     * If true, indicates that the delivery of envelopes for the current session should be distributed by using the round-robin strategy between the resolved routes with this setting.
+     * @return
+     */
+    public Boolean getRoundRobin() {
+        return roundRobin;
+    }
+
+    /**
+     * If true, indicates that the delivery of envelopes for the current session should be distributed by using the round-robin strategy between the resolved routes with this setting.
+     * @param roundRobin
+     */
+    public void setRoundRobin(Boolean roundRobin) {
+        this.roundRobin = roundRobin;
+    }
+
+    /**
+     * If true, indicates that the delivery of envelopes for the current session should only occurs if the distance from the originator is the smallest among the resolved routes with this setting.
+     * This configuration is not exclusive, so if there's more than one route with the same smallest distance, these sessions should receive the envelopes.
+     * @return
+     */
+    public Boolean getFilterByDistance() {
+        return filterByDistance;
+    }
+
+    /**
+     * If true, indicates that the delivery of envelopes for the current session should only occurs if the distance from the originator is the smallest among the resolved routes with this setting.
+     * This configuration is not exclusive, so if there's more than one route with the same smallest distance, these sessions should receive the envelopes.
+     * @param filterByDistance
+     */
+    public void setFilterByDistance(Boolean filterByDistance) {
+        this.filterByDistance = filterByDistance;
     }
 
     public enum RoutingRule {
