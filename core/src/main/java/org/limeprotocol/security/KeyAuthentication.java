@@ -6,7 +6,7 @@ public class KeyAuthentication extends Authentication {
     private String key;
 
     public KeyAuthentication() {
-        super(AuthenticationScheme.PLAIN);
+        super(AuthenticationScheme.KEY);
     }
 
     public String getKey() {
