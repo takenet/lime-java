@@ -2,6 +2,7 @@ package org.limeprotocol.network;
 
 import org.limeprotocol.*;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -55,4 +56,31 @@ public interface Channel extends MessageChannel, CommandChannel, NotificationCha
      * @return
      */
     Collection<ChannelModule<Command>> getCommandModules();
+
+    /**
+     * Sends the envelope using the appropriate method for its type.
+     *
+     * @param channel
+     * @param envelope
+     * @throws IOException
+     */
+    default void send(Channel channel, Envelope envelope) throws IOException {
+        if (channel == null) {
+            throw new IllegalArgumentException("channel");
+        }
+        if (envelope == null) {
+            throw new IllegalArgumentException("envelope");
+        }
+        if (envelope instanceof Notification) {
+            channel.sendNotification((Notification) envelope);
+        } else if (envelope instanceof Message) {
+            channel.sendMessage((Message) envelope);
+        } else if (envelope instanceof Command) {
+            channel.sendCommand((Command) envelope);
+        } else if (envelope instanceof Session) {
+            channel.sendSession((Session) envelope);
+        } else {
+            throw new IllegalArgumentException("Invalid or unknown envelope type");
+        }
+    }
 }
