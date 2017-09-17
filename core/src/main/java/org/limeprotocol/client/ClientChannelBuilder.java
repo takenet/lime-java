@@ -5,6 +5,7 @@ import org.limeprotocol.Envelope;
 import org.limeprotocol.Message;
 import org.limeprotocol.Notification;
 import org.limeprotocol.network.ChannelModule;
+import org.limeprotocol.network.Transport;
 
 import java.io.IOException;
 import java.net.URI;
@@ -38,5 +39,9 @@ public interface ClientChannelBuilder {
 
     interface ChannelModuleFactory<T extends Envelope> {
         ChannelModule<T> create(ClientChannel clientChannel);
+    }
+
+    interface TransportFactory {
+        Transport create() throws IOException;
     }
 }

@@ -140,7 +140,4 @@ public class ClientChannelBuilderImpl implements ClientChannelBuilder {
         return new ClientChannelBuilderImpl(transportFactory, serverURI);
     }
 
-    interface TransportFactory {
-        Transport create() throws IOException;
-    }
 }
