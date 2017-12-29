@@ -105,8 +105,13 @@ public class Command extends Envelope {
         SET,
 
         /**
-         * Deletes a value of the resource
-         * or the resource itself.
+         * Merges the resource document with an existing one.
+         * If the resource doesn't exists, it is created.
+         */
+        MERGE,
+
+        /**
+         * Deletes a value of the resource or the resource itself.
          */
         DELETE,
 
