@@ -1,4 +1,4 @@
-package ai.blip.messaging.resources;
+package net.take.iris.messaging.resources;
 
 import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;
@@ -7,9 +7,6 @@ import org.limeprotocol.MediaType;
 public class Thread extends DocumentBase {
     public static final String MIME_TYPE = "application/vnd.iris.thread+json";
 
-    /**
-     * Initializes a new instance of the @Thread class.
-     */
     public Thread() {
         super(MediaType.parse(MIME_TYPE));
     }

@@ -1,4 +1,4 @@
-package ai.blip.messaging.resources;
+package net.take.iris.messaging.resources;
 
 /**
  * Indicates the direction of a message in a thread.

@@ -1,4 +1,4 @@
-package ai.blip.messaging.resources;
+package net.take.iris.messaging.resources;
 
 import org.limeprotocol.DocumentBase;
 import org.limeprotocol.Identity;

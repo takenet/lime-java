@@ -1,5 +1,6 @@
 package org.limeprotocol.messaging.serialization;
 
+import net.take.iris.messaging.resources.artificialIntelligence.Intention;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -52,6 +53,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
     @Before
     public void setUp() throws Exception {
         Registrator.registerDocuments();
+        net.take.iris.messaging.Registrator.registerDocuments();
         target = new JacksonEnvelopeSerializer();
     }
 
@@ -821,6 +823,7 @@ public class JacksonEnvelopeMessagingSerializerTest {
         // Act
         Envelope envelope = target.deserialize(json);
 
+        // Assert
         assertThat(envelope).isInstanceOf(Command.class);
 
         Command command = (Command)envelope;
@@ -841,6 +844,33 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         Document[] items = documents.getItems();
         assertThat(items).isNotNull().hasSize(0);
+    }
+
+    @Test
+    public void deserialize_IntentionCollectionCommand_ReturnValidInstance() {
+
+        // Arrange
+        String json = "{\"type\":\"application/vnd.lime.collection+json\",\"resource\":{\"total\":7,\"itemType\":\"application/vnd.iris.ai.intention+json\",\"items\":[{\"id\":\"order_pizza2\",\"name\":\"Order pizza2\",\"storageDate\":\"2017-12-29T18:28:56.800Z\"},{\"id\":\"teste_i7\",\"name\":\"Teste I7\",\"storageDate\":\"2017-12-29T14:29:42.340Z\"},{\"id\":\"teste_i4\",\"name\":\"Teste I4\",\"storageDate\":\"2017-12-29T14:22:34.470Z\"},{\"id\":\"teste_i3\",\"name\":\"Teste I3\",\"storageDate\":\"2017-12-29T12:55:09.910Z\"},{\"id\":\"teste_i2\",\"name\":\"Teste I2\",\"storageDate\":\"2017-12-28T16:52:11.080Z\"},{\"id\":\"xpto\",\"name\":\"xpto\",\"storageDate\":\"2017-12-28T16:06:01.540Z\"},{\"id\":\"none\",\"name\":\"Resposta padrão\",\"storageDate\":\"2017-12-28T16:05:34.670Z\"}]},\"method\":\"get\",\"status\":\"success\",\"id\":\"1291b3c0-756f-4abd-9c8e-e9a4de90608b\",\"from\":\"postmaster@ai.msging.net/#irismsging2\",\"pp\":\"postmaster@ai.msging.net/#irismsging2-1\",\"to\":\"botwh@msging.net\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+        Command command = (Command)envelope;
+        assertThat(command.getResource()).isNotNull().isInstanceOf(DocumentCollection.class);
+
+        DocumentCollection documents = (DocumentCollection)command.getResource();
+        assertThat(documents.getTotal()).isEqualTo(7);
+        assertThat(documents.getItems().length).isEqualTo(7);
+
+        for (Document document : documents.getItems()) {
+            assertThat(document).isInstanceOf(Intention.class);
+            Intention intention = (Intention)document;
+            assertThat(intention.getId()).isNotNull();
+            assertThat(intention.getName()).isNotNull();
+            assertThat(intention.getStorageDate()).isNotNull();
+        }
     }
 
     //endregion Command
