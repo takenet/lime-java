@@ -873,6 +873,32 @@ public class JacksonEnvelopeMessagingSerializerTest {
         }
     }
 
+    @Test
+    public void deserialize_ResourceCollectionCommand_ReturnValidInstance() {
+
+        // Arrange
+        String json = "{\"type\":\"application/vnd.lime.collection+json\",\"resource\":{\"total\":5,\"itemType\":\"text/plain\",\"items\":[\"Teste_Content2-Entity_Content2\",\"Teste_Content3-Entity_Content3\",\"Teste_Content4Entity_Content4\",\"Teste_Content6::Entity_Content6\",\"Teste_ContentEntity_Content\"]},\"method\":\"get\",\"status\":\"success\",\"id\":\"830ad17d-875f-4c0a-b7a3-f08def17f633\",\"from\":\"postmaster@msging.net/#irismsging3\",\"to\":\"botwh@msging.net\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+        Command command = (Command)envelope;
+        assertThat(command.getResource()).isNotNull().isInstanceOf(DocumentCollection.class);
+
+        DocumentCollection documents = (DocumentCollection)command.getResource();
+        assertThat(documents.getTotal()).isEqualTo(5);
+        assertThat(documents.getItems().length).isEqualTo(5);
+
+        for (Document document : documents.getItems()) {
+            assertThat(document).isInstanceOf(PlainDocument.class);
+            PlainDocument plainDocument = (PlainDocument) document;
+            assertThat(plainDocument.getValue()).isNotNull();
+            assertThat(plainDocument.getMediaType().toString()).isEqualTo("text/plain");
+        }
+    }
+
     //endregion Command
 
     //endregion deserialize method

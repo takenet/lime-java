@@ -7,9 +7,11 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.limeprotocol.Document;
 import org.limeprotocol.DocumentCollection;
 import org.limeprotocol.MediaType;
+import org.limeprotocol.PlainDocument;
 import org.limeprotocol.serialization.JacksonEnvelopeSerializer;
 import org.limeprotocol.serialization.SerializationUtil;
 
@@ -34,9 +36,15 @@ public class DocumentCollectionDeserializer extends JsonDeserializer<DocumentCol
 
         int i = 0;
         for (Iterator iterator = documentsNode.elements(); iterator.hasNext(); i++) {
-            ObjectNode documentNode = (ObjectNode) iterator.next();
-            Document document = DocumentContainerDeserializer.getDocument(documentNode, itemType, JacksonEnvelopeSerializer.getObjectMapper());
-            items[i] = document;
+            Object node  = iterator.next();
+            if (node instanceof TextNode) {
+                TextNode textNode = (TextNode) node;
+                items[i] = new PlainDocument(textNode.textValue(), itemType);
+            } else {
+                ObjectNode documentNode = (ObjectNode) node;
+                Document document = DocumentContainerDeserializer.getDocument(documentNode, itemType, JacksonEnvelopeSerializer.getObjectMapper());
+                items[i] = document;
+            }
         }
 
         int total = 0;
