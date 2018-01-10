@@ -1,5 +1,6 @@
 package org.limeprotocol.messaging.serialization;
 
+import net.take.iris.messaging.resources.artificialIntelligence.AnalysisResponse;
 import net.take.iris.messaging.resources.artificialIntelligence.Intention;
 import org.junit.Assert;
 import org.junit.Before;
@@ -871,6 +872,50 @@ public class JacksonEnvelopeMessagingSerializerTest {
             assertThat(intention.getName()).isNotNull();
             assertThat(intention.getStorageDate()).isNotNull();
         }
+    }
+
+    @Test
+    public void deserialize_AIAnalysisResponseCommand_ReturnValidInstance() {
+
+        // Arrange
+        String json = "{\n" +
+                "  \"id\": \"9\",\n" +
+                "  \"from\": \"postmaster@ai.msging.net/#irismsging1\",\n" +
+                "  \"to\": \"contact@msging.net/default\",\n" +
+                "  \"method\": \"set\",\n" +
+                "  \"status\": \"success\",\n" +
+                "  \"type\": \"application/vnd.iris.ai.analysis-response+json\",\n" +
+                "  \"resource\": {\n" +
+                "    \"text\":\"I want a pepperoni pizza\",\n" +
+                "    \"intentions\": [\n" +
+                "      {\n" +
+                "        \"id\":\"order_pizza\",\n" +
+                "        \"name\":\"Order pizza\",\n" +
+                "        \"score\": 0.95\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"entities\":  [\n" +
+                "      {\n" +
+                "        \"id\":\"flavor\",\n" +
+                "        \"name\":\"Flavor\",\n" +
+                "        \"value\":\"Pepperoni\"\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  }\n" +
+                "}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+        Command command = (Command)envelope;
+        assertThat(command.getResource()).isNotNull().isInstanceOf(AnalysisResponse.class);
+
+        AnalysisResponse analysisResponse = (AnalysisResponse)command.getResource();
+        assertThat(analysisResponse.getText()).isNotNull().isNotEmpty();
+        assertThat(analysisResponse.getEntities().length).isEqualTo(1);
+        assertThat(analysisResponse.getIntentions().length).isEqualTo(1);
     }
 
     @Test
