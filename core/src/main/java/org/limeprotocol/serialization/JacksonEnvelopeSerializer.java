@@ -3,6 +3,7 @@ package org.limeprotocol.serialization;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import org.limeprotocol.*;
 import org.limeprotocol.security.*;
 import org.limeprotocol.serialization.jackson.CustomSerializerModule;
@@ -20,7 +21,9 @@ public class JacksonEnvelopeSerializer implements EnvelopeSerializer {
         templateObjectMapper = new ObjectMapper()
                 .setSerializationInclusion(Include.NON_NULL)
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .setDateFormat(new ISO8601DateFormat());
 
         objectMapper = createObjectMapper().registerModule(new CustomSerializerModule());
     }

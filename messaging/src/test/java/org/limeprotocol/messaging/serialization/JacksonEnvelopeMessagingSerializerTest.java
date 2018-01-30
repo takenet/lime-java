@@ -1,5 +1,6 @@
 package org.limeprotocol.messaging.serialization;
 
+import net.take.iris.messaging.resources.Schedule;
 import net.take.iris.messaging.resources.artificialIntelligence.AnalysisResponse;
 import net.take.iris.messaging.resources.artificialIntelligence.Intention;
 import org.junit.Assert;
@@ -21,10 +22,10 @@ import org.limeprotocol.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -303,6 +304,27 @@ public class JacksonEnvelopeMessagingSerializerTest {
 
         assertThatJson(resultString).node(STATUS_KEY).isPresent();
         assertThatJson(resultString).node(REASON_KEY).isAbsent();
+    }
+
+
+    @Test
+    public void serialize_Scheduled_ReturnsValidJsonString() throws ParseException {
+
+        String dateString = "2018-01-30 13:00:00";
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Schedule schedule = new Schedule();
+        schedule.setWhen(df.parse(dateString));
+
+        Command command = createCommand(schedule);
+        command.setMethod(Command.CommandMethod.SET);
+
+        String resultString = target.serialize(command);
+
+        assertThatJson(resultString).node(METHOD_KEY).isEqualTo(command.getMethod().toString().toLowerCase());
+        assertThatJson(resultString).node(TYPE_KEY).isEqualTo(command.getResource().getMediaType().toString());
+        assertThatJson(resultString).node(RESOURCE_KEY).isPresent();
+        assertThatJson(resultString).node(RESOURCE_KEY + ".when" ).isEqualTo("2018-01-30T13:00:00Z");
     }
 
     //endregion Command
