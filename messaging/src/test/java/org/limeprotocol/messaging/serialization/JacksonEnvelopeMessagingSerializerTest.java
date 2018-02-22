@@ -2,6 +2,7 @@ package org.limeprotocol.messaging.serialization;
 
 import net.take.iris.messaging.resources.Schedule;
 import net.take.iris.messaging.resources.artificialIntelligence.AnalysisResponse;
+import net.take.iris.messaging.resources.artificialIntelligence.Entity;
 import net.take.iris.messaging.resources.artificialIntelligence.Intention;
 import org.junit.Assert;
 import org.junit.Before;
@@ -964,6 +965,21 @@ public class JacksonEnvelopeMessagingSerializerTest {
             assertThat(plainDocument.getValue()).isNotNull();
             assertThat(plainDocument.getMediaType().toString()).isEqualTo("text/plain");
         }
+    }
+
+    @Test
+    public void deserialize_EntityResponseCommand_ReturValidInstance() {
+
+        // Arrange
+        String json = "{\"type\":\"application/vnd.iris.ai.entity+json\",\"resource\":{\"id\":\"e\",\"name\":\"e\",\"storageDate\":\"2018-02-20T18:13:26.940Z\",\"values\":[{\"name\":\"educacao \",\"synonymous\":[]},{\"name\":\"eletronico\",\"synonymous\":[\"eletronica\",\"eletronica\",\"eletronicos\"]},{\"name\":\"elite\",\"synonymous\":[]},{\"name\":\"emissor\",\"synonymous\":[]},{\"name\":\"empresa\",\"synonymous\":[\"empresas\",\"empresarial\"]},{\"name\":\"emprestimo\",\"synonymous\":[\"emprestimos\"]},{\"name\":\"erro\",\"synonymous\":[\"erros\",\"problema\",\"defeito\",\"falha\"]},{\"name\":\"esfera\",\"synonymous\":[]},{\"name\":\"estrangeira\",\"synonymous\":[]},{\"name\":\"estudante\",\"synonymous\":[\"estudantes\"]},{\"name\":\"euro\",\"synonymous\":[]},{\"name\":\"excecutiva\",\"synonymous\":[]},{\"name\":\"experiencia\",\"synonymous\":[\"experiencia\",\"experience\"]},{\"name\":\"expiracao\",\"synonymous\":[\"venceu\",\"validade\",\"vence\",\"expira\",\"termina\"]},{\"name\":\"expresso\",\"synonymous\":[]},{\"name\":\"email\",\"synonymous\":[\"e-mail\",\"imail\",\"correio eletronico\"]},{\"name\":\"exterior\",\"synonymous\":[]},{\"name\":\"empreenda\",\"synonymous\":[]},{\"name\":\"endereco\",\"synonymous\":[]},{\"name\":\"extrato\",\"synonymous\":[]}]},\"method\":\"get\",\"status\":\"success\",\"id\":\"60013938-2f01-45fa-ab9b-e0aef5a11baf\",\"from\":\"postmaster@ai.msging.net/#irismsging3\",\"pp\":\"postmaster@ai.msging.net/#irismsging3-1\",\"to\":\"botkcartoes@msging.net\"}";
+
+        // Act
+        Envelope envelope = target.deserialize(json);
+
+        // Assert
+        assertThat(envelope).isInstanceOf(Command.class);
+        Command command = (Command)envelope;
+        assertThat(command.getResource()).isNotNull().isInstanceOf(Entity.class);
     }
 
     //endregion Command

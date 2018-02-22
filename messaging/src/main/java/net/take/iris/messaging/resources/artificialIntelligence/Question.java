@@ -14,7 +14,6 @@ public class Question extends DocumentBase {
         super(MediaType.parse(MIME_TYPE));
     }
 
-
     public String getId() {
         return id;
     }

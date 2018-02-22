@@ -12,7 +12,6 @@ public class Entity extends DocumentBase {
     private String id;
     private String name;
     private Date storageDate;
-    private String jsonValues;
     private EntityValues[] values;
 
     public Entity() {
@@ -51,26 +50,5 @@ public class Entity extends DocumentBase {
         this.values = values;
     }
 
-    public class EntityValues {
 
-        private String name;
-        private String[] synonymous;
-
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String[] getSynonymous() {
-            return synonymous;
-        }
-
-        public void setSynonymous(String[] synonymous) {
-            this.synonymous = synonymous;
-        }
-    }
 }
