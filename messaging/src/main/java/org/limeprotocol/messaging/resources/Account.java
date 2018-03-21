@@ -21,14 +21,14 @@ public class Account extends ContactDocument {
     private Boolean isTemporary;
     private String password;
     private String oldPassword;
-    private String accessKey;
     private Integer inboxSize;
     private Boolean allowAnonymousSender;
     private Boolean allowUnknownSender;
     private Boolean storeMessageContent;
+    private Boolean encryptMessageContent;
+    private String accessKey;
     private Identity alternativeAccount;
     private Boolean publishToDirectory;
-
 
     /**
      * The user full name.
@@ -45,8 +45,6 @@ public class Account extends ContactDocument {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
-
-
 
     /**
      * Indicates that the account is temporary is valid only in the current session.
@@ -212,4 +210,19 @@ public class Account extends ContactDocument {
         this.publishToDirectory = publishToDirectory;
     }
 
+    /**
+     * Indicates if the content of messages from this account should be encrypted in the server.
+     * @return
+     */
+    public Boolean getEncryptMessageContent() {
+        return encryptMessageContent;
+    }
+
+    /**
+     * Indicates if the content of messages from this account should be encrypted in the server.
+     * @param encryptMessageContent
+     */
+    public void setEncryptMessageContent(Boolean encryptMessageContent) {
+        this.encryptMessageContent = encryptMessageContent;
+    }
 }

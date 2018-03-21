@@ -18,6 +18,9 @@ public abstract class ContactDocument extends DocumentBase {
     private Integer timezone;
     private String culture;
     private Map<String, String> extras;
+    private String source;
+    private String firstName;
+    private String lastName;
 
     ContactDocument(MediaType mediaType) {
         super(mediaType);
@@ -183,6 +186,54 @@ public abstract class ContactDocument extends DocumentBase {
      */
     public void setExtras(Map<String, String> extras) {
         this.extras = extras;
+    }
+
+    /**
+     * Where the account came from.
+     * @return
+     */
+    public String getSource() {
+        return source;
+    }
+
+    /**
+     * Where the account came from.
+     * @param source
+     */
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    /**
+     *  The contact first name.
+     * @return
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     *  The contact first name.
+     * @param firstName
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     *  The contact last name.
+     * @return
+     */
+    public String getLastName() {
+        return lastName;
+    }
+
+    /**
+     * The contact last name.
+     * @param lastName
+     */
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     /**
